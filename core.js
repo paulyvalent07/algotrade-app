@@ -40,6 +40,7 @@
     positions: ls.get('at.positions', {version: 1, positions: []}), positionsSha: null,
     quotes: ls.get('at.quotes', {positions: {}}),
     sfcQuotes: ls.get('at.sfcquotes', {prices: {}}),
+    live: ls.get('at.live', {prices: {}}),
     scans: [],
     alerts: null, alertsErr: null,   // alertsErr : null | 'token' | message
     sfc: null, sfcErr: null,
@@ -223,9 +224,17 @@
       if (q) { state.sfcQuotes = q.data; ls.set('at.sfcquotes', state.sfcQuotes); }
     } catch (e) { /* pas encore de cours SFC */ }
   }
+  /* Cours en direct (≈ toutes les 5 min) : branche « live » du dépôt public, mise à jour par un workflow GitHub. */
+  async function loadLive() {
+    try {
+      const r = await fetch('https://raw.githubusercontent.com/paulyvalent07/algotrade-app/live/quotes.json?t=' + Math.floor(Date.now() / 60000), {cache: 'no-store'});
+      if (!r.ok) return;
+      const d = await r.json(); if (d && d.prices) { state.live = d; ls.set('at.live', d); emit(); }
+    } catch (e) { /* hors ligne : on garde les derniers cours connus */ }
+  }
   async function loadAll() {
     state.loading = true; emit();
-    await Promise.allSettled([loadAlerts(), loadScans(), loadSfc(), loadLedgerRemote(), loadPositionsRemote()]);
+    await Promise.allSettled([loadAlerts(), loadScans(), loadSfc(), loadLedgerRemote(), loadPositionsRemote(), loadLive()]);
     state.loading = false; emit();
     syncSfcPositions().catch(() => {});
   }
@@ -297,6 +306,8 @@
     const q = {...((state.quotes.positions || {})[p.id] || {})};
     const sq = p.source === 'sfc' ? ((state.sfcQuotes || {}).prices || {})[p.sfc.symbol] : null;
     if (sq && isFinite(sq.last)) { q.last = sq.last; q.last_ts = (state.sfcQuotes || {}).ts || sq.ts; }
+    const lv = p.source === 'sfc' ? ((state.live || {}).prices || {})[p.sfc.symbol] : null;
+    if (lv && isFinite(lv.last) && (!q.last_ts || (state.live.ts || '') >= q.last_ts)) { q.last = lv.last; q.last_ts = state.live.ts; }
     const last = p.status === 'closed' ? p.exit?.price : (isFinite(q.last) ? q.last : null);
     const res = last != null ? pnlAt(p, last) : null;
     let hit = null;
@@ -444,7 +455,7 @@
     (state.alerts || []).forEach(a => state.seen.add(a.id)); ls.set('at.seen', [...state.seen]); emit();
   }
 
-  window.AlgoCore = {dismissAlert, sfcOrders, state, on, fmt, todayISO, computeLedger, snapshots, sfcSummary, loadAll, saveSettings,
+  window.AlgoCore = {loadLive, dismissAlert, sfcOrders, state, on, fmt, todayISO, computeLedger, snapshots, sfcSummary, loadAll, saveSettings,
     addMovement, deleteMovement, addAccount, deleteAccount, unseenCount, markAlertsSeen,
     parseLevel, pnlAt, positionView, takePosition, updatePosition, closePosition, deletePosition, takenIds,
     setAmount, pushStatus, enablePush, disablePush, testNotification};

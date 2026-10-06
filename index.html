@@ -404,7 +404,7 @@ nav.dock.min .dot{top:4px}
       <p id="push-msg" style="margin-top:6px">Reçois les nouvelles alertes sur l'écran de verrouillage.</p>
       <div class="row2"><button type="button" class="btn" id="push-on">Activer</button><button type="button" class="btn ghost" id="push-test">Tester</button><button type="button" class="btn ghost" id="push-off">Désactiver</button></div>
     </div>
-    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 16 · l'app se met à jour toute seule</p>
+    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 17 · l'app se met à jour toute seule</p>
     <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
   </form>
 </dialog>
@@ -607,7 +607,7 @@ function viewTrack() {
   const engaged = open.reduce((s, p) => s + p.amount, 0), latent = views.reduce((s, p) => s + (p.res ? p.res.eur : 0), 0), real = done.reduce((s, p) => s + (p.exit ? p.exit.eur : 0), 0);
   const sum = `<section class="card sum-card"><div><small>Engagé</small><b class="num">${F.eur(engaged, 0)}</b></div><div><small>En cours</small><b class="num ${latent > 0 ? 'up' : latent < 0 ? 'down' : 'muted'}">${F.signed(latent)}</b></div><div><small>Réalisé</small><b class="num ${real > 0 ? 'up' : real < 0 ? 'down' : 'muted'}">${F.signed(real)}</b></div></section>`;
   return sum + open.map(posHtml).join('') + (done.length ? `<h2>Clôturées</h2>` + done.map(posHtml).join('') : '') +
-    `<p class="disclaimer">Les cours sont mis à jour par le suivi planifié, pas en direct. Résultat estimé sur le montant alloué, levier inclus.</p>`;
+    `<p class="disclaimer">Cours rafraîchis toutes les ~5 min (jusqu'à 15 min de décalage possible). Résultat estimé sur le montant alloué, levier inclus.</p>`;
 }
 
 /* ---------- SFC ---------- */
@@ -921,7 +921,10 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
   /* nouvelle version installée : on recharge une fois pour ne plus avoir à rouvrir l'app deux fois */
   if (navigator.serviceWorker.controller) { let rl = false; navigator.serviceWorker.addEventListener('controllerchange', () => { if (!rl) { rl = true; location.reload(); } }); }
-  navigator.serviceWorker.addEventListener('message', e => { const t = e.data && e.data.goto; if (t === 'alerts-cfd') { view.filter = 'cfd'; if (view.tab !== 'alerts') switchTab('alerts'); else render(); C.loadAll(); } else if (TABS.includes(t)) { switchTab(t); C.loadAll(); } });
+  navigator.serviceWorker.addEventListener('message', e => { const t = e.data && e.data.goto; if (t === 'alerts-cfd') { view.filter = 'cfd'; if (view.tab !== 'alerts') switchTab('alerts'); else render(); C.loadAll();
+/* cours en direct : rafraîchis chaque minute tant que l'app est ouverte */
+setInterval(() => { if (!document.hidden) C.loadLive(); }, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) C.loadLive(); }); } else if (TABS.includes(t)) { switchTab(t); C.loadAll(); } });
 }
 { const h = location.hash.slice(1); if (h === 'alerts-cfd') { view.tab = 'alerts'; view.filter = 'cfd'; } else if (TABS.includes(h)) view.tab = h; }
 render(); C.loadAll();
