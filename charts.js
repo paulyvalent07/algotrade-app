@@ -68,11 +68,29 @@
     return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="Évolution de la répartition du capital">${out}</svg>`;
   }
 
+  /* Logos des banques (icône du site, repli sur une pastille à initiale) */
+  const DOMAINS = [['trade republic', 'traderepublic.com'], ['boursorama', 'boursorama.com'], ['revolut', 'revolut.com'], ['xtb', 'xtb.com'], ['ig', 'ig.com']];
+  const domainOf = name => {
+    const n = String(name).toLowerCase().trim();
+    const hit = DOMAINS.find(([k]) => k === 'ig' ? (n === 'ig' || n.startsWith('ig ')) : n.includes(k));
+    return hit ? hit[1] : null;
+  };
+  const logoUrl = name => name === 'Réserve' ? 'icon-192.png' : (domainOf(name) ? 'https://www.google.com/s2/favicons?sz=128&domain=' + domainOf(name) : null);
+  const logo = (name, px) => {
+    const u = logoUrl(name), ini = esc(String(name).trim().charAt(0).toUpperCase());
+    return `<span class="logo" style="width:${px}px;height:${px}px"><b>${ini}</b>${u ? `<img src="${u}" alt="" width="${px}" height="${px}" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</span>`;
+  };
+  const logoSvg = (name, y, px) => {
+    const u = logoUrl(name), ini = esc(String(name).trim().charAt(0).toUpperCase());
+    return `<circle cx="${px / 2}" cy="${y + px / 2}" r="${px / 2}" class="logo-bg"/><text x="${px / 2}" y="${y + px / 2 + 4}" text-anchor="middle" class="logo-ini">${ini}</text>` +
+      (u ? `<image href="${u}" x="0" y="${y}" width="${px}" height="${px}" clip-path="inset(0 round ${px / 2}px)" preserveAspectRatio="xMidYMid slice"/>` : '');
+  };
+
   /* Haltères : versé → valeur actuelle, un compte par ligne. rows : [{name, invested, value}] */
   function dumbbell(rows, fmtEur, fmtSigned) {
     rows = rows.filter(r => r.invested !== 0 || r.value !== 0);
     if (!rows.length) return '';
-    const W = 340, L = 100, X1 = W - 84, rowH = 38, T = 6, B = 22, H = T + rows.length * rowH + B;
+    const W = 340, L = 118, X1 = W - 84, rowH = 38, T = 6, B = 22, H = T + rows.length * rowH + B;
     const mx = Math.max(...rows.map(r => Math.max(r.invested, r.value)), 1) * 1.08;
     const x = v => L + (Math.max(0, v) / mx) * (X1 - L);
     const step = niceStep(mx / 3);
@@ -83,9 +101,9 @@
     rows.forEach((r, i) => {
       const cy = T + i * rowH + rowH / 2, d = r.value - r.invested;
       const pct = r.invested > 0 ? d / r.invested * 100 : null;
-      const label = r.name.length > 14 ? r.name.slice(0, 13) + '…' : r.name;
+      const label = r.name.length > 12 ? r.name.slice(0, 11) + '…' : r.name;
       const cls = d > 0 ? 'up' : d < 0 ? 'down' : 'flat';
-      out += `<text x="0" y="${cy + 4}" class="label">${esc(label)}</text>
+      out += `${logoSvg(r.name, cy - 10, 20)}<text x="28" y="${cy + 4}" class="label">${esc(label)}</text>
         <line x1="${x(r.invested)}" x2="${x(r.value)}" y1="${cy}" y2="${cy}" class="link"/>
         <circle cx="${x(r.invested)}" cy="${cy}" r="5" class="dot-from"/>
         <circle cx="${x(r.value)}" cy="${cy}" r="5" class="dot-to"/>
@@ -97,7 +115,7 @@
   }
 
   const legend = items => `<div class="legend-line">${items.map(it =>
-    `<span><i class="key" style="background:${col(it.slot)}"></i>${esc(it.name)}</span>`).join('')}</div>`;
+    `<span><i class="key" style="background:${col(it.slot)}"></i>${logo(it.name, 16)}${esc(it.name)}</span>`).join('')}</div>`;
   const dumbKey = () => `<div class="legend-line"><span><i class="dotkey from"></i>Versé</span><span><i class="dotkey to"></i>Valeur actuelle</span></div>`;
 
   /* Infobulle unique : souris, toucher et clavier. Les noms passent par textContent. */
@@ -135,5 +153,5 @@
     document.addEventListener('scroll', hide, {passive: true});
   }
 
-  window.AlgoCharts = {splitBar, stackedColumns, dumbbell, legend, dumbKey, slotOf, attachTooltips};
+  window.AlgoCharts = {logo, splitBar, stackedColumns, dumbbell, legend, dumbKey, slotOf, attachTooltips};
 })();

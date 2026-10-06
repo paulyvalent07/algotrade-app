@@ -2,10 +2,9 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="color-scheme" content="dark light">
-<meta name="theme-color" content="#EEF0F3" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#05070A" media="(prefers-color-scheme: dark)">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#05070A">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AlgoTrade">
@@ -19,7 +18,7 @@
 <style>
 /* ====== Jetons de design : c'est ici (et seulement ici) qu'on change l'apparence ======
    Sombre par défaut (noir profond, titane, un seul accent bleu glacier adouci).
-   Clair soigné en secours, selon le réglage de l'iPhone. */
+   Toujours sombre, quel que soit le réglage de l'iPhone. */
 :root{
   color-scheme:dark;
   --bg:#05070A; --bg-2:#0B1016;
@@ -27,37 +26,18 @@
   --glass:rgba(255,255,255,.045); --glass-2:rgba(255,255,255,.08);
   --ink:#F2F5F8; --muted:#8A94A3; --text-2:#B4BDC9; --text-3:#7F8998;
   --line:rgba(255,255,255,.085); --grid:rgba(255,255,255,.055); --axis:rgba(255,255,255,.18);
-  --glacier:#93BEDC; --up:#93BEDC; --down:#FF6B4A; --signal:#93BEDC; --warn:#FF6B4A; --on-signal:#05070A;
+  --glacier:#93BEDC; --up:#93BEDC; --down:#F0245F; --signal:#93BEDC; --warn:#F0245F; --on-signal:#05070A;
   --series-0:#6E7681; --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70; --series-4:#c98500;
   --series-5:#d55181; --series-6:#2fb344; --series-7:#9085e9;
   --dumb-from:#4C7DB4; --dumb-to:#9CC4EA;
   --metal:linear-gradient(180deg,#FFFFFF 0%,#E4E9EE 30%,#A3AEBB 58%,rgba(214,222,231,.78) 100%);
   --sheen:rgba(255,255,255,.95);
   --btn:linear-gradient(180deg,#F7F9FB,#C3CBD4); --on-btn:#0B0F14;
-  --dock:rgba(22,26,32,.7); --dock-line:rgba(255,255,255,.14); --dock-pill:rgba(255,255,255,.14);
+  --dock:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.04)); --dock-line:rgba(255,255,255,.2); --dock-pill:rgba(255,255,255,.16);
   --shadow:0 18px 50px rgba(0,0,0,.55);
   --halo:radial-gradient(120% 60% at 50% -10%,rgba(147,190,220,.16),transparent 60%);
   --r-card:28px; --r-ctl:18px;
   --font:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Inter,system-ui,'Segoe UI',sans-serif;
-}
-@media (prefers-color-scheme:light){
-  :root:not([data-theme="dark"]){
-    color-scheme:light;
-    --bg:#EEF0F3; --bg-2:#E5E8EC; --surface:#F7F8FA;
-    --glass:rgba(255,255,255,.72); --glass-2:rgba(255,255,255,.9);
-    --ink:#0B0F14; --muted:#5C6672; --text-2:#3D4753; --text-3:#5C6672;
-    --line:rgba(11,15,20,.09); --grid:rgba(11,15,20,.06); --axis:rgba(11,15,20,.22);
-    --glacier:#3F6F95; --up:#2F6A97; --down:#D8452A; --signal:#2F6A97; --warn:#C23A22; --on-signal:#fff;
-    --series-0:#898781; --series-1:#2a78d6; --series-2:#eb6834; --series-3:#1baf7a; --series-4:#eda100;
-    --series-5:#e87ba4; --series-6:#008300; --series-7:#4a3aa7;
-    --dumb-from:#86b6ef; --dumb-to:#1c5cab;
-    --metal:linear-gradient(180deg,#0E141B 0%,#2A333E 40%,#5A6573 70%,#1A222B 100%);
-    --sheen:rgba(255,255,255,.9);
-    --btn:linear-gradient(180deg,#1B222B,#05070A); --on-btn:#F2F5F8;
-    --dock:rgba(255,255,255,.78); --dock-line:rgba(11,15,20,.1); --dock-pill:rgba(11,15,20,.08);
-    --shadow:0 18px 50px rgba(20,30,45,.18);
-    --halo:radial-gradient(120% 60% at 50% -10%,rgba(63,111,149,.14),transparent 60%);
-  }
 }
 /* ====== Mise en page ====== */
 *{box-sizing:border-box;margin:0}
@@ -98,8 +78,8 @@ header{padding:calc(16px + env(safe-area-inset-top)) 0 8px}
 nav.dock{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);
   width:min(calc(100vw - 36px),380px);height:66px;padding:6px;z-index:6;border-radius:999px;
   background:var(--dock);border:1px solid var(--dock-line);
-  -webkit-backdrop-filter:blur(30px) saturate(185%);backdrop-filter:blur(30px) saturate(185%);
-  box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.2),inset 0 -1px 0 rgba(255,255,255,.04)}
+  -webkit-backdrop-filter:blur(18px) saturate(210%) brightness(1.08);backdrop-filter:blur(18px) saturate(210%) brightness(1.08);
+  box-shadow:0 10px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.34),inset 0 -1px 0 rgba(255,255,255,.08),inset 0 0 18px rgba(255,255,255,.05)}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){nav.dock{background:var(--bg-2)}}
 .dock-in{position:relative;display:grid;grid-template-columns:repeat(3,1fr);height:100%}
 .dock-pill{position:absolute;top:0;bottom:0;left:0;width:calc(100% / 3);border-radius:999px;background:var(--dock-pill);
@@ -172,7 +152,7 @@ h2{font-size:13px;font-weight:600;margin:30px 4px 10px;letter-spacing:.09em;text
 .pulse.off{background:var(--down);animation:none}
 @keyframes pulse{70%{box-shadow:0 0 0 9px transparent}100%{box-shadow:0 0 0 0 transparent}}
 .big{display:block;font-size:46px;font-weight:650;letter-spacing:-.03em;line-height:1.05;font-variant-numeric:tabular-nums;margin-top:4px}
-.big.neg{--metal:linear-gradient(180deg,#FFD7CC 0%,#FF8F75 45%,#FF6B4A 100%)}
+.big.neg{--metal:linear-gradient(180deg,#FFD3DF 0%,#FF6E96 45%,#F0245F 100%)}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
 .stats small{display:block;color:var(--muted);font-size:12.5px}
 .stats b{font-size:19px;font-weight:600;letter-spacing:-.01em}
@@ -205,6 +185,13 @@ h2{font-size:13px;font-weight:600;margin:30px 4px 10px;letter-spacing:.09em;text
 .split i{display:block;min-width:4px;border-radius:999px;transition:filter .2s}
 .split i:hover,.split i:focus-visible{filter:brightness(1.2)}
 .sw{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:12px}
+.logo{position:relative;display:inline-grid;place-items:center;flex:none;vertical-align:middle;border-radius:50%;overflow:hidden;background:var(--glass-2);box-shadow:0 0 0 1.5px var(--ring,transparent);margin-right:10px}
+.logo b{font-size:11px;font-weight:600;color:var(--text-2)}
+.logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;background:#fff}
+.legend-line .logo{margin-right:6px}
+.chart .logo-bg{fill:var(--glass-2)} .chart .logo-ini{fill:var(--text-2);font-size:10px;font-weight:600}
+.row .l.has-logo{display:flex;align-items:center}
+.row .l.has-logo .logo{margin-right:12px}
 .chart{width:100%;height:auto;display:block;overflow:visible}
 .chart .grid{stroke:var(--grid);stroke-width:.75}
 .chart .axis{stroke:var(--axis);stroke-width:.75}
@@ -235,7 +222,7 @@ h2{font-size:13px;font-weight:600;margin:30px 4px 10px;letter-spacing:.09em;text
 
 /* feuilles */
 dialog{border:1px solid var(--line);border-radius:30px;background:color-mix(in srgb,var(--bg-2) 88%,transparent);color:var(--ink);padding:24px;width:min(calc(100vw - 24px),460px);
-  margin:auto auto calc(12px + env(safe-area-inset-bottom));-webkit-backdrop-filter:blur(30px) saturate(160%);backdrop-filter:blur(30px) saturate(160%);box-shadow:var(--shadow)}
+  margin:auto auto calc(12px + env(safe-area-inset-bottom) + var(--kb,0px));max-height:calc(var(--vvh,100dvh) - 24px - env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain;transition:margin .25s ease;-webkit-backdrop-filter:blur(30px) saturate(160%);backdrop-filter:blur(30px) saturate(160%);box-shadow:var(--shadow)}
 dialog[open]{animation:sheet .45s cubic-bezier(.2,.8,.2,1)}
 @keyframes sheet{from{opacity:0;transform:translateY(40px) scale(.98)}}
 dialog::backdrop{background:rgba(0,0,0,.5);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
@@ -470,7 +457,7 @@ function viewCapital() {
   const parts = [{name: 'Réserve', value: c.reserve, slot: 0}, ...A.map(n => ({name: n, value: c.acc[n].value, slot: G.slotOf(n, A)}))];
   const rows = parts.map(p => {
     const share = c.total > 0 ? Math.max(0, p.value) / c.total * 100 : 0;
-    return `<div class="row"><div class="l"><span class="sw" style="background:var(--series-${p.slot})"></span><b>${esc(p.name)}</b> <small style="display:inline;margin-left:6px" class="num">${F.pct(share, 0)}</small></div>
+    return `<div class="row"><div class="l has-logo"><span style="--ring:var(--series-${p.slot});display:inline-flex">${G.logo(p.name, 30)}</span><span><b>${esc(p.name)}</b> <small style="display:inline;margin-left:6px" class="num">${F.pct(share, 0)}</small></span></div>
       <div class="r"><b class="num">${fe(p.value)}</b></div></div>`;
   }).join('');
   const snaps = C.snapshots(L, 12);
@@ -480,7 +467,7 @@ function viewCapital() {
   const dumb = G.dumbbell(A.map(n => ({name: n, invested: c.acc[n].invested, value: c.acc[n].value})), fe, F.signed);
   const all = L.movements.slice().sort((a, b) => b.date.localeCompare(a.date));
   const hist = (view.histAll ? all : all.slice(0, 5)).map(m => `<div class="row">
-      <div class="l">${esc(MV[m.type])}${m.account ? ' <b>' + esc(m.account) + '</b>' : ''}<small>${esc(F.dateLong(m.date))}${m.note ? ' · ' + esc(m.note) : ''}</small></div>
+      <div class="l">${esc(MV[m.type])}${m.account ? ' <span style="white-space:nowrap">' + G.logo(m.account, 18) + '<b>' + esc(m.account) + '</b></span>' : ''}<small>${esc(F.dateLong(m.date))}${m.note ? ' · ' + esc(m.note) : ''}</small></div>
       <div class="r"><b class="num">${fe(m.amount, 2)}</b><small><button class="del" data-del="${esc(m.id)}" aria-label="Supprimer ce mouvement">supprimer</button></small></div></div>`).join('');
   return `${buttons}
     <section class="card"><h3>Où est ton épargne</h3><p class="sub">Part de chaque poche dans le capital total.</p>
@@ -606,6 +593,22 @@ $('#form-account').addEventListener('submit', e => {
 })();
 
 G.attachTooltips();
+/* clavier : la feuille ouverte remonte au-dessus du clavier (iOS ne redimensionne pas la page) */
+(function () {
+  const vv = window.visualViewport; if (!vv) return;
+  const root = document.documentElement;
+  const sync = () => {
+    const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    root.style.setProperty('--kb', (kb > 80 ? kb : 0) + 'px');
+    root.style.setProperty('--vvh', vv.height + 'px');
+    const f = document.activeElement;
+    if (kb > 80 && f && f.closest && f.closest('dialog[open]')) setTimeout(() => f.scrollIntoView({block: 'center', behavior: 'smooth'}), 60);
+  };
+  vv.addEventListener('resize', sync); vv.addEventListener('scroll', sync);
+  document.addEventListener('focusin', e => { if (e.target.closest && e.target.closest('dialog[open]')) setTimeout(sync, 300); });
+  document.addEventListener('focusout', () => setTimeout(sync, 150));
+})();
+
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 render(); C.loadAll();
 </script>
