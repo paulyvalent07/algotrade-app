@@ -33,7 +33,7 @@
   --metal:linear-gradient(180deg,#FFFFFF 0%,#E4E9EE 30%,#A3AEBB 58%,rgba(214,222,231,.78) 100%);
   --sheen:rgba(255,255,255,.95);
   --btn:linear-gradient(180deg,#F7F9FB,#C3CBD4); --on-btn:#0B0F14;
-  --dock:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.012)); --dock-line:rgba(255,255,255,.18); --dock-pill:rgba(255,255,255,.12);
+  --dock:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.006)); --dock-line:rgba(255,255,255,.2); --dock-pill:rgba(255,255,255,.1);
   --shadow:0 18px 50px rgba(0,0,0,.55);
   --halo:radial-gradient(120% 60% at 50% -10%,rgba(147,190,220,.16),transparent 60%);
   --r-card:28px; --r-ctl:18px;
@@ -53,7 +53,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .up{color:var(--up)} .down{color:var(--down)} .muted{color:var(--muted)}
 
 /* en-tête */
-header{padding:calc(16px + env(safe-area-inset-top)) 0 8px}
+header{padding:calc(16px + env(safe-area-inset-top)) 0 4px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:17px;letter-spacing:.01em}
 .brand img{width:34px;height:34px;border-radius:10px;display:block}
@@ -78,7 +78,7 @@ header{padding:calc(16px + env(safe-area-inset-top)) 0 8px}
 nav.dock{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);
   width:min(calc(100vw - 36px),380px);height:66px;padding:6px;z-index:6;border-radius:999px;
   background:var(--dock);border:1px solid var(--dock-line);
-  -webkit-backdrop-filter:blur(12px) saturate(230%) brightness(1.1);backdrop-filter:blur(12px) saturate(230%) brightness(1.1);
+  -webkit-backdrop-filter:blur(9px) saturate(250%) brightness(1.12);backdrop-filter:blur(9px) saturate(250%) brightness(1.12);
   box-shadow:0 10px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.34),inset 0 -1px 0 rgba(255,255,255,.08),inset 0 0 18px rgba(255,255,255,.05)}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){nav.dock{background:var(--bg-2)}}
 .dock-in{position:relative;display:grid;grid-template-columns:repeat(3,1fr);height:100%}
@@ -113,8 +113,8 @@ h2{font-size:13px;font-weight:600;margin:30px 4px 10px;letter-spacing:.09em;text
 @keyframes fadein{from{opacity:0}to{opacity:1}}
 
 /* alertes */
-.chips{display:flex;gap:4px;margin-top:6px;padding:4px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.17);border-radius:999px;overflow-x:auto;scrollbar-width:none;
-  -webkit-backdrop-filter:blur(14px) saturate(200%);backdrop-filter:blur(14px) saturate(200%);box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
+.chips{display:flex;gap:4px;margin-top:6px;padding:4px;background:rgba(255,255,255,.015);border:1px solid rgba(255,255,255,.18);border-radius:999px;overflow-x:auto;scrollbar-width:none;
+  -webkit-backdrop-filter:blur(8px) saturate(220%);backdrop-filter:blur(8px) saturate(220%);box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:1;white-space:nowrap;border:0;background:none;border-radius:999px;padding:9px 7px;font-size:13px;font-weight:550;color:var(--muted);transition:background .25s,color .25s}
 .chip[aria-pressed="true"]{background:rgba(255,255,255,.13);color:var(--ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
@@ -184,7 +184,7 @@ h2{font-size:13px;font-weight:600;margin:30px 4px 10px;letter-spacing:.09em;text
 .btns{align-items:center}
 .btns .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px}
 .btn .ico{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.plus{flex:none;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;color:var(--ink);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.2);
+.plus{flex:none;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;color:var(--ink);background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.2);
   -webkit-backdrop-filter:blur(14px) saturate(180%);backdrop-filter:blur(14px) saturate(180%);box-shadow:inset 0 1px 0 rgba(255,255,255,.22);transition:transform .2s,background .2s}
 .plus svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round}
 .plus:active{transform:scale(.92);background:rgba(255,255,255,.12)}
@@ -229,7 +229,7 @@ h2{font-size:13px;font-weight:600;margin:30px 4px 10px;letter-spacing:.09em;text
 .tip-k{width:9px;height:9px;border-radius:50%;flex:none}
 
 /* feuilles */
-dialog{border:1px solid var(--line);border-radius:30px;background:color-mix(in srgb,var(--bg-2) 52%,transparent);color:var(--ink);padding:24px;width:min(calc(100vw - 24px),460px);
+dialog{border:1px solid var(--line);border-radius:30px;background:color-mix(in srgb,var(--bg-2) 38%,transparent);color:var(--ink);padding:24px;width:min(calc(100vw - 24px),460px);
   margin:auto auto calc(12px + env(safe-area-inset-bottom) + var(--kb,0px));max-height:calc(var(--vvh,100dvh) - 24px - env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain;transition:margin .25s ease;-webkit-backdrop-filter:blur(30px) saturate(160%);backdrop-filter:blur(30px) saturate(160%);box-shadow:var(--shadow)}
 dialog[open]{animation:sheet .45s cubic-bezier(.2,.8,.2,1)}
 @keyframes sheet{from{opacity:0;transform:translateY(40px) scale(.98)}}
@@ -263,6 +263,33 @@ input:focus,select:focus{outline:none;border-color:color-mix(in srgb,var(--glaci
 .bank-grid button:active{transform:scale(.97);background:rgba(255,255,255,.1)}
 .bank-grid .logo{margin-right:0}
 .bank-grid button[disabled]{opacity:.35}
+
+/* dock : bulle compacte pendant le défilement */
+nav.dock{transition:width .55s cubic-bezier(.3,1.35,.4,1),height .45s cubic-bezier(.3,1.35,.4,1),bottom .45s cubic-bezier(.3,1.35,.4,1)}
+nav.dock.min{width:min(calc(100vw - 36px),188px);height:56px;bottom:calc(20px + env(safe-area-inset-bottom))}
+nav.dock .dock-in button{transition:color .25s,font-size .3s,gap .3s}
+nav.dock.min .dock-in button{font-size:0;gap:0}
+nav.dock.min .dot{top:4px}
+/* courbe du capital */
+.chart .capline{fill:none;stroke:var(--glacier);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.chart .capdot{fill:var(--surface);stroke:var(--glacier);stroke-width:1.3} .chart .capdot.last{fill:var(--glacier)}
+/* glisser pour supprimer */
+.swipe{position:relative;overflow:hidden;touch-action:pan-y;--sx:0px}
+.swipe>.row{transform:translateX(var(--sx));transition:transform .35s cubic-bezier(.2,.9,.3,1.1)}
+.swipe.drag>.row,.swipe.drag>.swipe-act{transition:none}
+.swipe-act{position:absolute;left:-96px;top:8px;bottom:8px;width:88px;border-radius:18px !important;transform:translateX(var(--sx));transition:transform .35s cubic-bezier(.2,.9,.3,1.1);border:0;border-radius:0 0 0 0;background:var(--down);color:#fff;font-size:13px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.swipe-act svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.swipe:last-child>.row{border-bottom:0} .swipe:first-child>.row{padding-top:15px}
+.card>div>.swipe:first-child{margin-top:-2px}
+/* feuilles RIB et virement */
+.x-head{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.x-head h3{margin:0}.x-head .section-note{margin:2px 0 0}
+.x-head .logo{width:44px !important;height:44px !important;margin:0}
+.wide{width:100%;margin-top:14px;display:inline-flex;align-items:center;justify-content:center;gap:9px}
+.qr-box{background:#fff;border-radius:20px;padding:8px;width:176px;height:176px;margin:14px auto 6px;display:grid;place-items:center}
+.qr-box svg{width:100%;height:100%;display:block}
+.iban{font-variant-numeric:tabular-nums;letter-spacing:.02em;color:var(--ink);word-break:break-word}
+
 /* suivi des positions */
 .a-right{display:flex;align-items:center;gap:8px}
 .take{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid rgba(255,255,255,.28);background:rgba(255,255,255,.04);color:transparent;transition:background .25s,border-color .25s,color .25s,transform .2s}
@@ -326,11 +353,6 @@ input:focus,select:focus{outline:none;border-color:color-mix(in srgb,var(--glaci
         <button class="ibtn" id="refresh" aria-label="Actualiser"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v4.5h-4.5"/></svg></button>
         <button class="ibtn" id="settings" aria-label="Réglages"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.7 7.7 0 0 0 0-3l1.9-1.5-1.8-3.1-2.3.9a7.6 7.6 0 0 0-2.6-1.5L14 2.5h-3.6l-.6 2.3a7.6 7.6 0 0 0-2.6 1.5l-2.3-.9-1.8 3.1 1.9 1.5a7.7 7.7 0 0 0 0 3l-1.9 1.5 1.8 3.1 2.3-.9a7.6 7.6 0 0 0 2.6 1.5l.6 2.3H14l.6-2.3a7.6 7.6 0 0 0 2.6-1.5l2.3.9 1.8-3.1z" transform="translate(-1 0)"/></svg></button>
       </div>
-    </div>
-    <div class="hero">
-      <small>Capital total</small>
-      <b class="metal" id="f-total">–</b>
-      <div class="hero-sub"><span>SFC</span><b id="f-sfc" class="muted">–</b></div>
     </div>
   </header>
   <main id="view"></main>
@@ -426,16 +448,51 @@ input:focus,select:focus{outline:none;border-color:color-mix(in srgb,var(--glaci
 
 <dialog id="dlg-acct">
   <form method="dialog" id="form-acct">
-    <h3 id="x-name"></h3>
-    <p class="section-note" style="margin:0 4px" id="x-info"></p>
-    <p class="section-note" style="margin:14px 4px 0">Supprimer ce compte efface aussi ses mouvements : l'argent qui lui était alloué retourne à la réserve.</p>
-    <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Fermer</button><button class="btn danger" value="del">Supprimer</button></div>
+    <div class="x-head"><span id="x-logo"></span><div><h3 id="x-name"></h3><p class="section-note" id="x-info"></p></div></div>
+    <div class="push-box"><b style="font-size:14px">RIB</b>
+      <p id="x-rib" style="margin-top:6px"></p>
+      <div class="row2"><button type="button" class="btn ghost" id="x-edit">Renseigner</button><button type="button" class="btn ghost" id="x-copy">Copier l'IBAN</button></div>
+    </div>
+    <button type="button" class="btn wide" id="x-send"></button>
+    <p class="section-note" id="x-del-note" style="margin:16px 4px 0">Supprimer ce compte efface aussi ses mouvements : l'argent qui lui était alloué retourne à la réserve.</p>
+    <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Fermer</button><button class="btn danger" value="del" id="x-del">Supprimer</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-rib">
+  <form method="dialog" id="form-rib">
+    <h3 id="r-title">RIB</h3>
+    <label for="r-holder">Titulaire</label>
+    <input id="r-holder" maxlength="70" autocomplete="off" placeholder="Prénom Nom">
+    <label for="r-iban">IBAN</label>
+    <input id="r-iban" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="FR76 …">
+    <label for="r-bic">BIC (facultatif)</label>
+    <input id="r-bic" maxlength="11" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    <p class="section-note" style="margin:10px 4px 0">Le RIB reste sur cet appareil : il n'est jamais envoyé sur GitHub. Laisse l'IBAN vide pour l'effacer.</p>
+    <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-pay">
+  <form method="dialog" id="form-pay">
+    <h3 id="p-title"></h3>
+    <p class="section-note" style="margin:0 4px" id="p-who"></p>
+    <label for="p-amount">Montant (€)</label>
+    <input id="p-amount" type="number" inputmode="decimal" step="0.01" min="0">
+    <label for="p-ref">Motif</label>
+    <input id="p-ref" maxlength="60" value="AlgoTrade">
+    <div class="qr-box" id="p-qr"></div>
+    <div class="push-box" style="margin-top:10px"><p id="p-iban" class="iban" style="margin:0 0 10px"></p>
+      <div class="row2"><button type="button" class="btn ghost" id="p-copy-iban">Copier IBAN</button><button type="button" class="btn ghost" id="p-copy-amt">Copier montant</button></div></div>
+    <p class="section-note" style="margin:10px 4px 0">Scanne le code avec ta banque (virement par QR code) ou copie l'IBAN. Tu valides le virement dans ta banque, puis tu confirmes ici.</p>
+    <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">J'ai envoyé le virement</button></div>
   </form>
 </dialog>
 
 <div class="edge top" id="edge-top"></div><div class="edge bot"></div>
 <div id="toast" role="status" aria-live="polite"></div>
 
+<script src="qrcode.js"></script>
 <script src="core.js"></script>
 <script src="charts.js"></script>
 <script>
@@ -592,15 +649,19 @@ function viewSfc() {
 const MV = {deposit: 'Versement vers la réserve', allocate: 'Réserve vers', withdraw: 'Retrait vers la réserve depuis', payout: 'Retrait vers ma banque', valuation: 'Valeur mise à jour'};
 function viewCapital() {
   const L = S.ledger, A = L.accounts, c = C.computeLedger(L), fe = F.eur;
-  const buttons = `<div class="btns"><button class="btn" id="add-move"><svg class="ico" viewBox="0 0 24 24"><path d="M4 8h14"/><path d="M14.5 4.5 18 8l-3.5 3.5"/><path d="M20 16H6"/><path d="M9.5 12.5 6 16l3.5 3.5"/></svg>Transaction</button><button class="plus" id="add-account" aria-label="Ajouter un compte" title="Ajouter un compte"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>`;
-  if (!L.movements.length) return buttons + `<div class="empty"><b>Aucun mouvement</b>Commence par enregistrer un versement vers la réserve : les graphiques apparaissent ensuite.</div>`;
+  const hero = `<div class="hero"><small>Capital total</small><b class="metal" id="f-total">${fe(c.total)}</b><div class="hero-sub"><span>Réserve AlgoTrade</span><b class="num">${fe(c.reserve)}</b></div></div>`;
+  const buttons = `<div class="btns"><button class="btn" id="add-move"><svg class="ico" viewBox="0 0 24 24"><path d="M4 8h14"/><path d="M14.5 4.5 18 8l-3.5 3.5"/><path d="M20 16H6"/><path d="M9.5 12.5 6 16l3.5 3.5"/></svg>Transaction</button><button class="btn ghost" id="fund"><svg class="ico" viewBox="0 0 24 24"><path d="M12 4v12"/><path d="M7 11.5l5 5 5-5"/><path d="M5 20h14"/></svg>Alimenter</button><button class="plus" id="add-account" aria-label="Ajouter un compte" title="Ajouter un compte"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>`;
+  if (!L.movements.length) return hero + buttons + `<div class="empty"><b>Aucun mouvement</b>Commence par alimenter la réserve (bouton Alimenter) ou enregistre un versement : les graphiques apparaissent ensuite.</div>`;
   const parts = [{name: 'Réserve', value: c.reserve, slot: 0}, ...A.map(n => ({name: n, value: c.acc[n].value, slot: G.slotOf(n, A)}))];
-  const rows = parts.map(p => {
+  const rowOf = p => {
     const share = c.total > 0 ? Math.max(0, p.value) / c.total * 100 : 0;
-    return `<div class="row ${p.name === 'Réserve' ? '' : 'tap'}" ${p.name === 'Réserve' ? '' : `data-acct="${esc(p.name)}"`}><div class="l has-logo">${G.logo(p.name, 30)}<span><b>${esc(p.name)}</b> <small style="display:inline;margin-left:6px" class="num">${F.pct(share, 0)}</small></span></div>
+    return `<div class="row tap" data-acct="${esc(p.name)}"><div class="l has-logo">${G.logo(p.name, 30)}<span><b>${esc(p.name)}</b> <small style="display:inline;margin-left:6px" class="num">${F.pct(share, 0)}</small></span></div>
       <div class="r"><b class="num">${fe(p.value)}</b></div></div>`;
-  }).join('');
+  };
+  const rows = parts.map(p => p.name === 'Réserve' ? rowOf(p) :
+    `<div class="swipe"><button class="swipe-act" data-delacct="${esc(p.name)}" aria-label="Supprimer ${esc(p.name)}"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg>Supprimer</button>${rowOf(p)}</div>`).join('');
   const snaps = C.snapshots(L, 12);
+  const curve = snaps.length >= 2 ? `<section class="card"><h3>Capital</h3><p class="sub">Évolution du capital total à chaque date de saisie.</p>${G.capitalLine(snaps, fe, F.dateShort, F.dateLong)}</section>` : '';
   const evo = snaps.length >= 2
     ? G.stackedColumns(snaps, A, fe, F.dateShort, F.dateLong) + G.legend(parts.map(p => ({name: p.name, slot: p.slot})))
     : `<p class="section-note">L'évolution apparaît dès la deuxième date de saisie.</p>`;
@@ -609,10 +670,10 @@ function viewCapital() {
   const hist = (view.histAll ? all : all.slice(0, 5)).map(m => `<div class="row">
       <div class="l">${esc(MV[m.type])}${m.account ? ' <span style="white-space:nowrap">' + G.logo(m.account, 18) + '<b>' + esc(m.account) + '</b></span>' : ''}<small>${esc(F.dateLong(m.date))}${m.note ? ' · ' + esc(m.note) : ''}</small></div>
       <div class="r"><b class="num">${fe(m.amount, 2)}</b><small><button class="del" data-del="${esc(m.id)}" aria-label="Supprimer ce mouvement">supprimer</button></small></div></div>`).join('');
-  return `${buttons}
-    <section class="card"><h3>Où est ton épargne</h3><p class="sub">Part de chaque poche dans le capital total.</p>
+  return `${hero}${buttons}${curve}
+    <section class="card"><h3>Où est ton épargne</h3><p class="sub">Touche une ligne pour le RIB et les virements. Glisse vers la droite pour supprimer un compte.</p>
       ${G.splitBar(parts, fe)}<div style="margin-top:14px">${rows}</div></section>
-    <section class="card"><h3>Évolution</h3><p class="sub">Composition du capital à chaque date de saisie.</p>${evo}</section>
+    <section class="card"><h3>Répartition dans le temps</h3><p class="sub">Composition du capital à chaque date de saisie.</p>${evo}</section>
     ${dumb ? `<section class="card"><h3>Versé et valeur actuelle</h3><p class="sub">Ce que tu as mis sur chaque compte et ce qu'il vaut aujourd'hui.</p>${dumb}${G.dumbKey()}</section>` : ''}
     <h2>Historique</h2><section class="card" style="margin-top:0">${hist}${all.length > 5 ? `<button class="more" id="hist-more">${view.histAll ? 'Réduire' : 'Tout afficher (' + all.length + ')'}</button>` : ''}</section>
     <p class="disclaimer">Les montants des comptes sont saisis à la main : aucun lien avec les courtiers.</p>`;
@@ -621,10 +682,6 @@ function viewCapital() {
 /* ---------- rendu ---------- */
 function render() {
   const c = C.computeLedger(S.ledger);
-  tween($('#f-total'), c.total, v => F.eur(v));
-  const el = $('#f-sfc'), sum = C.sfcSummary(S.sfc);
-  if (sum) { el.textContent = F.signed(sum.cum); el.className = 'num ' + (sum.cum > 0 ? 'up' : sum.cum < 0 ? 'down' : 'muted'); }
-  else { el.textContent = '–'; el.className = 'muted'; }
   const u = C.unseenCount(), b = $('#badge'); b.hidden = u === 0; b.textContent = u;
   document.querySelectorAll('.dock button').forEach(x => x.setAttribute('aria-selected', x.dataset.tab === view.tab));
   $('#dock').style.setProperty('--i', TABS.indexOf(view.tab));
@@ -632,6 +689,7 @@ function render() {
   const v = $('#view');
   v.classList.toggle('enter', view.animate && !reduceMotion());
   v.innerHTML = view.tab === 'alerts' ? viewAlerts() : view.tab === 'sfc' ? viewSfc() : viewCapital();
+  const ft = $('#f-total'); if (ft) { ft._v = view.lastTotal ?? 0; view.lastTotal = c.total; tween(ft, c.total, v => F.eur(v)); }
   view.animate = false;
   if (!S.loading) $('#ptr').classList.remove('spin');
 }
@@ -651,8 +709,16 @@ function toggleAlert(card) {
 document.addEventListener('click', e => {
   const card = e.target.closest('.alert[role=button]');
   if (card && !e.target.closest('a,.take')) return toggleAlert(card);
-  const row = e.target.closest('[data-acct]'); if (row && !e.target.closest('button')) return openAcct(row.dataset.acct);
+  const row = e.target.closest('[data-acct]');
+  if (row && !e.target.closest('button')) {
+    const sw = row.closest('.swipe');
+    if (sw && sw._moved) return;
+    if (sw && sw.classList.contains('open')) { sw.classList.remove('open'); sw.style.setProperty('--sx', '0px'); return; }
+    return openAcct(row.dataset.acct);
+  }
   const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.delacct) { haptic(); return report(C.deleteAccount(t.dataset.delacct)); }
+  if (t.id === 'fund') return openPay(RESERVE);
   if (t.dataset.take) return takeClick(t.dataset.take);
   if (t.dataset.close) return openClose(t.dataset.close);
   if (t.dataset.delpos) { haptic(); return report(C.deletePosition(t.dataset.delpos)); }
@@ -783,15 +849,100 @@ $('#form-close').addEventListener('submit', e => {
   if (e.submitter && e.submitter.value !== 'ok') return;
   try { report(C.closePosition(closeId, parseFloat($('#c-price').value))); } catch (err) { e.preventDefault(); toast(err.message); }
 });
+const RESERVE = 'Réserve';
 function openAcct(name) {
-  acctName = name; const c = C.computeLedger(S.ledger), a = c.acc[name]; if (!a) return;
-  $('#x-name').textContent = name; $('#x-info').textContent = 'Versé ' + F.eur(a.invested, 0) + ' · valeur ' + F.eur(a.value, 0);
+  acctName = name; const c = C.computeLedger(S.ledger), isRes = name === RESERVE, a = isRes ? null : c.acc[name]; if (!isRes && !a) return;
+  $('#x-logo').innerHTML = G.logo(name, 44);
+  $('#x-name').textContent = isRes ? 'Réserve AlgoTrade' : name;
+  $('#x-info').textContent = isRes ? 'Disponible ' + F.eur(c.reserve, 0) : 'Versé ' + F.eur(a.invested, 0) + ' · valeur ' + F.eur(a.value, 0);
+  const r = C.getRib(name);
+  $('#x-rib').innerHTML = r ? `${r.holder ? esc(r.holder) + '<br>' : ''}<span class="iban">${esc(C.fmtIban(r.iban))}</span>` : '<span class="muted">Aucun RIB enregistré.</span>';
+  $('#x-edit').textContent = r ? 'Modifier' : 'Renseigner'; $('#x-copy').hidden = !r;
+  $('#x-send').innerHTML = isRes ? 'Alimenter la réserve' : 'Envoyer de l\'argent vers ' + esc(name);
+  $('#x-del').hidden = isRes; $('#x-del-note').hidden = isRes;
   $('#dlg-acct').showModal();
 }
 $('#form-acct').addEventListener('submit', e => {
   if (!e.submitter || e.submitter.value !== 'del') return;
   try { report(C.deleteAccount(acctName)); } catch (err) { e.preventDefault(); toast(err.message); }
 });
+const copyText = async (t, ok) => { try { await navigator.clipboard.writeText(t); haptic(); toast(ok); } catch (e) { toast('Copie impossible : appuie longuement sur le texte'); } };
+$('#x-copy').addEventListener('click', () => { const r = C.getRib(acctName); if (r) copyText(r.iban, 'IBAN copié'); });
+$('#x-edit').addEventListener('click', () => openRib(acctName));
+$('#x-send').addEventListener('click', () => { $('#dlg-acct').close(); openPay(acctName); });
+
+/* ---------- RIB ---------- */
+let ribName = null, afterRib = null;
+function openRib(name, then) {
+  ribName = name; afterRib = then || null;
+  const r = C.getRib(name) || {}, other = Object.values(S.rib.accounts || {}).find(x => x.holder);
+  $('#r-title').textContent = 'RIB · ' + (name === RESERVE ? 'Réserve AlgoTrade' : name);
+  $('#r-holder').value = r.holder || (other && other.holder) || ''; $('#r-iban').value = r.iban ? C.fmtIban(r.iban) : ''; $('#r-bic').value = r.bic || '';
+  if ($('#dlg-acct').open) $('#dlg-acct').close();
+  $('#dlg-rib').showModal();
+}
+$('#form-rib').addEventListener('submit', e => {
+  if (e.submitter && e.submitter.value !== 'ok') return;
+  try {
+    C.setRib(ribName, {holder: $('#r-holder').value, iban: $('#r-iban').value, bic: $('#r-bic').value});
+    toast('RIB enregistré sur cet appareil'); haptic('success');
+    if (afterRib) { const f = afterRib; setTimeout(f, 250); }
+  } catch (err) { e.preventDefault(); toast(err.message); }
+});
+
+/* ---------- virement : QR SEPA, copie, puis confirmation ---------- */
+let payName = null;
+function qrSvg(text) {
+  const q = qrcode(0, 'M'); q.addData(text, 'Byte'); q.make();
+  const n = q.getModuleCount(); let d = '';
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c + 2} ${r + 2}h1v1h-1z`;
+  return `<svg viewBox="0 0 ${n + 4} ${n + 4}" shape-rendering="crispEdges" role="img" aria-label="QR code de virement"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+}
+function payRefresh() {
+  const r = C.getRib(payName), amt = parseFloat($('#p-amount').value);
+  try { $('#p-qr').innerHTML = qrSvg(C.epcPayload({holder: r.holder || 'AlgoTrade', iban: r.iban, bic: r.bic, amount: amt, ref: $('#p-ref').value})); } catch (e) { $('#p-qr').textContent = 'QR indisponible'; }
+}
+function openPay(name) {
+  if (!C.getRib(name)) { toast('Renseigne d\'abord le RIB'); return openRib(name, () => openPay(name)); }
+  payName = name; const r = C.getRib(name), isRes = name === RESERVE;
+  $('#p-title').textContent = isRes ? 'Alimenter la réserve' : 'Envoyer vers ' + name;
+  $('#p-who').textContent = (isRes ? 'Depuis ta banque vers la réserve AlgoTrade' : 'Depuis la réserve AlgoTrade vers ' + name) + (r.holder ? ' · ' + r.holder : '');
+  $('#p-iban').textContent = C.fmtIban(r.iban); $('#p-amount').value = ''; $('#p-ref').value = 'AlgoTrade';
+  payRefresh(); $('#dlg-pay').showModal();
+}
+$('#p-amount').addEventListener('input', payRefresh); $('#p-ref').addEventListener('input', payRefresh);
+$('#p-copy-iban').addEventListener('click', () => copyText(C.getRib(payName).iban, 'IBAN copié'));
+$('#p-copy-amt').addEventListener('click', () => { const a = parseFloat($('#p-amount').value); if (a > 0) copyText(a.toFixed(2).replace('.', ','), 'Montant copié'); else toast('Saisis un montant'); });
+$('#form-pay').addEventListener('submit', e => {
+  if (e.submitter && e.submitter.value !== 'ok') return;
+  const a = parseFloat($('#p-amount').value);
+  if (!(a > 0)) { e.preventDefault(); return toast('Saisis le montant du virement'); }
+  try { report(payName === RESERVE ? C.addMovement({type: 'deposit', amount: a, date: C.todayISO(), note: 'Virement'}) : C.addMovement({type: 'allocate', account: payName, amount: a, date: C.todayISO(), note: 'Virement'})); }
+  catch (err) { e.preventDefault(); toast(err.message); }
+});
+
+/* ---------- glisser pour supprimer ---------- */
+(function () {
+  const W = 96; let cur = null, x0 = 0, y0 = 0, dx = 0, lock = null, base = 0;
+  const close = o => { o.classList.remove('open'); o.style.setProperty('--sx', '0px'); };
+  document.addEventListener('pointerdown', e => {
+    const sw = e.target.closest('.swipe');
+    document.querySelectorAll('.swipe.open').forEach(o => { if (o !== sw) close(o); });
+    if (!sw || e.target.closest('.swipe-act')) return;
+    cur = sw; x0 = e.clientX; y0 = e.clientY; dx = 0; lock = null; base = sw.classList.contains('open') ? W : 0;
+  });
+  document.addEventListener('pointermove', e => {
+    if (!cur) return; const mx = e.clientX - x0, my = e.clientY - y0;
+    if (lock === null) { if (Math.abs(mx) > 8 && Math.abs(mx) > Math.abs(my) * 1.4) lock = 'x'; else if (Math.abs(my) > 8) lock = 'y'; }
+    if (lock !== 'x') return; dx = mx;
+    const v = Math.max(0, base + dx); cur.classList.add('drag'); cur.style.setProperty('--sx', (v > W ? W + (v - W) * .3 : v) + 'px');
+  });
+  const end = () => {
+    if (!cur) return; const sw = cur; cur = null; sw.classList.remove('drag');
+    if (lock === 'x') { const open = base + dx > W * .45; sw.classList.toggle('open', open); sw.style.setProperty('--sx', open ? W + 'px' : '0px'); if (open) haptic(); sw._moved = true; setTimeout(() => { sw._moved = false; }, 80); }
+  };
+  document.addEventListener('pointerup', end); document.addEventListener('pointercancel', end);
+})();
 
 /* ---------- notifications ---------- */
 const PUSH_MSG = {on: "Les notifications sont activées sur cet appareil.", off: "Reçois les nouvelles alertes sur l'écran de verrouillage.",
@@ -810,6 +961,16 @@ async function pushAction(a) {
   } catch (err) { toast(err.message); }
   refreshPush();
 }
+
+/* dock : devient une bulle compacte quand on défile vers le bas, se redéploie en remontant ou au repos */
+(function () {
+  const dock = document.querySelector('nav.dock'); let last = scrollY, idle;
+  addEventListener('scroll', () => {
+    const y = scrollY, d = y - last; last = y;
+    if (y < 24 || d < -6) dock.classList.remove('min'); else if (d > 6) dock.classList.add('min');
+    clearTimeout(idle); idle = setTimeout(() => dock.classList.remove('min'), 1500);
+  }, {passive: true});
+})();
 
 /* clavier : la feuille ouverte remonte au-dessus du clavier (iOS ne redimensionne pas la page) */
 (function () {

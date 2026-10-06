@@ -68,12 +68,47 @@
     return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="Évolution de la répartition du capital">${out}</svg>`;
   }
 
+  /* Courbe du capital total (réserve + comptes) à chaque date de saisie, espacée selon le temps réel. */
+  function capitalLine(snaps, fmtEur, dateShort, dateLong) {
+    if (snaps.length < 2) return '';
+    const W = 340, H = 190, L = 46, R = 14, T = 20, B = 26, iw = W - L - R, ih = H - T - B;
+    const vals = snaps.map(s => s.total), lo0 = Math.min(...vals), hi0 = Math.max(...vals);
+    const pad = (hi0 - lo0) * 0.18 || Math.max(1, hi0 * 0.05);
+    const step = niceStep((hi0 - lo0 + 2 * pad) / 3);
+    const lo = Math.floor((lo0 - pad) / step) * step, hi = Math.ceil((hi0 + pad) / step) * step;
+    const t = d => new Date(d).getTime(), t0 = t(snaps[0].date), t1 = t(snaps[snaps.length - 1].date) || t0 + 1;
+    const x = s => L + (t1 === t0 ? 0 : (t(s.date) - t0) / (t1 - t0)) * iw, y = v => T + ih - ((v - lo) / (hi - lo || 1)) * ih;
+    let out = `<defs><linearGradient id="capfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--glacier)" stop-opacity=".16"/><stop offset="1" stop-color="var(--glacier)" stop-opacity="0"/></linearGradient></defs>`;
+    for (let v = lo; v <= hi + 1e-9; v += step)
+      out += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" class="${v === lo ? 'axis' : 'grid'}"/><text x="${L - 6}" y="${y(v) + 4}" class="tick" text-anchor="end">${nfInt(v)}</text>`;
+    const P = snaps.map(s => [x(s), y(s.total)]);
+    let d = `M${P[0][0]},${P[0][1]}`;
+    for (let i = 0; i < P.length - 1; i++) {   // courbe de Catmull-Rom → Bézier, sans dépasser les valeurs voisines
+      const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || p2;
+      const c1y = Math.min(Math.max(p1[1] + (p2[1] - p0[1]) / 6, Math.min(p1[1], p2[1])), Math.max(p1[1], p2[1]));
+      const c2y = Math.min(Math.max(p2[1] - (p3[1] - p1[1]) / 6, Math.min(p1[1], p2[1])), Math.max(p1[1], p2[1]));
+      d += ` C${p1[0] + (p2[0] - p0[0]) / 6},${c1y} ${p2[0] - (p3[0] - p1[0]) / 6},${c2y} ${p2[0]},${p2[1]}`;
+    }
+    out += `<path d="${d} L${P[P.length - 1][0]},${T + ih} L${P[0][0]},${T + ih} Z" fill="url(#capfill)"/><path d="${d}" class="capline"/>`;
+    const n = snaps.length;
+    snaps.forEach((s, i) => {
+      const [cx, cy] = P[i], prev = snaps[i - 1], dlt = prev ? s.total - prev.total : null;
+      out += `<circle cx="${cx}" cy="${cy}" r="${i === n - 1 ? 4 : 2.4}" class="${i === n - 1 ? 'capdot last' : 'capdot'}"/>
+        <rect class="hit" x="${cx - Math.max(10, iw / n / 2)}" y="${T}" width="${Math.max(20, iw / n)}" height="${ih}" tabindex="0" aria-label="${esc(dateLong(s.date))} : ${esc(fmtEur(s.total))}"
+          data-tip="${tip(dateLong(s.date), [{n: 'Capital total', v: fmtEur(s.total)}].concat(dlt == null ? [] : [{n: 'Depuis la saisie précédente', v: (dlt > 0 ? '+' : dlt < 0 ? '−' : '') + fmtEur(Math.abs(dlt))}]))}"/>`;
+      if (n <= 6 || i % Math.ceil(n / 5) === 0 || i === n - 1) out += `<text x="${Math.min(Math.max(cx, L + 12), W - R - 12)}" y="${H - 8}" class="tick" text-anchor="middle">${esc(dateShort(s.date))}</text>`;
+    });
+    const last = P[n - 1];
+    out += `<text x="${Math.min(last[0], W - R - 30)}" y="${last[1] - 10}" class="value" text-anchor="middle">${esc(fmtEur(snaps[n - 1].total))}</text>`;
+    return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="Évolution du capital total">${out}</svg>`;
+  }
+
   /* Logos des banques (icône du site, repli sur une pastille à initiale) */
-  const DOMAINS = [['trade republic', 'traderepublic.com'], ['boursorama', 'boursorama.com'], ['boursobank', 'boursorama.com'], ['revolut', 'revolut.com'], ['xtb', 'xtb.com'], ['ig', 'ig.com'],
+  const DOMAINS = [['trade republic', 'traderepublic.com'], ['boursorama', 'boursobank.com'], ['boursobank', 'boursobank.com'], ['revolut', 'revolut.com'], ['xtb', 'xtb.com'], ['ig', 'ig.com'],
     ['degiro', 'degiro.com'], ['interactive brokers', 'interactivebrokers.com'], ['saxo', 'home.saxo'], ['etoro', 'etoro.com'], ['fortuneo', 'fortuneo.fr'], ['crédit agricole', 'credit-agricole.fr'],
-    ['bnp paribas', 'mabanque.bnpparibas'], ['société générale', 'societegenerale.fr'], ['lcl', 'lcl.fr'], ['n26', 'n26.com'], ['wise', 'wise.com'], ['binance', 'binance.com'],
-    ['coinbase', 'coinbase.com'], ['kraken', 'kraken.com'], ['bitpanda', 'bitpanda.com'], ['plus500', 'plus500.com'], ['hsbc', 'hsbc.com'], ['credit mutuel', 'creditmutuel.fr'], ['crédit mutuel', 'creditmutuel.fr']];
-  const BANKS = ['XTB', 'Revolut', 'IG', 'Boursorama', 'Trade Republic', 'Degiro', 'Interactive Brokers', 'Saxo', 'eToro', 'Fortuneo', 'Crédit Agricole', 'BNP Paribas', 'Société Générale', 'LCL', 'N26', 'Wise', 'Binance', 'Coinbase', 'Kraken', 'Bitpanda'];
+    ['bnp paribas', 'bnpparibas.fr'], ['société générale', 'sg.fr'], ['societe generale', 'sg.fr'], ['lcl', 'lcl.fr'], ['n26', 'n26.com'], ['wise', 'wise.com'], ['binance', 'binance.com'],
+    ['coinbase', 'coinbase.com'], ['bitpanda', 'bitpanda.com'], ['plus500', 'plus500.com'], ['hsbc', 'hsbc.fr']];
+  const BANKS = ['XTB', 'Revolut', 'IG', 'Boursorama', 'Trade Republic', 'Degiro', 'Interactive Brokers', 'Saxo', 'eToro', 'Fortuneo', 'Crédit Agricole', 'BNP Paribas', 'Société Générale', 'LCL', 'N26', 'Wise', 'Binance', 'Coinbase', 'Bitpanda', 'HSBC'];
   const domainOf = name => {
     const n = String(name).toLowerCase().trim();
     const hit = DOMAINS.find(([k]) => k.length <= 4 ? (n === k || n.startsWith(k + ' ')) : n.includes(k));
@@ -82,7 +117,7 @@
   const logoUrl = name => name === 'Réserve' ? 'icon-192.png' : (domainOf(name) ? 'https://www.google.com/s2/favicons?sz=128&domain=' + domainOf(name) : null);
   const logo = (name, px) => {
     const u = logoUrl(name), ini = esc(String(name).trim().charAt(0).toUpperCase());
-    return `<span class="logo" style="width:${px}px;height:${px}px"><b>${ini}</b>${u ? `<img src="${u}" alt="" width="${px}" height="${px}" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</span>`;
+    return `<span class="logo" style="width:${px}px;height:${px}px"><b>${ini}</b>${u ? `<img src="${u}" alt="" width="${px}" height="${px}" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()" onload="if(this.naturalWidth<24)this.remove()">` : ''}</span>`;
   };
   const logoSvg = (name, y, px) => {
     const u = logoUrl(name), ini = esc(String(name).trim().charAt(0).toUpperCase());
@@ -157,5 +192,5 @@
     document.addEventListener('scroll', hide, {passive: true});
   }
 
-  window.AlgoCharts = {logo, BANKS, splitBar, stackedColumns, dumbbell, legend, dumbKey, slotOf, attachTooltips};
+  window.AlgoCharts = {logo, BANKS, capitalLine, splitBar, stackedColumns, dumbbell, legend, dumbKey, slotOf, attachTooltips};
 })();
