@@ -32,7 +32,7 @@
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
 
   /* ---------- état ---------- */
-  const DEFAULTS = {repo: 'paulyvalent07/AlgoTrade', branch: 'main', dataBranch: 'app-data', token: ''};
+  const DEFAULTS = {repo: 'paulyvalent07/AlgoTrade', branch: 'main', dataBranch: 'app-data', token: '', finnhub: ''};
   const state = {
     settings: {...DEFAULTS, ...ls.get('at.settings', {})},
     ledger: ls.get('at.ledger', {version: 1, accounts: ['XTB', 'Revolut', 'IG', 'Boursorama', 'Trade Republic'], movements: []}),
@@ -41,6 +41,7 @@
     quotes: ls.get('at.quotes', {positions: {}}),
     sfcQuotes: ls.get('at.sfcquotes', {prices: {}}),
     live: ls.get('at.live', {prices: {}}),
+    stockQuotes: {},
     scans: [],
     alerts: null, alertsErr: null,   // alertsErr : null | 'token' | message
     sfc: null, sfcErr: null,
@@ -231,6 +232,22 @@
       if (!r.ok) return;
       const d = await r.json(); if (d && d.prices) { state.live = d; ls.set('at.live', d); emit(); }
     } catch (e) { /* hors ligne : on garde les derniers cours connus */ }
+    loadStocks();
+  }
+  /* Actions suivies : cours en direct via Finnhub (clé gratuite saisie dans les réglages, gardée sur cet appareil). Actions US uniquement. */
+  const stockSym = p => (p.source !== 'sfc' && p.category !== 'cfd' && /^[A-Z]{1,5}(\.[A-Z])?$/.test(p.ticker || '')) ? p.ticker : null;
+  async function loadStocks() {
+    const key = state.settings.finnhub; if (!key) return;
+    const syms = [...new Set(state.positions.positions.filter(p => p.status !== 'closed').map(stockSym).filter(Boolean))].slice(0, 12);
+    let any = false;
+    await Promise.all(syms.map(async sym => {
+      try {
+        const r = await fetch('https://finnhub.io/api/v1/quote?symbol=' + encodeURIComponent(sym) + '&token=' + encodeURIComponent(key), {cache: 'no-store'});
+        if (!r.ok) return; const d = await r.json();
+        if (d && d.c > 0) { state.stockQuotes[sym] = {last: d.c, ts: d.t ? new Date(d.t * 1000).toISOString() : null, fetched: new Date().toISOString()}; any = true; }
+      } catch (e) { /* hors ligne ou limite atteinte : on garde le dernier cours */ }
+    }));
+    if (any) emit();
   }
   async function loadAll() {
     state.loading = true; emit();
@@ -308,10 +325,19 @@
     if (sq && isFinite(sq.last)) { q.last = sq.last; q.last_ts = (state.sfcQuotes || {}).ts || sq.ts; }
     const lv = p.source === 'sfc' ? ((state.live || {}).prices || {})[p.sfc.symbol] : null;
     if (lv && isFinite(lv.last) && (!q.last_ts || (state.live.ts || '') >= q.last_ts)) { q.last = lv.last; q.last_ts = state.live.ts; }
+    const ss = stockSym(p), st = ss ? state.stockQuotes[ss] : null;
+    if (st && (!q.last_ts || st.fetched >= q.last_ts)) { q.last = st.last; q.last_ts = st.fetched; }
     const last = p.status === 'closed' ? p.exit?.price : (isFinite(q.last) ? q.last : null);
     const res = last != null ? pnlAt(p, last) : null;
     let hit = null;
-    if (p.status !== 'closed') hit = q.hit || null;
+    if (p.status !== 'closed') {
+      hit = q.hit || null;
+      if (!hit && last != null && (st || (p.source === 'sfc' && q.last_ts))) {   // niveaux touchés d'après le cours en direct
+        const long = p.direction !== 'short';
+        if (Number.isFinite(p.stop) && (long ? last <= p.stop : last >= p.stop)) hit = 'stop';
+        else if (Number.isFinite(p.target) && (long ? last >= p.target : last <= p.target)) hit = 'target';
+      }
+    }
     let bot = null;
     if (p.source === 'sfc' && p.status !== 'closed' && state.sfc) {
       const bp = (state.sfc.state.positions || {})[p.sfc.symbol];
@@ -446,7 +472,7 @@
   /* ---------- autres actions ---------- */
   function saveSettings(s) {
     state.settings = {repo: (s.repo || '').trim() || DEFAULTS.repo, branch: (s.branch || '').trim() || DEFAULTS.branch,
-      dataBranch: (s.dataBranch || '').trim() || DEFAULTS.dataBranch, token: (s.token || '').trim()};
+      dataBranch: (s.dataBranch || '').trim() || DEFAULTS.dataBranch, token: (s.token || '').trim(), finnhub: (s.finnhub || '').trim()};
     ls.set('at.settings', state.settings); state.ledgerSha = null; return loadAll();
   }
   const unseenCount = () => (state.alerts || []).filter(a => !state.seen.has(a.id) && !state.dismissed.has(a.id)).length;

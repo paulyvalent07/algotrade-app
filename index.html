@@ -399,12 +399,14 @@ nav.dock.min .dot{top:4px}
     <input id="s-data" autocomplete="off" autocapitalize="off" spellcheck="false">
     <label for="s-token">Jeton GitHub (lecture et écriture sur ce dépôt)</label>
     <input id="s-token" type="password" autocomplete="off" placeholder="github_pat_…">
+    <label for="s-finnhub">Clé Finnhub (cours en direct des actions, facultatif)</label>
+    <input id="s-finnhub" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="clé gratuite sur finnhub.io">
     <p class="section-note" style="margin:10px 4px 0">Le jeton reste sur cet appareil. Sans jeton, les alertes et SFC ne se chargent pas, et le capital reste local.</p>
     <div class="push-box"><b style="font-size:14px">Notifications</b>
       <p id="push-msg" style="margin-top:6px">Reçois les nouvelles alertes sur l'écran de verrouillage.</p>
       <div class="row2"><button type="button" class="btn" id="push-on">Activer</button><button type="button" class="btn ghost" id="push-test">Tester</button><button type="button" class="btn ghost" id="push-off">Désactiver</button></div>
     </div>
-    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 17 · l'app se met à jour toute seule</p>
+    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 18 · l'app se met à jour toute seule</p>
     <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
   </form>
 </dialog>
@@ -607,7 +609,7 @@ function viewTrack() {
   const engaged = open.reduce((s, p) => s + p.amount, 0), latent = views.reduce((s, p) => s + (p.res ? p.res.eur : 0), 0), real = done.reduce((s, p) => s + (p.exit ? p.exit.eur : 0), 0);
   const sum = `<section class="card sum-card"><div><small>Engagé</small><b class="num">${F.eur(engaged, 0)}</b></div><div><small>En cours</small><b class="num ${latent > 0 ? 'up' : latent < 0 ? 'down' : 'muted'}">${F.signed(latent)}</b></div><div><small>Réalisé</small><b class="num ${real > 0 ? 'up' : real < 0 ? 'down' : 'muted'}">${F.signed(real)}</b></div></section>`;
   return sum + open.map(posHtml).join('') + (done.length ? `<h2>Clôturées</h2>` + done.map(posHtml).join('') : '') +
-    `<p class="disclaimer">Cours rafraîchis toutes les ~5 min (jusqu'à 15 min de décalage possible). Résultat estimé sur le montant alloué, levier inclus.</p>`;
+    `<p class="disclaimer">Cours SFC rafraîchis toutes les ~5 min ; actions US en direct avec une clé Finnhub (réglages). Résultat estimé sur le montant alloué, levier inclus.</p>`;
 }
 
 /* ---------- SFC ---------- */
@@ -754,12 +756,12 @@ function refreshNow() { $('#ptr').classList.add('spin'); return C.loadAll(); }
 })();
 
 function openSettings() {
-  $('#s-repo').value = S.settings.repo; $('#s-branch').value = S.settings.branch; $('#s-data').value = S.settings.dataBranch; $('#s-token').value = S.settings.token;
+  $('#s-repo').value = S.settings.repo; $('#s-branch').value = S.settings.branch; $('#s-data').value = S.settings.dataBranch; $('#s-token').value = S.settings.token; $('#s-finnhub').value = S.settings.finnhub || '';
   refreshPush(); $('#dlg-settings').showModal();
 }
 $('#form-settings').addEventListener('submit', e => {
   if (e.submitter && e.submitter.value !== 'ok') return;
-  C.saveSettings({repo: $('#s-repo').value, branch: $('#s-branch').value, dataBranch: $('#s-data').value, token: $('#s-token').value});
+  C.saveSettings({repo: $('#s-repo').value, branch: $('#s-branch').value, dataBranch: $('#s-data').value, token: $('#s-token').value, finnhub: $('#s-finnhub').value});
 });
 
 $('#form-account').addEventListener('submit', e => {
