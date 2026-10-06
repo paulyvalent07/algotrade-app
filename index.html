@@ -404,7 +404,7 @@ nav.dock.min .dot{top:4px}
       <p id="push-msg" style="margin-top:6px">Reçois les nouvelles alertes sur l'écran de verrouillage.</p>
       <div class="row2"><button type="button" class="btn" id="push-on">Activer</button><button type="button" class="btn ghost" id="push-test">Tester</button><button type="button" class="btn ghost" id="push-off">Désactiver</button></div>
     </div>
-    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 12 · l'app se met à jour toute seule</p>
+    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 13 · l'app se met à jour toute seule</p>
     <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
   </form>
 </dialog>
@@ -837,19 +837,21 @@ $('#form-edit').addEventListener('submit', e => {
 
 /* ---------- glisser pour supprimer ---------- */
 (function () {
-  const W = 96; let cur = null, x0 = 0, y0 = 0, dx = 0, lock = null, base = 0;
+  const W = 96, FULL = .35; let cur = null, x0 = 0, y0 = 0, dx = 0, lock = null, base = 0, hist = [];
   const close = o => { o.classList.remove('open'); o.style.setProperty('--sx', '0px'); };
   document.addEventListener('pointerdown', e => {
     const sw = e.target.closest('.swipe');
     document.querySelectorAll('.swipe.open').forEach(o => { if (o !== sw) close(o); });
     if (!sw || e.target.closest('.swipe-act')) return;
-    cur = sw; x0 = e.clientX; y0 = e.clientY; dx = 0; lock = null; base = sw.classList.contains('open') ? W : 0;
+    cur = sw; x0 = e.clientX; y0 = e.clientY; dx = 0; lock = null; hist = []; base = sw.classList.contains('open') ? W : 0;
   });
   document.addEventListener('pointermove', e => {
     if (!cur) return; const mx = e.clientX - x0, my = e.clientY - y0;
     if (lock === null) { if (Math.abs(mx) > 8 && Math.abs(mx) > Math.abs(my) * 1.4) lock = 'x'; else if (Math.abs(my) > 8) lock = 'y'; }
     if (lock !== 'x') return; dx = mx;
-    const v = Math.max(0, base + dx), full = v > cur.offsetWidth * .55;
+    if (!cur._cap) { cur._cap = true; try { cur.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ } }
+    hist.push([performance.now(), mx]); if (hist.length > 12) hist.shift();
+    const v = Math.max(0, base + dx), full = v > cur.offsetWidth * FULL;
     cur.classList.add('drag'); cur.style.setProperty('--sx', v + 'px');
     if (full !== cur.classList.contains('full')) { cur.classList.toggle('full', full); haptic(); }
   });
@@ -857,8 +859,9 @@ $('#form-edit').addEventListener('submit', e => {
     if (!cur) return; const sw = cur; cur = null; sw.classList.remove('drag');
     if (lock !== 'x') return;
     const v = Math.max(0, base + dx), act = sw.querySelector('.swipe-act');
-    sw.classList.remove('full');
-    if (act && v > sw.offsetWidth * .55) {            // glissement long : suppression directe, comme dans Mail
+    sw.classList.remove('full'); sw._cap = false;
+    const now = performance.now(), ref = hist.find(h => now - h[0] < 220), vel = ref ? (dx - ref[1]) / Math.max(30, now - ref[0]) : 0;
+    if (act && (v > sw.offsetWidth * FULL || (vel > .5 && v > 90))) {            // glissement long : suppression directe, comme dans Mail
       sw.style.setProperty('--sx', sw.offsetWidth + 'px'); act.click();
     } else {
       const open = v > W * .45; sw.classList.toggle('open', open); sw.style.setProperty('--sx', open ? W + 'px' : '0px'); if (open) haptic();
