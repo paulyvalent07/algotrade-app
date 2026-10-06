@@ -39,6 +39,7 @@
     ledgerSha: null,
     positions: ls.get('at.positions', {version: 1, positions: []}), positionsSha: null,
     quotes: ls.get('at.quotes', {positions: {}}),
+    scans: [],
     alerts: null, alertsErr: null,   // alertsErr : null | 'token' | message
     sfc: null, sfcErr: null,
     seen: new Set(ls.get('at.seen', [])),
@@ -158,6 +159,10 @@
       else { state.alerts = null; state.alertsErr = needToken(e) ? 'token' : e.message; }
     }
   }
+  async function loadScans() {
+    try { const j = JSON.parse(await ghRaw('data/scans.json', state.settings.dataBranch)); state.scans = (j.scans || []).slice().sort((a, b) => String(b.ts).localeCompare(String(a.ts))); }
+    catch (e) { state.scans = []; }
+  }
   async function loadSfc() {
     try {
       const [st, hb, log] = await Promise.all([ghRaw('state.json'), ghRaw('heartbeat.json'), ghRaw('bot_log.csv')]);
@@ -189,7 +194,7 @@
   }
   async function loadAll() {
     state.loading = true; emit();
-    await Promise.allSettled([loadAlerts(), loadSfc(), loadLedgerRemote(), loadPositionsRemote()]);
+    await Promise.allSettled([loadAlerts(), loadScans(), loadSfc(), loadLedgerRemote(), loadPositionsRemote()]);
     state.loading = false; emit();
   }
 

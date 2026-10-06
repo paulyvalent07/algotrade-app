@@ -293,6 +293,16 @@ nav.dock.min .dot{top:4px}
 .qr-box svg{width:100%;height:100%;display:block}
 .iban{font-variant-numeric:tabular-nums;letter-spacing:.02em;color:var(--ink);word-break:break-word}
 
+
+/* journal des scans */
+.scan{margin-top:12px;padding:16px 18px;border:1px solid var(--line);border-radius:var(--r-card);background:var(--glass);cursor:pointer}
+.scan-sum{margin:8px 0 0;font-size:14px;color:var(--text-2)}
+.scan .a-more{display:grid;grid-template-rows:0fr;transition:grid-template-rows .4s} .scan.open .a-more{grid-template-rows:1fr} .scan .a-more>div{overflow:hidden}
+.scan-list{display:grid;gap:10px;padding-top:14px;margin-top:12px;border-top:1px solid var(--line)}
+.scan-row{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;font-size:13.5px}
+.scan-row small{grid-column:1/-1;color:var(--muted);font-size:12.5px}
+.vd{font-size:11.5px;font-weight:600;color:var(--muted)} .vd.win{color:var(--up)} .vd.watch{color:var(--text-2)}
+
 /* suivi des positions */
 .a-right{display:flex;align-items:center;gap:8px}
 .take{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid rgba(255,255,255,.28);background:rgba(255,255,255,.04);color:transparent;transition:background .25s,border-color .25s,color .25s,transform .2s}
@@ -489,7 +499,7 @@ function viewAlerts() {
   const list = S.alerts.filter(a => view.filter === 'all' || a.category === view.filter);
   const body = list.length ? list.map(alertHtml).join('') :
     `<div class="empty"><b>Aucune alerte pour l'instant</b>Les scans publient ici dès qu'un candidat passe leur filtre. Un jour sans alerte est normal.</div>`;
-  return `<div class="chips">${chips}</div>${body}<p class="disclaimer">Aide à la décision, pas un conseil financier. Les CFD à levier peuvent faire perdre plus que la mise.</p>`;
+  return `<div class="chips">${chips}</div>${scansHtml()}${body}<p class="disclaimer">Aide à la décision, pas un conseil financier. Les CFD à levier peuvent faire perdre plus que la mise.</p>`;
 }
 function alertHtml(a) {
   const fresh = !S.seen.has(a.id), open = view.open.has(a.id);
@@ -513,6 +523,20 @@ function alertHtml(a) {
   </article>`;
 }
 
+
+
+/* ---------- journal des scans : preuve que les scans tournent, même sans alerte ---------- */
+const VERD = {signal: 'Signal', 'à surveiller': 'À surveiller', 'écarté': 'Écarté', 'marché fermé': 'Marché fermé'};
+function scansHtml() {
+  const list = (S.scans || []).filter(x => view.filter === 'all' || x.category === view.filter);
+  if (!list.length) return `<p class="section-note" style="margin:14px 6px 0">Aucun scan enregistré pour l'instant. Chaque scan laissera ici sa trace, même sans alerte.</p>`;
+  const x = list[0], open = view.open.has('scan:' + x.id), n = (x.assets || []).length;
+  const rows = (x.assets || []).map(a => `<div class="scan-row"><b>${esc(a.name)}</b><span class="vd ${a.verdict === 'signal' ? 'win' : a.verdict === 'à surveiller' ? 'watch' : ''}">${esc(VERD[a.verdict] || a.verdict)}</span><small>${esc(a.reason || '')}</small></div>`).join('');
+  return `<article class="scan ${open ? 'open' : ''}" data-scan="${esc(x.id)}" role="button" tabindex="0" aria-expanded="${open}">
+    <div class="a-top"><span class="a-cat">Dernier scan · ${esc(CAT[x.category] || x.category)} <span style="font-weight:400;letter-spacing:0;text-transform:none">· ${esc(F.ago(x.ts))}</span></span>${x.status === 'degraded' ? '<span class="badge loss">Limité</span>' : '<span class="badge">' + (x.alerts || 0) + ' alerte' + ((x.alerts || 0) > 1 ? 's' : '') + '</span>'}</div>
+    <p class="scan-sum">${esc(x.summary || '')}${n ? ` <span class="muted">· ${n} actifs examinés</span>` : ''}</p>
+    ${n ? `<div class="a-more"><div><div class="a-body scan-list">${rows}</div></div></div>` : ''}</article>`;
+}
 
 /* ---------- suivi ---------- */
 const fp = n => new Intl.NumberFormat('fr-FR', {maximumFractionDigits: 4}).format(n);
@@ -640,6 +664,8 @@ function toggleAlert(card) {
   open ? view.open.add(id) : view.open.delete(id); haptic();
 }
 document.addEventListener('click', e => {
+  const sc = e.target.closest('.scan');
+  if (sc) { const id = 'scan:' + sc.dataset.scan, o = !sc.classList.contains('open'); sc.classList.toggle('open', o); sc.setAttribute('aria-expanded', o); o ? view.open.add(id) : view.open.delete(id); haptic(); return; }
   const card = e.target.closest('.alert[role=button]');
   if (card && !e.target.closest('a,.take')) return toggleAlert(card);
   const sw0 = e.target.closest('.swipe');
