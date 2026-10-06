@@ -39,6 +39,7 @@
     ledgerSha: null,
     positions: ls.get('at.positions', {version: 1, positions: []}), positionsSha: null,
     quotes: ls.get('at.quotes', {positions: {}}),
+    sfcQuotes: ls.get('at.sfcquotes', {prices: {}}),
     scans: [],
     alerts: null, alertsErr: null,   // alertsErr : null | 'token' | message
     sfc: null, sfcErr: null,
@@ -97,7 +98,7 @@
       if (r.event === 'ENTRY') realNow[r.symbol] = !!r.deal_id;
       const real = r.event === 'ENTRY' ? !!r.deal_id : (r.pnl_source === 'ig' || !!realNow[r.symbol]);
       const n = v => (v === '' || v == null || isNaN(+v)) ? '' : String(Math.round(+v * 10000) / 10000);
-      out.push({id: 'sfc:' + r.symbol + ':' + r.ts, kind: 'sfc', category: 'cfd', ts: r.ts, exit: r.event === 'EXIT', real, xtb,
+      out.push({id: 'sfc:' + r.symbol + ':' + r.ts, kind: 'sfc', category: 'cfd', ts: r.ts, exit: r.event === 'EXIT', real, xtb, symbol: r.symbol, ticker: r.symbol, leverage: 'x3',
         title: (r.event === 'ENTRY' ? '' : 'Clôture · ') + name,
         direction: r.event === 'ENTRY' ? (r.side === 'short' ? 'short' : 'long') : null,
         entry: r.event === 'ENTRY' ? n(r.entry) : '', stop: r.event === 'ENTRY' ? n(r.sl) : '', target: r.event === 'ENTRY' ? n(r.tp) : '',
@@ -214,11 +215,16 @@
       const q = await ghJsonWithSha('data/quotes.json');
       if (q) { state.quotes = q.data; ls.set('at.quotes', state.quotes); }
     } catch (e) { /* pas encore de cours */ }
+    try {
+      const q = await ghJsonWithSha('data/sfc_quotes.json');
+      if (q) { state.sfcQuotes = q.data; ls.set('at.sfcquotes', state.sfcQuotes); }
+    } catch (e) { /* pas encore de cours SFC */ }
   }
   async function loadAll() {
     state.loading = true; emit();
     await Promise.allSettled([loadAlerts(), loadScans(), loadSfc(), loadLedgerRemote(), loadPositionsRemote()]);
     state.loading = false; emit();
+    syncSfcPositions().catch(() => {});
   }
 
   /* ---------- actions sur le registre ---------- */
@@ -285,12 +291,35 @@
   }
   /* Position enrichie du dernier cours connu (écrit par le suivi planifié). */
   function positionView(p) {
-    const q = (state.quotes.positions || {})[p.id] || {};
+    const q = {...((state.quotes.positions || {})[p.id] || {})};
+    const sq = p.source === 'sfc' ? ((state.sfcQuotes || {}).prices || {})[p.sfc.symbol] : null;
+    if (sq && isFinite(sq.last)) { q.last = sq.last; q.last_ts = (state.sfcQuotes || {}).ts || sq.ts; }
     const last = p.status === 'closed' ? p.exit?.price : (isFinite(q.last) ? q.last : null);
     const res = last != null ? pnlAt(p, last) : null;
     let hit = null;
     if (p.status !== 'closed') hit = q.hit || null;
-    return {...p, last, last_ts: q.last_ts || null, hit, res};
+    let bot = null;
+    if (p.source === 'sfc' && p.status !== 'closed' && state.sfc) {
+      const bp = (state.sfc.state.positions || {})[p.sfc.symbol];
+      if (bp) bot = {trail: +bp.trail, tp: +bp.tp, sl: +bp.sl, lastBar: bp.last_bar_ts, cycle: state.sfc.heartbeat && state.sfc.heartbeat.ts};
+    }
+    return {...p, last, last_ts: q.last_ts || null, hit, res, bot};
+  }
+  /* Positions SFC suivies : quand le bot clôture l'ordre (scan horaire), la position se clôture ici avec le prix de sortie du bot. */
+  let syncing = false;
+  async function syncSfcPositions() {
+    if (syncing || !state.sfc) return; syncing = true;
+    try {
+      let changed = false;
+      for (const p of state.positions.positions) {
+        if (p.source !== 'sfc' || p.status === 'closed') continue;
+        const ex = state.sfc.log.filter(r => r.event === 'EXIT' && r.symbol === p.sfc.symbol && r.ts > p.sfc.ts && isFinite(parseFloat(r.exit))).sort((a, b) => a.ts.localeCompare(b.ts))[0];
+        if (!ex) continue;
+        const price = parseFloat(ex.exit), r = pnlAt(p, price);
+        Object.assign(p, {status: 'closed', pending: true, exit: {price, ts: ex.ts, pct: r.pct, eur: r.eur, reason: ex.reason || '', by: 'bot'}}); changed = true;
+      }
+      if (changed) await savePositions('suivi: clôture par le bot SFC');
+    } finally { syncing = false; }
   }
   function mergePositions(local, remote) {
     const byId = new Map(remote.positions.map(p => [p.id, p]));
@@ -319,7 +348,8 @@
     if (takenIds().has(alert.id)) throw new Error('Déjà suivie');
     state.positions.positions.push({id: uid(), alertId: alert.id, ticker: alert.ticker || '', title: alert.title || alert.ticker, category: alert.category,
       direction: alert.direction || 'long', leverage: alert.leverage || null, amount: Math.round(amount * 100) / 100, entry,
-      stop: isFinite(stop) ? stop : null, target: isFinite(target) ? target : null, status: 'open', openedAt: new Date().toISOString(), pending: true});
+      stop: isFinite(stop) ? stop : null, target: isFinite(target) ? target : null, status: 'open', openedAt: new Date().toISOString(), pending: true,
+      ...(alert.kind === 'sfc' ? {source: 'sfc', sfc: {symbol: alert.symbol, ts: alert.ts}, ticker: alert.symbol} : {})});
     return savePositions('suivi: ouverture ' + (alert.ticker || alert.title));
   }
   function updatePosition(id, patch, message) {

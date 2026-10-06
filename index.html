@@ -404,7 +404,7 @@ nav.dock.min .dot{top:4px}
       <p id="push-msg" style="margin-top:6px">Reçois les nouvelles alertes sur l'écran de verrouillage.</p>
       <div class="row2"><button type="button" class="btn" id="push-on">Activer</button><button type="button" class="btn ghost" id="push-test">Tester</button><button type="button" class="btn ghost" id="push-off">Désactiver</button></div>
     </div>
-    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 13 · l'app se met à jour toute seule</p>
+    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 15 · l'app se met à jour toute seule</p>
     <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
   </form>
 </dialog>
@@ -433,7 +433,7 @@ nav.dock.min .dot{top:4px}
     <input id="t-stop" type="number" inputmode="decimal" step="any" min="0">
     <label for="t-target">Objectif (facultatif)</label>
     <input id="t-target" type="number" inputmode="decimal" step="any" min="0">
-    <p class="section-note" style="margin:10px 4px 0">L'ordre est considéré comme exécuté à ce prix. Corrige les niveaux si ton ordre réel est différent.</p>
+    <p class="section-note" id="t-note" style="margin:10px 4px 0">L'ordre est considéré comme exécuté à ce prix. Corrige les niveaux si ton ordre réel est différent.</p>
     <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Suivre</button></div>
   </form>
 </dialog>
@@ -516,15 +516,15 @@ function swipeWrap(id, html) {
   return `<div class="swipe aw"><button class="swipe-act" data-dismiss="${esc(id)}" aria-label="Supprimer"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg>Supprimer</button>${html}</div>`;
 }
 function orderHtml(a) {
-  const open = view.open.has(a.id), pl = a.pnl;
-  const where = a.real ? 'Ordre IG démo' : 'Ordre simulé';
+  const open = view.open.has(a.id), pl = a.pnl, taken = C.takenIds().has(a.id);
+  const where = a.real ? 'IG démo' : 'Simulé';
   const tag = a.exit ? `<span class="tag ${pl != null && pl < 0 ? 'sell' : 'buy'}">${pl != null ? (pl >= 0 ? '+' : '−') + Math.abs(pl).toFixed(2).replace('.', ',') + ' €' : 'Clôture'}</span>`
     : a.direction === 'short' ? '<span class="tag sell">Vente</span>' : '<span class="tag buy">Achat</span>';
   const lv = a.exit ? [['Sortie', a.exitPrice]] : [['Entrée', a.entry], ['Stop', a.stop], ['Objectif', a.target]];
   const lvh = lv.filter(([, v]) => v).map(([k, v]) => `<span>${k}<b class="num">${esc(v)}</b></span>`).join('');
   const note = a.real ? "Cet ordre existe sur ton compte démo IG." : "Ordre virtuel : le bot le suit en simulation, rien n'est placé chez IG.";
   return `<article class="alert ${open ? 'open' : ''}" data-alert="${esc(a.id)}" role="button" tabindex="0" aria-expanded="${open}">
-    <div class="a-top"><span class="a-cat">SFC · ${where}<span style="font-weight:400;letter-spacing:0;text-transform:none">· ${esc(F.ago(a.ts))}</span></span><span class="a-right">${tag}</span></div>
+    <div class="a-top"><span class="a-cat">SFC · ${where}<span style="font-weight:400;letter-spacing:0;text-transform:none">· ${esc(F.ago(a.ts))}</span></span><span class="a-right">${tag}${a.exit ? '' : `<button class="take ${taken ? 'on' : ''}" data-take="${esc(a.id)}" aria-label="${taken ? 'Position suivie' : 'Suivre cette position'}"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>`}</span></div>
     <div class="a-title">${esc(a.title)}</div>
     ${lvh ? `<div class="lv">${lvh}</div>` : ''}
     <div class="a-more"><div><div class="a-body">
@@ -590,12 +590,13 @@ function posHtml(raw) {
   const cls = eur == null ? 'muted' : eur > 0 ? 'up' : eur < 0 ? 'down' : 'muted';
   const badge = closed ? '<span class="badge">Clôturée</span>' : p.hit === 'target' ? '<span class="badge win">Objectif atteint</span>' : p.hit === 'stop' ? '<span class="badge loss">Stop touché</span>' : '<span class="badge">En cours</span>';
   const tag = p.direction === 'short' ? '<span class="tag sell">Vente</span>' : '<span class="tag buy">Achat</span>';
-  return `<article class="card pos"><div class="a-top"><span class="a-cat">${esc(CAT[p.category] || p.category)}</span><span class="a-right">${tag}${badge}</span></div>
+  return `<article class="card pos"><div class="a-top"><span class="a-cat">${p.source === 'sfc' ? 'SFC · ' : ''}${esc(CAT[p.category] || p.category)}</span><span class="a-right">${tag}${badge}</span></div>
     <div class="a-title" style="margin-top:8px">${esc(p.title)}</div>
     <div class="p-pnl ${cls}">${eur == null ? '–' : F.signed(eur)}${pct != null ? `<small>${pct > 0 ? '+' : pct < 0 ? '−' : ''}${F.pct(Math.abs(pct), 1)}</small>` : ''}</div>
     <div class="p-row"><span>Engagé <b class="num">${F.eur(p.amount, 0)}</b>${p.leverage ? ' · levier ' + esc(p.leverage) : ''}</span><span>Entrée <b class="num">${fp(p.entry)}</b></span></div>
     <div class="p-row"><span>${closed ? 'Sortie' : 'Dernier cours'} <b class="num">${(closed ? p.exit.price : p.last) != null ? fp(closed ? p.exit.price : p.last) : '–'}</b></span><span class="muted">${closed ? esc(F.dateLong(p.exit.ts)) : p.last_ts ? esc(F.dateTime(p.last_ts)) : 'en attente de cours'}</span></div>
     ${closed ? '' : gaugeHtml(p)}
+    ${p.source === 'sfc' ? `<div class="p-row"><span class="muted">${closed ? (p.exit.by === 'bot' ? 'Clôturée par le bot' + (p.exit.reason ? ' · ' + esc(p.exit.reason) : '') : 'Clôturée à la main') : p.bot ? 'Bot : stop suiveur <b class="num">' + fp(p.bot.trail) + '</b>' : 'Bot : ordre non retrouvé'}</span><span class="muted">${!closed && p.bot && p.bot.cycle ? 'scan ' + esc(F.ago(p.bot.cycle)) : ''}</span></div>` : ''}
     <div class="p-actions">${closed ? '' : `<button class="btn ghost" data-close="${esc(p.id)}">Clôturer</button>`}<button class="linkbtn" data-delpos="${esc(p.id)}">Supprimer</button></div></article>`;
 }
 function viewTrack() {
@@ -793,20 +794,21 @@ document.addEventListener('click', e => {
 /* ---------- suivi : feuilles ---------- */
 let takeAlert = null, closeId = null, acctName = null;
 function takeClick(id) {
-  const a = (S.alerts || []).find(x => x.id === id); if (!a) return;
+  const a = (S.alerts || []).concat(C.sfcOrders()).find(x => x.id === id); if (!a) return;
   if (C.takenIds().has(id)) { haptic(); view.filter = 'track'; view.animate = true; return render(); }
   takeAlert = a; haptic();
   $('#t-title').textContent = a.title + (a.direction ? ' · ' + (a.direction === 'short' ? 'vente' : 'achat') : '');
   const v = x => x == null ? '' : x;
   $('#t-amount').value = ''; $('#t-entry').value = v(C.parseLevel(a.entry, 'entry')); $('#t-stop').value = v(C.parseLevel(a.stop, 'stop')); $('#t-target').value = v(C.parseLevel(a.target, 'target'));
+  $('#t-note').textContent = a.kind === 'sfc' ? "Niveaux du bot (futures Yahoo) : remplace-les par ton prix d'exécution réel sur XTB. La position se clôturera ici au prochain scan où le bot sortira de l'ordre." : "L'ordre est considéré comme exécuté à ce prix. Corrige les niveaux si ton ordre réel est différent.";
   $('#dlg-take').showModal();
 }
 $('#form-take').addEventListener('submit', e => {
   if (e.submitter && e.submitter.value !== 'ok') return;
   try {
     const n = id => { const x = parseFloat($(id).value); return isFinite(x) ? x : null; };
-    report(C.takePosition(takeAlert, {amount: n('#t-amount'), entry: n('#t-entry'), stop: n('#t-stop'), target: n('#t-target')}));
-    view.filter = 'track'; view.animate = true;
+    const res = C.takePosition(takeAlert, {amount: n('#t-amount'), entry: n('#t-entry'), stop: n('#t-stop'), target: n('#t-target')});
+    view.filter = 'track'; view.animate = true; render(); report(res);
   } catch (err) { e.preventDefault(); toast(err.message); }
 });
 function openClose(id) {
