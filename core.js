@@ -43,6 +43,7 @@
     alerts: null, alertsErr: null,   // alertsErr : null | 'token' | message
     sfc: null, sfcErr: null,
     seen: new Set(ls.get('at.seen', [])),
+    dismissed: new Set(ls.get('at.dismissed', [])),
     loading: false
   };
   const listeners = new Set();
@@ -404,12 +405,13 @@
       dataBranch: (s.dataBranch || '').trim() || DEFAULTS.dataBranch, token: (s.token || '').trim()};
     ls.set('at.settings', state.settings); state.ledgerSha = null; return loadAll();
   }
-  const unseenCount = () => (state.alerts || []).filter(a => !state.seen.has(a.id)).length;
+  const unseenCount = () => (state.alerts || []).filter(a => !state.seen.has(a.id) && !state.dismissed.has(a.id)).length;
+  function dismissAlert(id) { state.dismissed.add(id); ls.set('at.dismissed', [...state.dismissed].slice(-500)); emit(); }
   function markAlertsSeen() {
     (state.alerts || []).forEach(a => state.seen.add(a.id)); ls.set('at.seen', [...state.seen]); emit();
   }
 
-  window.AlgoCore = {sfcOrders, state, on, fmt, todayISO, computeLedger, snapshots, sfcSummary, loadAll, saveSettings,
+  window.AlgoCore = {dismissAlert, sfcOrders, state, on, fmt, todayISO, computeLedger, snapshots, sfcSummary, loadAll, saveSettings,
     addMovement, deleteMovement, addAccount, deleteAccount, unseenCount, markAlertsSeen,
     parseLevel, pnlAt, positionView, takePosition, updatePosition, closePosition, deletePosition, takenIds,
     setAmount, pushStatus, enablePush, disablePush, testNotification};

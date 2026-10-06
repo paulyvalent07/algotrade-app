@@ -121,6 +121,14 @@ h2{font-size:13px;font-weight:600;margin:30px 4px 10px;letter-spacing:.09em;text
 .alert{display:block;width:100%;text-align:left;background:var(--glass);border:1px solid var(--line);border-radius:var(--r-card);padding:20px;margin-top:14px;color:inherit;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.05);transition:transform .25s,background .25s}
 .alert:active{transform:scale(.985)}
+.aw{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;margin-top:14px;border-radius:var(--r-card);transition:opacity .25s,max-height .3s .05s,margin .3s .05s;max-height:900px}
+.aw.gone{opacity:0;max-height:0;margin-top:0}
+.aw>.alert{margin-top:0;transform:translateX(var(--sx));transition:transform .35s cubic-bezier(.2,.9,.3,1.1),background .25s}
+.aw>.alert:active{transform:translateX(var(--sx))}
+.aw.drag>.alert{transition:none}
+.aw>.swipe-act{top:0;bottom:0;border-radius:var(--r-card) !important}
+#view.enter .aw{animation:rise .55s cubic-bezier(.2,.7,.2,1) both}
+#view.enter .aw>.alert{animation:none}
 .a-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .a-cat{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
 .fresh-dot{width:7px;height:7px;border-radius:50%;background:var(--glacier);box-shadow:0 0 10px var(--glacier)}
@@ -496,10 +504,13 @@ function viewAlerts() {
   const chips = [['all', 'Tout'], ['cfd', 'CFD'], ['short_term', 'Court terme'], ['long_term', 'Long terme'], ['track', 'Suivi' + (S.positions.positions.some(p => p.status === 'open') ? ' · ' + S.positions.positions.filter(p => p.status === 'open').length : '')]]
     .map(([k, l]) => `<button class="chip" data-filter="${k}" aria-pressed="${view.filter === k}">${l}</button>`).join('');
   if (view.filter === 'track') return `<div class="chips">${chips}</div>${viewTrack()}`;
-  const list = S.alerts.concat(C.sfcOrders()).filter(a => view.filter === 'all' || a.category === view.filter).sort((a, b) => String(b.ts).localeCompare(String(a.ts)));
-  const body = list.length ? list.map(alertHtml).join('') :
+  const list = S.alerts.concat(C.sfcOrders()).filter(a => !S.dismissed.has(a.id) && (view.filter === 'all' || a.category === view.filter)).sort((a, b) => String(b.ts).localeCompare(String(a.ts)));
+  const body = list.length ? list.map(a => swipeWrap(a.id, alertHtml(a))).join('') :
     `<div class="empty"><b>Aucune alerte pour l'instant</b>Les scans publient ici dès qu'un candidat passe leur filtre. Un jour sans alerte est normal.</div>`;
   return `<div class="chips">${chips}</div>${scansHtml()}${body}<p class="disclaimer">Aide à la décision, pas un conseil financier. Les CFD à levier peuvent faire perdre plus que la mise.</p>`;
+}
+function swipeWrap(id, html) {
+  return `<div class="swipe aw"><button class="swipe-act" data-dismiss="${esc(id)}" aria-label="Supprimer"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg>Supprimer</button>${html}</div>`;
 }
 function orderHtml(a) {
   const open = view.open.has(a.id), pl = a.pnl;
@@ -686,12 +697,13 @@ function toggleAlert(card) {
 document.addEventListener('click', e => {
   const sc = e.target.closest('.scan');
   if (sc) { const id = 'scan:' + sc.dataset.scan, o = !sc.classList.contains('open'); sc.classList.toggle('open', o); sc.setAttribute('aria-expanded', o); o ? view.open.add(id) : view.open.delete(id); haptic(); return; }
-  const card = e.target.closest('.alert[role=button]');
-  if (card && !e.target.closest('a,.take')) return toggleAlert(card);
   const sw0 = e.target.closest('.swipe');
   if (sw0 && sw0._moved) return;
   if (sw0 && sw0.classList.contains('open') && !e.target.closest('.swipe-act')) { sw0.classList.remove('open'); sw0.style.setProperty('--sx', '0px'); return; }
+  const card = e.target.closest('.alert[role=button]');
+  if (card && !e.target.closest('a,.take')) return toggleAlert(card);
   const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.dismiss) { haptic(); const w = t.closest('.swipe'); w.classList.add('gone'); return setTimeout(() => C.dismissAlert(t.dataset.dismiss), 260); }
   if (t.dataset.delacct) { haptic(); return report(C.deleteAccount(t.dataset.delacct)); }
   if (t.dataset.edit) return openEdit(t.dataset.edit);
   if (t.dataset.take) return takeClick(t.dataset.take);
