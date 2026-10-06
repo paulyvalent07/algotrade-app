@@ -867,7 +867,11 @@ async function pushAction(a) {
   document.addEventListener('focusout', () => setTimeout(sync, 150));
 })();
 
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.serviceWorker.addEventListener('message', e => { const t = e.data && e.data.goto; if (TABS.includes(t)) { switchTab(t); C.loadAll(); } });
+}
+{ const h = location.hash.slice(1); if (TABS.includes(h)) view.tab = h; }
 render(); C.loadAll();
 </script>
 </body>
