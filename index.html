@@ -33,7 +33,7 @@
   --metal:linear-gradient(180deg,#FFFFFF 0%,#E4E9EE 30%,#A3AEBB 58%,rgba(214,222,231,.78) 100%);
   --sheen:rgba(255,255,255,.95);
   --btn:linear-gradient(180deg,#F7F9FB,#C3CBD4); --on-btn:#0B0F14;
-  --dock:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.04)); --dock-line:rgba(255,255,255,.2); --dock-pill:rgba(255,255,255,.16);
+  --dock:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.012)); --dock-line:rgba(255,255,255,.18); --dock-pill:rgba(255,255,255,.12);
   --shadow:0 18px 50px rgba(0,0,0,.55);
   --halo:radial-gradient(120% 60% at 50% -10%,rgba(147,190,220,.16),transparent 60%);
   --r-card:28px; --r-ctl:18px;
@@ -78,7 +78,7 @@ header{padding:calc(16px + env(safe-area-inset-top)) 0 8px}
 nav.dock{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);
   width:min(calc(100vw - 36px),380px);height:66px;padding:6px;z-index:6;border-radius:999px;
   background:var(--dock);border:1px solid var(--dock-line);
-  -webkit-backdrop-filter:blur(18px) saturate(210%) brightness(1.08);backdrop-filter:blur(18px) saturate(210%) brightness(1.08);
+  -webkit-backdrop-filter:blur(12px) saturate(230%) brightness(1.1);backdrop-filter:blur(12px) saturate(230%) brightness(1.1);
   box-shadow:0 10px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.34),inset 0 -1px 0 rgba(255,255,255,.08),inset 0 0 18px rgba(255,255,255,.05)}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){nav.dock{background:var(--bg-2)}}
 .dock-in{position:relative;display:grid;grid-template-columns:repeat(3,1fr);height:100%}
@@ -113,10 +113,11 @@ h2{font-size:13px;font-weight:600;margin:30px 4px 10px;letter-spacing:.09em;text
 @keyframes fadein{from{opacity:0}to{opacity:1}}
 
 /* alertes */
-.chips{display:flex;gap:4px;margin-top:6px;padding:4px;background:var(--glass);border:1px solid var(--line);border-radius:999px;overflow-x:auto;scrollbar-width:none}
+.chips{display:flex;gap:4px;margin-top:6px;padding:4px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.17);border-radius:999px;overflow-x:auto;scrollbar-width:none;
+  -webkit-backdrop-filter:blur(14px) saturate(200%);backdrop-filter:blur(14px) saturate(200%);box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex:1;white-space:nowrap;border:0;background:none;border-radius:999px;padding:9px 12px;font-size:13.5px;font-weight:550;color:var(--muted);transition:background .25s,color .25s}
-.chip[aria-pressed="true"]{background:var(--glass-2);color:var(--ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+.chip{flex:1;white-space:nowrap;border:0;background:none;border-radius:999px;padding:9px 7px;font-size:13px;font-weight:550;color:var(--muted);transition:background .25s,color .25s}
+.chip[aria-pressed="true"]{background:rgba(255,255,255,.13);color:var(--ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
 .alert{display:block;width:100%;text-align:left;background:var(--glass);border:1px solid var(--line);border-radius:var(--r-card);padding:20px;margin-top:14px;color:inherit;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.05);transition:transform .25s,background .25s}
 .alert:active{transform:scale(.985)}
@@ -192,7 +193,7 @@ h2{font-size:13px;font-weight:600;margin:30px 4px 10px;letter-spacing:.09em;text
 .split i{display:block;min-width:4px;border-radius:999px;transition:filter .2s}
 .split i:hover,.split i:focus-visible{filter:brightness(1.2)}
 .sw{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:12px}
-.logo{position:relative;display:inline-grid;place-items:center;flex:none;vertical-align:middle;border-radius:50%;overflow:hidden;background:var(--glass-2);box-shadow:0 0 0 1.5px var(--ring,transparent);margin-right:10px}
+.logo{position:relative;display:inline-grid;place-items:center;flex:none;vertical-align:middle;border-radius:50%;overflow:hidden;background:var(--glass-2);box-shadow:0 0 0 1.5px rgba(255,255,255,.22);margin-right:10px}
 .logo b{font-size:11px;font-weight:600;color:var(--text-2)}
 .logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;background:#fff}
 .legend-line .logo{margin-right:6px}
@@ -228,7 +229,7 @@ h2{font-size:13px;font-weight:600;margin:30px 4px 10px;letter-spacing:.09em;text
 .tip-k{width:9px;height:9px;border-radius:50%;flex:none}
 
 /* feuilles */
-dialog{border:1px solid var(--line);border-radius:30px;background:color-mix(in srgb,var(--bg-2) 88%,transparent);color:var(--ink);padding:24px;width:min(calc(100vw - 24px),460px);
+dialog{border:1px solid var(--line);border-radius:30px;background:color-mix(in srgb,var(--bg-2) 52%,transparent);color:var(--ink);padding:24px;width:min(calc(100vw - 24px),460px);
   margin:auto auto calc(12px + env(safe-area-inset-bottom) + var(--kb,0px));max-height:calc(var(--vvh,100dvh) - 24px - env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain;transition:margin .25s ease;-webkit-backdrop-filter:blur(30px) saturate(160%);backdrop-filter:blur(30px) saturate(160%);box-shadow:var(--shadow)}
 dialog[open]{animation:sheet .45s cubic-bezier(.2,.8,.2,1)}
 @keyframes sheet{from{opacity:0;transform:translateY(40px) scale(.98)}}
@@ -254,6 +255,38 @@ input:focus,select:focus{outline:none;border-color:color-mix(in srgb,var(--glaci
 .edge.top::after,.edge.bot::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,var(--bg),transparent)}
 .edge.bot::after{background:linear-gradient(to top,var(--bg),transparent);opacity:.75}
 .edge.top::after{opacity:.7}
+
+
+/* suivi des positions */
+.a-right{display:flex;align-items:center;gap:8px}
+.take{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid rgba(255,255,255,.28);background:rgba(255,255,255,.04);color:transparent;transition:background .25s,border-color .25s,color .25s,transform .2s}
+.take svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.take:active{transform:scale(.9)}
+.take.on{background:var(--glacier);border-color:var(--glacier);color:var(--on-signal)}
+.sum-card{display:flex;justify-content:space-between;gap:12px;align-items:flex-end}
+.sum-card small{display:block;color:var(--muted);font-size:12.5px;margin-bottom:4px}
+.sum-card b{font-size:26px;font-weight:620;letter-spacing:-.02em}
+.pos .p-pnl{font-size:26px;font-weight:620;letter-spacing:-.02em;margin-top:6px}
+.pos .p-pnl small{font-size:14px;font-weight:500;margin-left:8px;color:var(--muted)}
+.pos .p-row{display:flex;justify-content:space-between;gap:10px;color:var(--text-2);font-size:13.5px;margin-top:8px}
+.pos .p-row b{color:var(--ink);font-weight:600}
+.badge{font-size:12px;font-weight:600;border-radius:999px;padding:4px 11px;background:rgba(255,255,255,.08);color:var(--text-2)}
+.badge.win{background:color-mix(in srgb,var(--up) 18%,transparent);color:var(--up)}
+.badge.loss{background:color-mix(in srgb,var(--down) 18%,transparent);color:var(--down)}
+.gauge{position:relative;height:4px;border-radius:99px;background:rgba(255,255,255,.12);margin:18px 6px 8px}
+.gauge i{position:absolute;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%}
+.gauge .g-e{background:var(--text-3)} .gauge .g-l{background:var(--glacier);box-shadow:0 0 0 3px color-mix(in srgb,var(--glacier) 25%,transparent)}
+.gauge .g-l.neg{background:var(--down);box-shadow:0 0 0 3px color-mix(in srgb,var(--down) 25%,transparent)}
+.g-lab{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted)}
+.p-actions{display:flex;gap:10px;align-items:center;margin-top:16px}
+.p-actions .btn{padding:10px 18px;font-size:14px}
+.linkbtn{background:none;border:0;color:var(--muted);font-size:13px;padding:8px 4px}
+.danger{background:color-mix(in srgb,var(--down) 16%,transparent);color:var(--down);border:1px solid color-mix(in srgb,var(--down) 45%,transparent);box-shadow:none}
+.row.tap{cursor:pointer}
+.push-box{margin:16px 4px 0;padding:14px 16px;border:1px solid var(--line);border-radius:var(--r-ctl);background:var(--glass)}
+.push-box p{font-size:13px;color:var(--text-2);margin:0 0 10px}
+.push-box .row2{display:flex;gap:8px;flex-wrap:wrap}
+.push-box .btn{padding:9px 16px;font-size:13.5px}
 
 /* tirer pour actualiser */
 #ptr{position:fixed;top:calc(8px + env(safe-area-inset-top));left:50%;width:44px;height:44px;margin-left:-22px;border-radius:50%;z-index:7;display:grid;place-items:center;
@@ -316,6 +349,10 @@ input:focus,select:focus{outline:none;border-color:color-mix(in srgb,var(--glaci
     <label for="s-token">Jeton GitHub (lecture et écriture sur ce dépôt)</label>
     <input id="s-token" type="password" autocomplete="off" placeholder="github_pat_…">
     <p class="section-note" style="margin:10px 4px 0">Le jeton reste sur cet appareil. Sans jeton, les alertes et SFC ne se chargent pas, et le capital reste local.</p>
+    <div class="push-box"><b style="font-size:14px">Notifications</b>
+      <p id="push-msg" style="margin-top:6px">Reçois les nouvelles alertes sur l'écran de verrouillage.</p>
+      <div class="row2"><button type="button" class="btn" id="push-on">Activer</button><button type="button" class="btn ghost" id="push-test">Tester</button><button type="button" class="btn ghost" id="push-off">Désactiver</button></div>
+    </div>
     <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
   </form>
 </dialog>
@@ -350,6 +387,43 @@ input:focus,select:focus{outline:none;border-color:color-mix(in srgb,var(--glaci
     <input id="a-name" maxlength="40" required autocomplete="off">
     <p class="err" id="a-err" hidden></p>
     <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Ajouter</button></div>
+  </form>
+</dialog>
+
+
+<dialog id="dlg-take">
+  <form method="dialog" id="form-take">
+    <h3>Suivre cette position</h3>
+    <p class="section-note" style="margin:0 4px" id="t-title"></p>
+    <label for="t-amount">Montant alloué (€)</label>
+    <input id="t-amount" type="number" inputmode="decimal" step="0.01" min="0" required>
+    <label for="t-entry">Prix d'entrée</label>
+    <input id="t-entry" type="number" inputmode="decimal" step="any" min="0" required>
+    <label for="t-stop">Stop (facultatif)</label>
+    <input id="t-stop" type="number" inputmode="decimal" step="any" min="0">
+    <label for="t-target">Objectif (facultatif)</label>
+    <input id="t-target" type="number" inputmode="decimal" step="any" min="0">
+    <p class="section-note" style="margin:10px 4px 0">L'ordre est considéré comme exécuté à ce prix. Corrige les niveaux si ton ordre réel est différent.</p>
+    <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Suivre</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-close">
+  <form method="dialog" id="form-close">
+    <h3>Clôturer la position</h3>
+    <p class="section-note" style="margin:0 4px" id="c-title"></p>
+    <label for="c-price">Prix de sortie</label>
+    <input id="c-price" type="number" inputmode="decimal" step="any" min="0" required>
+    <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Clôturer</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-acct">
+  <form method="dialog" id="form-acct">
+    <h3 id="x-name"></h3>
+    <p class="section-note" style="margin:0 4px" id="x-info"></p>
+    <p class="section-note" style="margin:14px 4px 0">Supprimer ce compte efface aussi ses mouvements : l'argent qui lui était alloué retourne à la réserve.</p>
+    <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Fermer</button><button class="btn danger" value="del">Supprimer</button></div>
   </form>
 </dialog>
 
@@ -400,8 +474,9 @@ function viewAlerts() {
   if (S.alertsErr === 'token') return tokenHelp();
   if (S.alertsErr) return `<div class="err">Impossible de lire les alertes : ${esc(S.alertsErr)}.</div>`;
   if (S.alerts === null) return `<p class="empty">Chargement…</p>`;
-  const chips = [['all', 'Tout'], ['cfd', 'CFD'], ['short_term', 'Court terme'], ['long_term', 'Long terme']]
+  const chips = [['all', 'Tout'], ['cfd', 'CFD'], ['short_term', 'Court terme'], ['long_term', 'Long terme'], ['track', 'Suivi' + (S.positions.positions.some(p => p.status === 'open') ? ' · ' + S.positions.positions.filter(p => p.status === 'open').length : '')]]
     .map(([k, l]) => `<button class="chip" data-filter="${k}" aria-pressed="${view.filter === k}">${l}</button>`).join('');
+  if (view.filter === 'track') return `<div class="chips">${chips}</div>${viewTrack()}`;
   const list = S.alerts.filter(a => view.filter === 'all' || a.category === view.filter);
   const body = list.length ? list.map(alertHtml).join('') :
     `<div class="empty"><b>Aucune alerte pour l'instant</b>Les scans publient ici dès qu'un candidat passe leur filtre. Un jour sans alerte est normal.</div>`;
@@ -409,6 +484,7 @@ function viewAlerts() {
 }
 function alertHtml(a) {
   const fresh = !S.seen.has(a.id), open = view.open.has(a.id);
+  const taken = C.takenIds().has(a.id);
   const tag = a.direction === 'long' ? '<span class="tag buy">Achat</span>' : a.direction === 'short' ? '<span class="tag sell">Vente</span>' : '';
   const lv = [['Entrée', a.entry], ['Stop', a.stop], ['Objectif', a.target]].filter(([, v]) => v)
     .map(([k, v]) => `<span>${k}<b class="num">${esc(v)}</b></span>`).join('');
@@ -416,7 +492,7 @@ function alertHtml(a) {
   const src = (a.sources || []).filter(s => /^https?:\/\//.test(s.url)).map(s => `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.name)}</a>`).join('');
   const more = a.summary || meta || a.risk || src;
   return `<article class="alert ${open ? 'open' : ''}" data-alert="${esc(a.id)}" ${more ? 'role="button" tabindex="0" aria-expanded="' + open + '"' : ''}>
-    <div class="a-top"><span class="a-cat">${fresh ? '<i class="fresh-dot" title="Nouvelle"></i>' : ''}${esc(CAT[a.category] || a.category)}<span style="font-weight:400;letter-spacing:0;text-transform:none">· ${esc(F.ago(a.ts))}</span></span>${tag}</div>
+    <div class="a-top"><span class="a-cat">${fresh ? '<i class="fresh-dot" title="Nouvelle"></i>' : ''}${esc(CAT[a.category] || a.category)}<span style="font-weight:400;letter-spacing:0;text-transform:none">· ${esc(F.ago(a.ts))}</span></span><span class="a-right">${tag}<button class="take ${taken ? 'on' : ''}" data-take="${esc(a.id)}" aria-label="${taken ? 'Position suivie' : 'Suivre cette position'}"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></span></div>
     <div class="a-title">${esc(a.title || a.ticker)}</div>
     ${lv ? `<div class="lv">${lv}</div>` : ''}
     ${more ? `<div class="a-more"><div><div class="a-body">
@@ -426,6 +502,44 @@ function alertHtml(a) {
       ${src ? `<div class="a-src">${src}</div>` : ''}
     </div></div></div>` : ''}
   </article>`;
+}
+
+
+/* ---------- suivi ---------- */
+const fp = n => new Intl.NumberFormat('fr-FR', {maximumFractionDigits: 4}).format(n);
+function gaugeHtml(p) {
+  const pts = [p.stop, p.target, p.entry, p.last].filter(v => v != null && isFinite(v));
+  if (p.stop == null && p.target == null) return '';
+  const lo = Math.min(...pts), hi = Math.max(...pts), span = hi - lo || 1, at = v => ((v - lo) / span * 100).toFixed(1);
+  const ends = [['Stop', p.stop], ['Objectif', p.target]].filter(([, v]) => v != null).sort((a, b) => a[1] - b[1]);
+  const lab = ends.length === 2 ? ends : [ends[0], null];
+  const neg = p.res && p.res.eur < 0;
+  return `<div class="gauge"><i class="g-e" style="left:${at(p.entry)}%" title="Entrée"></i>${p.last != null ? `<i class="g-l ${neg ? 'neg' : ''}" style="left:${at(p.last)}%"></i>` : ''}</div>
+    <div class="g-lab"><span>${lab[0] ? lab[0][0] + ' ' + fp(lab[0][1]) : ''}</span><span>${lab[1] ? lab[1][0] + ' ' + fp(lab[1][1]) : ''}</span></div>`;
+}
+function posHtml(raw) {
+  const p = C.positionView(raw), closed = p.status === 'closed', r = closed ? p.exit : p.res;
+  const eur = r ? (closed ? r.eur : r.eur) : null, pct = r ? r.pct : null;
+  const cls = eur == null ? 'muted' : eur > 0 ? 'up' : eur < 0 ? 'down' : 'muted';
+  const badge = closed ? '<span class="badge">Clôturée</span>' : p.hit === 'target' ? '<span class="badge win">Objectif atteint</span>' : p.hit === 'stop' ? '<span class="badge loss">Stop touché</span>' : '<span class="badge">En cours</span>';
+  const tag = p.direction === 'short' ? '<span class="tag sell">Vente</span>' : '<span class="tag buy">Achat</span>';
+  return `<article class="card pos"><div class="a-top"><span class="a-cat">${esc(CAT[p.category] || p.category)}</span><span class="a-right">${tag}${badge}</span></div>
+    <div class="a-title" style="margin-top:8px">${esc(p.title)}</div>
+    <div class="p-pnl ${cls}">${eur == null ? '–' : F.signed(eur)}${pct != null ? `<small>${pct > 0 ? '+' : pct < 0 ? '−' : ''}${F.pct(Math.abs(pct), 1)}</small>` : ''}</div>
+    <div class="p-row"><span>Engagé <b class="num">${F.eur(p.amount, 0)}</b>${p.leverage ? ' · levier ' + esc(p.leverage) : ''}</span><span>Entrée <b class="num">${fp(p.entry)}</b></span></div>
+    <div class="p-row"><span>${closed ? 'Sortie' : 'Dernier cours'} <b class="num">${(closed ? p.exit.price : p.last) != null ? fp(closed ? p.exit.price : p.last) : '–'}</b></span><span class="muted">${closed ? esc(F.dateLong(p.exit.ts)) : p.last_ts ? esc(F.dateTime(p.last_ts)) : 'en attente de cours'}</span></div>
+    ${closed ? '' : gaugeHtml(p)}
+    <div class="p-actions">${closed ? '' : `<button class="btn ghost" data-close="${esc(p.id)}">Clôturer</button>`}<button class="linkbtn" data-delpos="${esc(p.id)}">Supprimer</button></div></article>`;
+}
+function viewTrack() {
+  const all = S.positions.positions.slice().sort((a, b) => String(b.openedAt).localeCompare(String(a.openedAt)));
+  if (!all.length) return `<div class="empty"><b>Aucune position suivie</b>Coche le rond d'une alerte, indique le montant alloué : l'ordre est considéré comme exécuté et suivi ici.</div>`;
+  const open = all.filter(p => p.status !== 'closed'), done = all.filter(p => p.status === 'closed');
+  const views = open.map(C.positionView);
+  const engaged = open.reduce((s, p) => s + p.amount, 0), latent = views.reduce((s, p) => s + (p.res ? p.res.eur : 0), 0), real = done.reduce((s, p) => s + (p.exit ? p.exit.eur : 0), 0);
+  const sum = `<section class="card sum-card"><div><small>Engagé</small><b class="num">${F.eur(engaged, 0)}</b></div><div><small>En cours</small><b class="num ${latent > 0 ? 'up' : latent < 0 ? 'down' : 'muted'}">${F.signed(latent)}</b></div><div><small>Réalisé</small><b class="num ${real > 0 ? 'up' : real < 0 ? 'down' : 'muted'}">${F.signed(real)}</b></div></section>`;
+  return sum + open.map(posHtml).join('') + (done.length ? `<h2>Clôturées</h2>` + done.map(posHtml).join('') : '') +
+    `<p class="disclaimer">Les cours sont mis à jour par le suivi planifié, pas en direct. Résultat estimé sur le montant alloué, levier inclus.</p>`;
 }
 
 /* ---------- SFC ---------- */
@@ -477,7 +591,7 @@ function viewCapital() {
   const parts = [{name: 'Réserve', value: c.reserve, slot: 0}, ...A.map(n => ({name: n, value: c.acc[n].value, slot: G.slotOf(n, A)}))];
   const rows = parts.map(p => {
     const share = c.total > 0 ? Math.max(0, p.value) / c.total * 100 : 0;
-    return `<div class="row"><div class="l has-logo"><span style="--ring:var(--series-${p.slot});display:inline-flex">${G.logo(p.name, 30)}</span><span><b>${esc(p.name)}</b> <small style="display:inline;margin-left:6px" class="num">${F.pct(share, 0)}</small></span></div>
+    return `<div class="row ${p.name === 'Réserve' ? '' : 'tap'}" ${p.name === 'Réserve' ? '' : `data-acct="${esc(p.name)}"`}><div class="l has-logo">${G.logo(p.name, 30)}<span><b>${esc(p.name)}</b> <small style="display:inline;margin-left:6px" class="num">${F.pct(share, 0)}</small></span></div>
       <div class="r"><b class="num">${fe(p.value)}</b></div></div>`;
   }).join('');
   const snaps = C.snapshots(L, 12);
@@ -530,8 +644,15 @@ function toggleAlert(card) {
 }
 document.addEventListener('click', e => {
   const card = e.target.closest('.alert[role=button]');
-  if (card && !e.target.closest('a')) return toggleAlert(card);
+  if (card && !e.target.closest('a,.take')) return toggleAlert(card);
+  const row = e.target.closest('[data-acct]'); if (row && !e.target.closest('button')) return openAcct(row.dataset.acct);
   const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.take) return takeClick(t.dataset.take);
+  if (t.dataset.close) return openClose(t.dataset.close);
+  if (t.dataset.delpos) { haptic(); return report(C.deletePosition(t.dataset.delpos)); }
+  if (t.id === 'push-on') return pushAction('on');
+  if (t.id === 'push-off') return pushAction('off');
+  if (t.id === 'push-test') return pushAction('test');
   if (t.dataset.tab) return switchTab(t.dataset.tab);
   if (t.dataset.filter) { haptic(); view.filter = t.dataset.filter; view.animate = true; return render(); }
   if (t.id === 'refresh') { haptic(); return refreshNow(); }
@@ -574,7 +695,7 @@ function refreshNow() { $('#ptr').classList.add('spin'); return C.loadAll(); }
 
 function openSettings() {
   $('#s-repo').value = S.settings.repo; $('#s-branch').value = S.settings.branch; $('#s-data').value = S.settings.dataBranch; $('#s-token').value = S.settings.token;
-  $('#dlg-settings').showModal();
+  refreshPush(); $('#dlg-settings').showModal();
 }
 $('#form-settings').addEventListener('submit', e => {
   if (e.submitter && e.submitter.value !== 'ok') return;
@@ -615,6 +736,64 @@ $('#form-account').addEventListener('submit', e => {
 G.attachTooltips();
 const edgeTop = document.getElementById('edge-top');
 addEventListener('scroll', () => edgeTop.classList.toggle('on', scrollY > 12), {passive: true});
+
+/* ---------- suivi : feuilles ---------- */
+let takeAlert = null, closeId = null, acctName = null;
+function takeClick(id) {
+  const a = (S.alerts || []).find(x => x.id === id); if (!a) return;
+  if (C.takenIds().has(id)) { haptic(); view.filter = 'track'; view.animate = true; return render(); }
+  takeAlert = a; haptic();
+  $('#t-title').textContent = a.title + (a.direction ? ' · ' + (a.direction === 'short' ? 'vente' : 'achat') : '');
+  const v = x => x == null ? '' : x;
+  $('#t-amount').value = ''; $('#t-entry').value = v(C.parseLevel(a.entry, 'entry')); $('#t-stop').value = v(C.parseLevel(a.stop, 'stop')); $('#t-target').value = v(C.parseLevel(a.target, 'target'));
+  $('#dlg-take').showModal();
+}
+$('#form-take').addEventListener('submit', e => {
+  if (e.submitter && e.submitter.value !== 'ok') return;
+  try {
+    const n = id => { const x = parseFloat($(id).value); return isFinite(x) ? x : null; };
+    report(C.takePosition(takeAlert, {amount: n('#t-amount'), entry: n('#t-entry'), stop: n('#t-stop'), target: n('#t-target')}));
+    view.filter = 'track'; view.animate = true;
+  } catch (err) { e.preventDefault(); toast(err.message); }
+});
+function openClose(id) {
+  const p = S.positions.positions.find(x => x.id === id); if (!p) return;
+  closeId = id; const q = C.positionView(p);
+  $('#c-title').textContent = p.title; $('#c-price').value = q.last != null ? q.last : p.entry;
+  $('#dlg-close').showModal();
+}
+$('#form-close').addEventListener('submit', e => {
+  if (e.submitter && e.submitter.value !== 'ok') return;
+  try { report(C.closePosition(closeId, parseFloat($('#c-price').value))); } catch (err) { e.preventDefault(); toast(err.message); }
+});
+function openAcct(name) {
+  acctName = name; const c = C.computeLedger(S.ledger), a = c.acc[name]; if (!a) return;
+  $('#x-name').textContent = name; $('#x-info').textContent = 'Versé ' + F.eur(a.invested, 0) + ' · valeur ' + F.eur(a.value, 0);
+  $('#dlg-acct').showModal();
+}
+$('#form-acct').addEventListener('submit', e => {
+  if (!e.submitter || e.submitter.value !== 'del') return;
+  try { report(C.deleteAccount(acctName)); } catch (err) { e.preventDefault(); toast(err.message); }
+});
+
+/* ---------- notifications ---------- */
+const PUSH_MSG = {on: "Les notifications sont activées sur cet appareil.", off: "Reçois les nouvelles alertes sur l'écran de verrouillage.",
+  denied: "Refusées : autorise-les dans Réglages > Notifications > AlgoTrade de l'iPhone.", install: "Sur iPhone : Partager, puis « Sur l'écran d'accueil », et ouvre l'app depuis son icône.", unsupported: "Ce navigateur ne gère pas les notifications."};
+async function refreshPush() {
+  const st = await C.pushStatus(); $('#push-msg').textContent = PUSH_MSG[st] || PUSH_MSG.off;
+  $('#push-on').hidden = st === 'on'; $('#push-off').hidden = st !== 'on'; $('#push-test').hidden = st !== 'on';
+  $('#push-on').disabled = st === 'install' || st === 'unsupported';
+}
+async function pushAction(a) {
+  try {
+    if (a === 'on') { await C.enablePush(); toast('Notifications activées'); }
+    if (a === 'off') { await C.disablePush(); toast('Notifications désactivées'); }
+    if (a === 'test') { await C.testNotification(); }
+    haptic('success');
+  } catch (err) { toast(err.message); }
+  refreshPush();
+}
+
 /* clavier : la feuille ouverte remonte au-dessus du clavier (iOS ne redimensionne pas la page) */
 (function () {
   const vv = window.visualViewport; if (!vv) return;

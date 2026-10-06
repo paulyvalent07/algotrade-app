@@ -37,6 +37,8 @@
     settings: {...DEFAULTS, ...ls.get('at.settings', {})},
     ledger: ls.get('at.ledger', {version: 1, accounts: ['XTB', 'Revolut', 'IG', 'Boursorama', 'Trade Republic'], movements: []}),
     ledgerSha: null,
+    positions: ls.get('at.positions', {version: 1, positions: []}), positionsSha: null,
+    quotes: ls.get('at.quotes', {positions: {}}),
     alerts: null, alertsErr: null,   // alertsErr : null | 'token' | message
     sfc: null, sfcErr: null,
     seen: new Set(ls.get('at.seen', [])),
@@ -174,9 +176,20 @@
       if (r) { state.ledger = mergeLedger(state.ledger, r.data); state.ledgerSha = r.sha; ls.set('at.ledger', state.ledger); }
     } catch (e) { /* le registre local reste valable */ }
   }
+  async function loadPositionsRemote() {
+    if (!state.settings.token) return;
+    try {
+      const r = await ghJsonWithSha('data/positions.json');
+      if (r) { state.positions = mergePositions(state.positions, r.data); state.positionsSha = r.sha; ls.set('at.positions', state.positions); }
+    } catch (e) { /* le suivi local reste valable */ }
+    try {
+      const q = await ghJsonWithSha('data/quotes.json');
+      if (q) { state.quotes = q.data; ls.set('at.quotes', state.quotes); }
+    } catch (e) { /* pas encore de cours */ }
+  }
   async function loadAll() {
     state.loading = true; emit();
-    await Promise.allSettled([loadAlerts(), loadSfc(), loadLedgerRemote()]);
+    await Promise.allSettled([loadAlerts(), loadSfc(), loadLedgerRemote(), loadPositionsRemote()]);
     state.loading = false; emit();
   }
 
@@ -218,6 +231,134 @@
     return saveLedger('ledger: nouveau compte ' + name);
   }
 
+
+  /* ---------- suivi des positions ---------- */
+  /* data/positions.json (écrit par l'app) : une position = une alerte cochée, considérée comme exécutée.
+   * data/quotes.json (écrit par le suivi planifié) : derniers cours et touches de stop / objectif, indexés par id. */
+  const clean = t => String(t ?? '').replace(/\d+(?:[.,]\d+)?\s*%/g, ' ');
+  const NUM = /\d+(?:[ \u00a0\u202f]\d{3})*(?:[.,]\d+)?/g;
+  const toNum = x => parseFloat(x.replace(/[ \u00a0\u202f]/g, '').replace(',', '.'));
+  /* « 3 960-3 975 » (milieu), « ≤ 105 $ », « +8 % : 112 / +10 % : 115 » (premier niveau chiffré) */
+  function parseLevel(text, kind) {
+    if (!text) return null;
+    let t = String(text);
+    if (kind === 'target' && t.includes(':')) t = t.slice(t.indexOf(':') + 1);
+    const nums = (clean(t).match(NUM) || []).map(toNum).filter(isFinite);
+    if (!nums.length) return null;
+    if (kind === 'entry' && nums.length >= 2 && /\d\s*[-–]\s*\d/.test(t)) return Math.round((nums[0] + nums[1]) / 2 * 1e4) / 1e4;
+    return nums[0];
+  }
+  const levNum = l => parseFloat(String(l ?? '').replace(',', '.').replace(/[^\d.]/g, '')) || 1;
+  /* Résultat d'une position à un prix donné : sur le sous-jacent, puis sur le montant alloué (levier inclus). */
+  function pnlAt(p, price) {
+    if (!isFinite(price) || !isFinite(p.entry) || p.entry <= 0) return null;
+    const move = (price / p.entry - 1) * (p.direction === 'short' ? -1 : 1), lev = levNum(p.leverage);
+    return {underlying: move * 100, pct: move * lev * 100, eur: p.amount * move * lev};
+  }
+  /* Position enrichie du dernier cours connu (écrit par le suivi planifié). */
+  function positionView(p) {
+    const q = (state.quotes.positions || {})[p.id] || {};
+    const last = p.status === 'closed' ? p.exit?.price : (isFinite(q.last) ? q.last : null);
+    const res = last != null ? pnlAt(p, last) : null;
+    let hit = null;
+    if (p.status !== 'closed') hit = q.hit || null;
+    return {...p, last, last_ts: q.last_ts || null, hit, res};
+  }
+  function mergePositions(local, remote) {
+    const byId = new Map(remote.positions.map(p => [p.id, p]));
+    for (const p of local.positions) if (p.pending) byId.set(p.id, p);
+    return {...remote, positions: [...byId.values()]};
+  }
+  const stripP = d => ({...d, positions: d.positions.map(({pending, ...p}) => p)});
+  async function savePositions(message) {
+    ls.set('at.positions', state.positions); emit();
+    if (!state.settings.token) return 'local';
+    const done = () => { state.positions.positions.forEach(p => delete p.pending); ls.set('at.positions', state.positions); emit(); return 'sync'; };
+    try { state.positionsSha = await ghPut('data/positions.json', stripP(state.positions), state.positionsSha, message); return done(); }
+    catch (e) {
+      if (e.code !== 409 && e.code !== 422) return 'echec:' + e.message;
+      try {
+        const r = await ghJsonWithSha('data/positions.json');
+        if (r) state.positions = mergePositions(state.positions, r.data);
+        state.positionsSha = await ghPut('data/positions.json', stripP(state.positions), r ? r.sha : null, message); return done();
+      } catch (e2) { return 'echec:' + e2.message; }
+    }
+  }
+  const takenIds = () => new Set(state.positions.positions.map(p => p.alertId));
+  function takePosition(alert, {amount, entry, stop, target}) {
+    if (!isFinite(amount) || amount <= 0) throw new Error('Montant invalide');
+    if (!isFinite(entry) || entry <= 0) throw new Error("Prix d'entrée invalide");
+    if (takenIds().has(alert.id)) throw new Error('Déjà suivie');
+    state.positions.positions.push({id: uid(), alertId: alert.id, ticker: alert.ticker || '', title: alert.title || alert.ticker, category: alert.category,
+      direction: alert.direction || 'long', leverage: alert.leverage || null, amount: Math.round(amount * 100) / 100, entry,
+      stop: isFinite(stop) ? stop : null, target: isFinite(target) ? target : null, status: 'open', openedAt: new Date().toISOString(), pending: true});
+    return savePositions('suivi: ouverture ' + (alert.ticker || alert.title));
+  }
+  function updatePosition(id, patch, message) {
+    const p = state.positions.positions.find(x => x.id === id); if (!p) return 'echec:introuvable';
+    Object.assign(p, patch, {pending: true});
+    return savePositions(message || 'suivi: mise à jour');
+  }
+  function closePosition(id, price) {
+    const p = state.positions.positions.find(x => x.id === id); if (!p) return 'echec:introuvable';
+    if (!isFinite(price) || price <= 0) throw new Error('Prix invalide');
+    const r = pnlAt(p, price);
+    return updatePosition(id, {status: 'closed', exit: {price, ts: new Date().toISOString(), pct: r.pct, eur: r.eur}}, 'suivi: clôture ' + p.ticker);
+  }
+  function deletePosition(id) {
+    state.positions.positions = state.positions.positions.filter(p => p.id !== id);
+    return savePositions('suivi: suppression');
+  }
+
+  /* ---------- notifications (Web Push) ---------- */
+  const VAPID_PUBLIC = 'BD7kcZfmGEnBungpccsK0tEyR_dtuLY501OVJieGhopP4hPVqYVqS6KmxzpQ7ay0N5Gt1zVy-BvTksBO3FyLgkQ';
+  const b64u = s => { const p = '='.repeat((4 - s.length % 4) % 4); const b = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(b, c => c.charCodeAt(0)); };
+  const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  async function pushStatus() {
+    if (!pushSupported()) return standalone() ? 'unsupported' : 'install';
+    if (Notification.permission === 'denied') return 'denied';
+    try { const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription(); if (sub && Notification.permission === 'granted') return 'on'; } catch (e) { /* ignore */ }
+    return 'off';
+  }
+  async function enablePush() {
+    if (!pushSupported()) throw new Error(standalone() ? "Ce navigateur ne gère pas les notifications" : "Ajoute d'abord l'app à l'écran d'accueil (Partager, puis Sur l'écran d'accueil), puis rouvre-la depuis l'icône");
+    if (!state.settings.token) throw new Error("Ajoute d'abord ton jeton GitHub dans les réglages");
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') throw new Error('Notifications refusées dans les réglages de l’iPhone');
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: b64u(VAPID_PUBLIC)});
+    const j = sub.toJSON(), entry = {endpoint: j.endpoint, keys: j.keys, ts: new Date().toISOString()};
+    for (let i = 0; i < 2; i++) {
+      const r = await ghJsonWithSha('data/push.json');
+      const data = r ? r.data : {version: 1, subscriptions: []};
+      data.subscriptions = (data.subscriptions || []).filter(x => x.endpoint !== entry.endpoint).concat(entry).slice(-5);
+      try { await ghPut('data/push.json', data, r ? r.sha : null, 'push: abonnement'); return 'on'; }
+      catch (e) { if (e.code !== 409 && e.code !== 422) throw e; }
+    }
+    throw new Error('Enregistrement impossible, réessaie');
+  }
+  async function disablePush() {
+    const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      const ep = sub.endpoint; await sub.unsubscribe();
+      try { const r = await ghJsonWithSha('data/push.json'); if (r) { r.data.subscriptions = (r.data.subscriptions || []).filter(x => x.endpoint !== ep); await ghPut('data/push.json', r.data, r.sha, 'push: désabonnement'); } } catch (e) { /* ignore */ }
+    }
+  }
+  async function testNotification() {
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification('AlgoTrade', {body: "Les notifications fonctionnent sur cet appareil.", icon: 'icon-192.png', badge: 'icon-192.png', tag: 'test'});
+  }
+
+  /* Supprime un compte et ses mouvements : l'argent qui lui était alloué retourne à la réserve. */
+  function deleteAccount(name) {
+    if (!state.ledger.accounts.includes(name)) throw new Error('Compte introuvable');
+    state.ledger.accounts = state.ledger.accounts.filter(n => n !== name);
+    state.ledger.movements = state.ledger.movements.filter(m => m.account !== name);
+    return saveLedger('ledger: suppression du compte ' + name);
+  }
+
   /* ---------- autres actions ---------- */
   function saveSettings(s) {
     state.settings = {repo: (s.repo || '').trim() || DEFAULTS.repo, branch: (s.branch || '').trim() || DEFAULTS.branch,
@@ -230,5 +371,7 @@
   }
 
   window.AlgoCore = {state, on, fmt, todayISO, computeLedger, snapshots, sfcSummary, loadAll, saveSettings,
-    addMovement, deleteMovement, addAccount, unseenCount, markAlertsSeen};
+    addMovement, deleteMovement, addAccount, deleteAccount, unseenCount, markAlertsSeen,
+    parseLevel, pnlAt, positionView, takePosition, updatePosition, closePosition, deletePosition, takenIds,
+    pushStatus, enablePush, disablePush, testNotification};
 })();
