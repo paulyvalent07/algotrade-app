@@ -83,6 +83,28 @@
   }
 
   /* Résumé de SFC prêt à afficher. */
+  /* Ordres du bot SFC (entrées / clôtures) présentés comme des alertes CFD */
+  const SFC_NAMES = {'CL=F': ['Pétrole WTI', 'OIL.WTI'], 'NG=F': ['Gaz naturel', 'NATGAS'], 'SI=F': ['Argent', 'SILVER'], 'GC=F': ['Or', 'GOLD'],
+    'ZW=F': ['Blé', 'WHEAT'], 'ZC=F': ['Maïs', 'CORN'], 'CT=F': ['Coton', 'COTTON']};
+  const SFC_WHY = {tp: 'Objectif atteint', tp_gap: 'Objectif atteint', trail: 'Stop suiveur', sl: 'Stop loss', time: 'Durée max'};
+  function sfcOrders() {
+    const log = state.sfc && state.sfc.log; if (!log) return [];
+    const rows = log.filter(r => (r.event === 'ENTRY' || r.event === 'EXIT') && SFC_NAMES[r.symbol]).sort((a, b) => a.ts.localeCompare(b.ts));
+    const realNow = {}; const out = [];
+    for (const r of rows) {
+      const [name, xtb] = SFC_NAMES[r.symbol];
+      if (r.event === 'ENTRY') realNow[r.symbol] = !!r.deal_id;
+      const real = r.event === 'ENTRY' ? !!r.deal_id : (r.pnl_source === 'ig' || !!realNow[r.symbol]);
+      const n = v => (v === '' || v == null || isNaN(+v)) ? '' : String(Math.round(+v * 10000) / 10000);
+      out.push({id: 'sfc:' + r.symbol + ':' + r.ts, kind: 'sfc', category: 'cfd', ts: r.ts, exit: r.event === 'EXIT', real, xtb,
+        title: (r.event === 'ENTRY' ? '' : 'Clôture · ') + name,
+        direction: r.event === 'ENTRY' ? (r.side === 'short' ? 'short' : 'long') : null,
+        entry: r.event === 'ENTRY' ? n(r.entry) : '', stop: r.event === 'ENTRY' ? n(r.sl) : '', target: r.event === 'ENTRY' ? n(r.tp) : '',
+        exitPrice: n(r.exit), pnl: r.pnl_eur === '' ? null : +r.pnl_eur, why: SFC_WHY[r.reason] || r.reason || '', detail: r.detail || ''});
+    }
+    return out.reverse().slice(0, 30);
+  }
+
   function sfcSummary(sfc) {
     if (!sfc) return null;
     const {state: st, heartbeat: hb, log} = sfc;
@@ -387,7 +409,7 @@
     (state.alerts || []).forEach(a => state.seen.add(a.id)); ls.set('at.seen', [...state.seen]); emit();
   }
 
-  window.AlgoCore = {state, on, fmt, todayISO, computeLedger, snapshots, sfcSummary, loadAll, saveSettings,
+  window.AlgoCore = {sfcOrders, state, on, fmt, todayISO, computeLedger, snapshots, sfcSummary, loadAll, saveSettings,
     addMovement, deleteMovement, addAccount, deleteAccount, unseenCount, markAlertsSeen,
     parseLevel, pnlAt, positionView, takePosition, updatePosition, closePosition, deletePosition, takenIds,
     setAmount, pushStatus, enablePush, disablePush, testNotification};

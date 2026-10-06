@@ -496,12 +496,32 @@ function viewAlerts() {
   const chips = [['all', 'Tout'], ['cfd', 'CFD'], ['short_term', 'Court terme'], ['long_term', 'Long terme'], ['track', 'Suivi' + (S.positions.positions.some(p => p.status === 'open') ? ' · ' + S.positions.positions.filter(p => p.status === 'open').length : '')]]
     .map(([k, l]) => `<button class="chip" data-filter="${k}" aria-pressed="${view.filter === k}">${l}</button>`).join('');
   if (view.filter === 'track') return `<div class="chips">${chips}</div>${viewTrack()}`;
-  const list = S.alerts.filter(a => view.filter === 'all' || a.category === view.filter);
+  const list = S.alerts.concat(C.sfcOrders()).filter(a => view.filter === 'all' || a.category === view.filter).sort((a, b) => String(b.ts).localeCompare(String(a.ts)));
   const body = list.length ? list.map(alertHtml).join('') :
     `<div class="empty"><b>Aucune alerte pour l'instant</b>Les scans publient ici dès qu'un candidat passe leur filtre. Un jour sans alerte est normal.</div>`;
   return `<div class="chips">${chips}</div>${scansHtml()}${body}<p class="disclaimer">Aide à la décision, pas un conseil financier. Les CFD à levier peuvent faire perdre plus que la mise.</p>`;
 }
+function orderHtml(a) {
+  const open = view.open.has(a.id), pl = a.pnl;
+  const where = a.real ? 'Ordre IG démo' : 'Ordre simulé';
+  const tag = a.exit ? `<span class="tag ${pl != null && pl < 0 ? 'sell' : 'buy'}">${pl != null ? (pl >= 0 ? '+' : '−') + Math.abs(pl).toFixed(2).replace('.', ',') + ' €' : 'Clôture'}</span>`
+    : a.direction === 'short' ? '<span class="tag sell">Vente</span>' : '<span class="tag buy">Achat</span>';
+  const lv = a.exit ? [['Sortie', a.exitPrice]] : [['Entrée', a.entry], ['Stop', a.stop], ['Objectif', a.target]];
+  const lvh = lv.filter(([, v]) => v).map(([k, v]) => `<span>${k}<b class="num">${esc(v)}</b></span>`).join('');
+  const note = a.real ? "Cet ordre existe sur ton compte démo IG." : "Ordre virtuel : le bot le suit en simulation, rien n'est placé chez IG.";
+  return `<article class="alert ${open ? 'open' : ''}" data-alert="${esc(a.id)}" role="button" tabindex="0" aria-expanded="${open}">
+    <div class="a-top"><span class="a-cat">SFC · ${where}<span style="font-weight:400;letter-spacing:0;text-transform:none">· ${esc(F.ago(a.ts))}</span></span><span class="a-right">${tag}</span></div>
+    <div class="a-title">${esc(a.title)}</div>
+    ${lvh ? `<div class="lv">${lvh}</div>` : ''}
+    <div class="a-more"><div><div class="a-body">
+      <p class="a-sum">${a.exit ? esc((a.why || 'Sortie') + (a.pnl != null ? ' · résultat calculé par le bot' : '')) + '. Clôture ta position XTB si tu l\'as ouverte.' : 'À reproduire sur XTB si tu veux la suivre.'}</p>
+      <div class="a-meta"><span>XTB <b>${esc(a.xtb)}</b></span><span>${esc(F.dateTime(a.ts))}</span></div>
+      <p class="a-risk">${note} Les niveaux sont ceux des futures Yahoo : sur XTB le cours peut différer (surtout l'or, de plusieurs dizaines de points).</p>
+    </div></div></div>
+  </article>`;
+}
 function alertHtml(a) {
+  if (a.kind === 'sfc') return orderHtml(a);
   const fresh = !S.seen.has(a.id), open = view.open.has(a.id);
   const taken = C.takenIds().has(a.id);
   const tag = a.direction === 'long' ? '<span class="tag buy">Achat</span>' : a.direction === 'short' ? '<span class="tag sell">Vente</span>' : '';
@@ -869,9 +889,9 @@ async function pushAction(a) {
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
-  navigator.serviceWorker.addEventListener('message', e => { const t = e.data && e.data.goto; if (TABS.includes(t)) { switchTab(t); C.loadAll(); } });
+  navigator.serviceWorker.addEventListener('message', e => { const t = e.data && e.data.goto; if (t === 'alerts-cfd') { view.filter = 'cfd'; if (view.tab !== 'alerts') switchTab('alerts'); else render(); C.loadAll(); } else if (TABS.includes(t)) { switchTab(t); C.loadAll(); } });
 }
-{ const h = location.hash.slice(1); if (TABS.includes(h)) view.tab = h; }
+{ const h = location.hash.slice(1); if (h === 'alerts-cfd') { view.tab = 'alerts'; view.filter = 'cfd'; } else if (TABS.includes(h)) view.tab = h; }
 render(); C.loadAll();
 </script>
 </body>
