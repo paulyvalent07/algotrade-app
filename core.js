@@ -92,17 +92,20 @@
   function sfcOrders() {
     const log = state.sfc && state.sfc.log; if (!log) return [];
     const rows = log.filter(r => (r.event === 'ENTRY' || r.event === 'EXIT') && SFC_NAMES[r.symbol]).sort((a, b) => a.ts.localeCompare(b.ts));
-    const realNow = {}; const out = [];
+    const realNow = {}, lastEntry = {}; const out = [];
     for (const r of rows) {
       const [name, xtb] = SFC_NAMES[r.symbol];
       if (r.event === 'ENTRY') realNow[r.symbol] = !!r.deal_id;
+      else if (lastEntry[r.symbol]) lastEntry[r.symbol].done = true;
       const real = r.event === 'ENTRY' ? !!r.deal_id : (r.pnl_source === 'ig' || !!realNow[r.symbol]);
       const n = v => (v === '' || v == null || isNaN(+v)) ? '' : String(Math.round(+v * 10000) / 10000);
-      out.push({id: 'sfc:' + r.symbol + ':' + r.ts, kind: 'sfc', category: 'cfd', ts: r.ts, exit: r.event === 'EXIT', real, xtb, symbol: r.symbol, ticker: r.symbol, leverage: 'x3',
+      const o = {id: 'sfc:' + r.symbol + ':' + r.ts, kind: 'sfc', category: 'cfd', ts: r.ts, exit: r.event === 'EXIT', real, xtb, symbol: r.symbol, ticker: r.symbol, leverage: 'x3',
         title: (r.event === 'ENTRY' ? '' : 'Clôture · ') + name,
         direction: r.event === 'ENTRY' ? (r.side === 'short' ? 'short' : 'long') : null,
         entry: r.event === 'ENTRY' ? n(r.entry) : '', stop: r.event === 'ENTRY' ? n(r.sl) : '', target: r.event === 'ENTRY' ? n(r.tp) : '',
-        exitPrice: n(r.exit), pnl: r.pnl_eur === '' ? null : +r.pnl_eur, why: SFC_WHY[r.reason] || r.reason || '', detail: r.detail || ''});
+        exitPrice: n(r.exit), pnl: r.pnl_eur === '' ? null : +r.pnl_eur, why: SFC_WHY[r.reason] || r.reason || '', detail: r.detail || ''};
+      if (r.event === 'ENTRY') lastEntry[r.symbol] = o;
+      out.push(o);
     }
     return out.reverse().slice(0, 30);
   }
