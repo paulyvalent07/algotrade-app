@@ -257,6 +257,12 @@ input:focus,select:focus{outline:none;border-color:color-mix(in srgb,var(--glaci
 .edge.top::after{opacity:.7}
 
 
+/* choix de banque */
+.bank-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;max-height:42vh;overflow-y:auto;padding:2px}
+.bank-grid button{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:18px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);font-size:14px;font-weight:550;text-align:left;transition:background .2s,transform .2s}
+.bank-grid button:active{transform:scale(.97);background:rgba(255,255,255,.1)}
+.bank-grid .logo{margin-right:0}
+.bank-grid button[disabled]{opacity:.35}
 /* suivi des positions */
 .a-right{display:flex;align-items:center;gap:8px}
 .take{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid rgba(255,255,255,.28);background:rgba(255,255,255,.04);color:transparent;transition:background .25s,border-color .25s,color .25s,transform .2s}
@@ -381,12 +387,12 @@ input:focus,select:focus{outline:none;border-color:color-mix(in srgb,var(--glaci
 
 <dialog id="dlg-account">
   <form method="dialog" id="form-account">
-    <h3>Nouveau compte</h3>
-    <p class="section-note" style="margin:0 4px">Un compte ou un portefeuille, par exemple « XTB Actions » ou « XTB Matières ».</p>
-    <label for="a-name">Nom</label>
-    <input id="a-name" maxlength="40" required autocomplete="off">
+    <h3>Ajouter un compte</h3>
+    <div class="bank-grid" id="bank-grid"></div>
+    <label for="a-name">Autre établissement</label>
+    <input id="a-name" maxlength="40" autocomplete="off" placeholder="Nom du compte ou du portefeuille">
     <p class="err" id="a-err" hidden></p>
-    <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Ajouter</button></div>
+    <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Fermer</button><button class="btn" value="ok">Ajouter</button></div>
   </form>
 </dialog>
 
@@ -659,7 +665,7 @@ document.addEventListener('click', e => {
   if (t.id === 'settings') return openSettings();
   if (t.id === 'add-move') return openMove();
   if (t.id === 'hist-more') { view.histAll = !view.histAll; return render(); }
-  if (t.id === 'add-account') { $('#a-name').value = ''; $('#a-err').hidden = true; return $('#dlg-account').showModal(); }
+  if (t.id === 'add-account') { fillBanks(); $('#a-name').value = ''; $('#a-err').hidden = true; return $('#dlg-account').showModal(); }
   if (t.dataset.del) return report(C.deleteMovement(t.dataset.del));
 });
 document.addEventListener('keydown', e => {
@@ -736,6 +742,17 @@ $('#form-account').addEventListener('submit', e => {
 G.attachTooltips();
 const edgeTop = document.getElementById('edge-top');
 addEventListener('scroll', () => edgeTop.classList.toggle('on', scrollY > 12), {passive: true});
+
+/* ---------- ajout de compte ---------- */
+function fillBanks() {
+  const have = new Set(S.ledger.accounts.map(a => a.toLowerCase()));
+  $('#bank-grid').innerHTML = G.BANKS.map(n => `<button type="button" data-bank="${esc(n)}" ${have.has(n.toLowerCase()) ? 'disabled' : ''}>${G.logo(n, 28)}<span>${esc(n)}</span></button>`).join('');
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-bank]'); if (!b || b.disabled) return;
+  haptic();
+  try { report(C.addAccount(b.dataset.bank)); $('#dlg-account').close(); } catch (err) { toast(err.message); }
+});
 
 /* ---------- suivi : feuilles ---------- */
 let takeAlert = null, closeId = null, acctName = null;

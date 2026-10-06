@@ -69,10 +69,14 @@
   }
 
   /* Logos des banques (icône du site, repli sur une pastille à initiale) */
-  const DOMAINS = [['trade republic', 'traderepublic.com'], ['boursorama', 'boursorama.com'], ['revolut', 'revolut.com'], ['xtb', 'xtb.com'], ['ig', 'ig.com']];
+  const DOMAINS = [['trade republic', 'traderepublic.com'], ['boursorama', 'boursorama.com'], ['boursobank', 'boursorama.com'], ['revolut', 'revolut.com'], ['xtb', 'xtb.com'], ['ig', 'ig.com'],
+    ['degiro', 'degiro.com'], ['interactive brokers', 'interactivebrokers.com'], ['saxo', 'home.saxo'], ['etoro', 'etoro.com'], ['fortuneo', 'fortuneo.fr'], ['crédit agricole', 'credit-agricole.fr'],
+    ['bnp paribas', 'mabanque.bnpparibas'], ['société générale', 'societegenerale.fr'], ['lcl', 'lcl.fr'], ['n26', 'n26.com'], ['wise', 'wise.com'], ['binance', 'binance.com'],
+    ['coinbase', 'coinbase.com'], ['kraken', 'kraken.com'], ['bitpanda', 'bitpanda.com'], ['plus500', 'plus500.com'], ['hsbc', 'hsbc.com'], ['credit mutuel', 'creditmutuel.fr'], ['crédit mutuel', 'creditmutuel.fr']];
+  const BANKS = ['XTB', 'Revolut', 'IG', 'Boursorama', 'Trade Republic', 'Degiro', 'Interactive Brokers', 'Saxo', 'eToro', 'Fortuneo', 'Crédit Agricole', 'BNP Paribas', 'Société Générale', 'LCL', 'N26', 'Wise', 'Binance', 'Coinbase', 'Kraken', 'Bitpanda'];
   const domainOf = name => {
     const n = String(name).toLowerCase().trim();
-    const hit = DOMAINS.find(([k]) => k === 'ig' ? (n === 'ig' || n.startsWith('ig ')) : n.includes(k));
+    const hit = DOMAINS.find(([k]) => k.length <= 4 ? (n === k || n.startsWith(k + ' ')) : n.includes(k));
     return hit ? hit[1] : null;
   };
   const logoUrl = name => name === 'Réserve' ? 'icon-192.png' : (domainOf(name) ? 'https://www.google.com/s2/favicons?sz=128&domain=' + domainOf(name) : null);
@@ -153,5 +157,5 @@
     document.addEventListener('scroll', hide, {passive: true});
   }
 
-  window.AlgoCharts = {logo, splitBar, stackedColumns, dumbbell, legend, dumbKey, slotOf, attachTooltips};
+  window.AlgoCharts = {logo, BANKS, splitBar, stackedColumns, dumbbell, legend, dumbKey, slotOf, attachTooltips};
 })();
