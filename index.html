@@ -402,6 +402,7 @@ nav.dock.min .dot{top:4px}
       <p id="push-msg" style="margin-top:6px">Reçois les nouvelles alertes sur l'écran de verrouillage.</p>
       <div class="row2"><button type="button" class="btn" id="push-on">Activer</button><button type="button" class="btn ghost" id="push-test">Tester</button><button type="button" class="btn ghost" id="push-off">Désactiver</button></div>
     </div>
+    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 11 · l'app se met à jour toute seule</p>
     <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
   </form>
 </dialog>
@@ -901,6 +902,8 @@ async function pushAction(a) {
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
+  /* nouvelle version installée : on recharge une fois pour ne plus avoir à rouvrir l'app deux fois */
+  if (navigator.serviceWorker.controller) { let rl = false; navigator.serviceWorker.addEventListener('controllerchange', () => { if (!rl) { rl = true; location.reload(); } }); }
   navigator.serviceWorker.addEventListener('message', e => { const t = e.data && e.data.goto; if (t === 'alerts-cfd') { view.filter = 'cfd'; if (view.tab !== 'alerts') switchTab('alerts'); else render(); C.loadAll(); } else if (TABS.includes(t)) { switchTab(t); C.loadAll(); } });
 }
 { const h = location.hash.slice(1); if (h === 'alerts-cfd') { view.tab = 'alerts'; view.filter = 'cfd'; } else if (TABS.includes(h)) view.tab = h; }
