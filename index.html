@@ -285,7 +285,9 @@ nav.dock.min .dot{top:4px}
 .swipe{position:relative;overflow:hidden;touch-action:pan-y;--sx:0px}
 .swipe>.row{transform:translateX(var(--sx));transition:transform .35s cubic-bezier(.2,.9,.3,1.1)}
 .swipe.drag>.row,.swipe.drag>.swipe-act{transition:none}
-.swipe-act{position:absolute;left:-96px;top:8px;bottom:8px;width:88px;border-radius:18px !important;transform:translateX(var(--sx));transition:transform .35s cubic-bezier(.2,.9,.3,1.1);border:0;border-radius:0 0 0 0;background:var(--down);color:#fff;font-size:13px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.swipe.full>.swipe-act{background:color-mix(in srgb,var(--down) 85%,#fff)}
+.swipe-act svg{flex:none}
+.swipe-act{position:absolute;left:0;top:8px;bottom:8px;width:max(0px,calc(var(--sx) - 8px));overflow:hidden;white-space:nowrap;padding:0;border-radius:18px !important;transition:width .35s cubic-bezier(.2,.9,.3,1.1),background .2s;border:0;border-radius:0 0 0 0;background:var(--down);color:#fff;font-size:13px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
 .swipe-act svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .swipe:last-child>.row{border-bottom:0} .swipe:first-child>.row{padding-top:15px}
 .card>div>.swipe:first-child{margin-top:-2px}
@@ -402,7 +404,7 @@ nav.dock.min .dot{top:4px}
       <p id="push-msg" style="margin-top:6px">Reçois les nouvelles alertes sur l'écran de verrouillage.</p>
       <div class="row2"><button type="button" class="btn" id="push-on">Activer</button><button type="button" class="btn ghost" id="push-test">Tester</button><button type="button" class="btn ghost" id="push-off">Désactiver</button></div>
     </div>
-    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 11 · l'app se met à jour toute seule</p>
+    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 12 · l'app se met à jour toute seule</p>
     <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
   </form>
 </dialog>
@@ -847,11 +849,21 @@ $('#form-edit').addEventListener('submit', e => {
     if (!cur) return; const mx = e.clientX - x0, my = e.clientY - y0;
     if (lock === null) { if (Math.abs(mx) > 8 && Math.abs(mx) > Math.abs(my) * 1.4) lock = 'x'; else if (Math.abs(my) > 8) lock = 'y'; }
     if (lock !== 'x') return; dx = mx;
-    const v = Math.max(0, base + dx); cur.classList.add('drag'); cur.style.setProperty('--sx', (v > W ? W + (v - W) * .3 : v) + 'px');
+    const v = Math.max(0, base + dx), full = v > cur.offsetWidth * .55;
+    cur.classList.add('drag'); cur.style.setProperty('--sx', v + 'px');
+    if (full !== cur.classList.contains('full')) { cur.classList.toggle('full', full); haptic(); }
   });
   const end = () => {
     if (!cur) return; const sw = cur; cur = null; sw.classList.remove('drag');
-    if (lock === 'x') { const open = base + dx > W * .45; sw.classList.toggle('open', open); sw.style.setProperty('--sx', open ? W + 'px' : '0px'); if (open) haptic(); sw._moved = true; setTimeout(() => { sw._moved = false; }, 80); }
+    if (lock !== 'x') return;
+    const v = Math.max(0, base + dx), act = sw.querySelector('.swipe-act');
+    sw.classList.remove('full');
+    if (act && v > sw.offsetWidth * .55) {            // glissement long : suppression directe, comme dans Mail
+      sw.style.setProperty('--sx', sw.offsetWidth + 'px'); act.click();
+    } else {
+      const open = v > W * .45; sw.classList.toggle('open', open); sw.style.setProperty('--sx', open ? W + 'px' : '0px'); if (open) haptic();
+    }
+    sw._moved = true; setTimeout(() => { sw._moved = false; }, 80);
   };
   document.addEventListener('pointerup', end); document.addEventListener('pointercancel', end);
 })();
