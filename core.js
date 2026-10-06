@@ -39,7 +39,6 @@
     ledgerSha: null,
     positions: ls.get('at.positions', {version: 1, positions: []}), positionsSha: null,
     quotes: ls.get('at.quotes', {positions: {}}),
-    rib: ls.get('at.rib', {accounts: {}}),
     alerts: null, alertsErr: null,   // alertsErr : null | 'token' | message
     sfc: null, sfcErr: null,
     seen: new Set(ls.get('at.seen', [])),
@@ -361,27 +360,21 @@
   }
 
 
-  /* ---------- RIB et virements (sur l'appareil seulement) ---------- */
-  const cleanIban = x => String(x || '').replace(/\s+/g, '').toUpperCase();
-  const fmtIban = x => cleanIban(x).replace(/(.{4})/g, '$1 ').trim();
-  function validIban(x) {
-    x = cleanIban(x); if (!/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(x)) return false;
-    let rem = 0; for (const ch of x.slice(4) + x.slice(0, 4)) for (const d of (/\d/.test(ch) ? ch : String(ch.charCodeAt(0) - 55))) rem = (rem * 10 + +d) % 97;
-    return rem === 1;
-  }
-  const getRib = name => (state.rib.accounts || {})[name] || null;
-  function setRib(name, {holder, iban, bic}) {
-    iban = cleanIban(iban);
-    if (iban && !validIban(iban)) throw new Error('IBAN invalide, vérifie les caractères');
-    state.rib.accounts = state.rib.accounts || {};
-    if (!iban) delete state.rib.accounts[name];
-    else state.rib.accounts[name] = {holder: String(holder || '').trim().slice(0, 70), iban, bic: cleanIban(bic).slice(0, 11)};
-    ls.set('at.rib', state.rib); emit();
-  }
-  /* Contenu du QR « virement SEPA » (norme EPC, lisible par la plupart des applis bancaires européennes). */
-  function epcPayload({holder, iban, bic, amount, ref}) {
-    const a = isFinite(amount) && amount > 0 ? 'EUR' + amount.toFixed(2) : '';
-    return ['BCD', '002', '1', 'SCT', bic || '', (holder || '').slice(0, 70), cleanIban(iban), a, '', '', (ref || '').slice(0, 140)].join('\n');
+  /* Fixe le montant actuel d'un compte (ou de la réserve) : un mouvement « valuation » ou un ajustement de la réserve. */
+  function setAmount(name, amount) {
+    if (!isFinite(amount) || amount < 0) throw new Error('Montant invalide');
+    amount = Math.round(amount * 100) / 100;
+    const c = computeLedger(state.ledger);
+    if (name === 'Réserve') {
+      const d = Math.round((amount - c.reserve) * 100) / 100;
+      if (d === 0) return Promise.resolve('sync');
+      state.ledger.movements.push({id: uid(), date: todayISO(), type: d > 0 ? 'deposit' : 'payout', account: null, amount: Math.abs(d), note: 'Mise à jour', pending: true});
+    } else {
+      if (!c.acc[name]) throw new Error('Compte introuvable');
+      if (Math.round(c.acc[name].value * 100) / 100 === amount) return Promise.resolve('sync');
+      state.ledger.movements.push({id: uid(), date: todayISO(), type: 'valuation', account: name, amount, note: 'Mise à jour', pending: true});
+    }
+    return saveLedger('ledger: mise à jour ' + name);
   }
 
   /* ---------- autres actions ---------- */
@@ -398,5 +391,5 @@
   window.AlgoCore = {state, on, fmt, todayISO, computeLedger, snapshots, sfcSummary, loadAll, saveSettings,
     addMovement, deleteMovement, addAccount, deleteAccount, unseenCount, markAlertsSeen,
     parseLevel, pnlAt, positionView, takePosition, updatePosition, closePosition, deletePosition, takenIds,
-    getRib, setRib, validIban, fmtIban, epcPayload, pushStatus, enablePush, disablePush, testNotification};
+    setAmount, pushStatus, enablePush, disablePush, testNotification};
 })();

@@ -281,7 +281,10 @@ nav.dock.min .dot{top:4px}
 .swipe-act svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .swipe:last-child>.row{border-bottom:0} .swipe:first-child>.row{padding-top:15px}
 .card>div>.swipe:first-child{margin-top:-2px}
-/* feuilles RIB et virement */
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.amt{background:none;border:0;padding:6px 0 6px 10px;font-weight:600;font-size:inherit;color:var(--ink);border-bottom:1px dashed rgba(255,255,255,.25)}
+.amt:active{color:var(--glacier)}
+/* feuilles */
 .x-head{display:flex;align-items:center;gap:14px;margin-bottom:6px}
 .x-head h3{margin:0}.x-head .section-note{margin:2px 0 0}
 .x-head .logo{width:44px !important;height:44px !important;margin:0}
@@ -385,28 +388,6 @@ nav.dock.min .dot{top:4px}
   </form>
 </dialog>
 
-<dialog id="dlg-move">
-  <form method="dialog" id="form-move">
-    <h3>Transaction</h3>
-    <label for="m-type">Type</label>
-    <select id="m-type">
-      <option value="deposit">Versement vers la réserve</option>
-      <option value="allocate">Répartition : réserve vers un compte</option>
-      <option value="withdraw">Retrait : compte vers la réserve</option>
-      <option value="payout">Retrait : réserve vers ma banque</option>
-      <option value="valuation">Valeur actuelle d'un compte</option>
-    </select>
-    <div id="m-acc-wrap"><label for="m-acc">Compte</label><select id="m-acc"></select></div>
-    <label for="m-amount" id="m-amount-label">Montant (€)</label>
-    <input id="m-amount" type="number" inputmode="decimal" step="0.01" min="0" required>
-    <label for="m-date">Date</label>
-    <input id="m-date" type="date" required>
-    <label for="m-note">Note (facultatif)</label>
-    <input id="m-note" maxlength="80">
-    <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
-  </form>
-</dialog>
-
 <dialog id="dlg-account">
   <form method="dialog" id="form-account">
     <h3>Ajouter un compte</h3>
@@ -446,53 +427,18 @@ nav.dock.min .dot{top:4px}
   </form>
 </dialog>
 
-<dialog id="dlg-acct">
-  <form method="dialog" id="form-acct">
-    <div class="x-head"><span id="x-logo"></span><div><h3 id="x-name"></h3><p class="section-note" id="x-info"></p></div></div>
-    <div class="push-box"><b style="font-size:14px">RIB</b>
-      <p id="x-rib" style="margin-top:6px"></p>
-      <div class="row2"><button type="button" class="btn ghost" id="x-edit">Renseigner</button><button type="button" class="btn ghost" id="x-copy">Copier l'IBAN</button></div>
-    </div>
-    <button type="button" class="btn wide" id="x-send"></button>
-    <p class="section-note" id="x-del-note" style="margin:16px 4px 0">Supprimer ce compte efface aussi ses mouvements : l'argent qui lui était alloué retourne à la réserve.</p>
-    <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Fermer</button><button class="btn danger" value="del" id="x-del">Supprimer</button></div>
-  </form>
-</dialog>
-
-<dialog id="dlg-rib">
-  <form method="dialog" id="form-rib">
-    <h3 id="r-title">RIB</h3>
-    <label for="r-holder">Titulaire</label>
-    <input id="r-holder" maxlength="70" autocomplete="off" placeholder="Prénom Nom">
-    <label for="r-iban">IBAN</label>
-    <input id="r-iban" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="FR76 …">
-    <label for="r-bic">BIC (facultatif)</label>
-    <input id="r-bic" maxlength="11" autocomplete="off" autocapitalize="characters" spellcheck="false">
-    <p class="section-note" style="margin:10px 4px 0">Le RIB reste sur cet appareil : il n'est jamais envoyé sur GitHub. Laisse l'IBAN vide pour l'effacer.</p>
+<dialog id="dlg-edit">
+  <form method="dialog" id="form-edit">
+    <div class="x-head"><span id="e-logo"></span><div><h3 id="e-name"></h3><p class="section-note" id="e-info"></p></div></div>
+    <label for="e-amount">Montant actuel (€)</label>
+    <input id="e-amount" type="number" inputmode="decimal" step="0.01" min="0" required>
     <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
-  </form>
-</dialog>
-
-<dialog id="dlg-pay">
-  <form method="dialog" id="form-pay">
-    <h3 id="p-title"></h3>
-    <p class="section-note" style="margin:0 4px" id="p-who"></p>
-    <label for="p-amount">Montant (€)</label>
-    <input id="p-amount" type="number" inputmode="decimal" step="0.01" min="0">
-    <label for="p-ref">Motif</label>
-    <input id="p-ref" maxlength="60" value="AlgoTrade">
-    <div class="qr-box" id="p-qr"></div>
-    <div class="push-box" style="margin-top:10px"><p id="p-iban" class="iban" style="margin:0 0 10px"></p>
-      <div class="row2"><button type="button" class="btn ghost" id="p-copy-iban">Copier IBAN</button><button type="button" class="btn ghost" id="p-copy-amt">Copier montant</button></div></div>
-    <p class="section-note" style="margin:10px 4px 0">Scanne le code avec ta banque (virement par QR code) ou copie l'IBAN. Tu valides le virement dans ta banque, puis tu confirmes ici.</p>
-    <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">J'ai envoyé le virement</button></div>
   </form>
 </dialog>
 
 <div class="edge top" id="edge-top"></div><div class="edge bot"></div>
 <div id="toast" role="status" aria-live="polite"></div>
 
-<script src="qrcode.js"></script>
 <script src="core.js"></script>
 <script src="charts.js"></script>
 <script>
@@ -646,37 +592,23 @@ function viewSfc() {
 }
 
 /* ---------- capital ---------- */
-const MV = {deposit: 'Versement vers la réserve', allocate: 'Réserve vers', withdraw: 'Retrait vers la réserve depuis', payout: 'Retrait vers ma banque', valuation: 'Valeur mise à jour'};
 function viewCapital() {
   const L = S.ledger, A = L.accounts, c = C.computeLedger(L), fe = F.eur;
-  const hero = `<div class="hero"><small>Capital total</small><b class="metal" id="f-total">${fe(c.total)}</b><div class="hero-sub"><span>Réserve AlgoTrade</span><b class="num">${fe(c.reserve)}</b></div></div>`;
-  const buttons = `<div class="btns"><button class="btn" id="add-move"><svg class="ico" viewBox="0 0 24 24"><path d="M4 8h14"/><path d="M14.5 4.5 18 8l-3.5 3.5"/><path d="M20 16H6"/><path d="M9.5 12.5 6 16l3.5 3.5"/></svg>Transaction</button><button class="btn ghost" id="fund"><svg class="ico" viewBox="0 0 24 24"><path d="M12 4v12"/><path d="M7 11.5l5 5 5-5"/><path d="M5 20h14"/></svg>Alimenter</button><button class="plus" id="add-account" aria-label="Ajouter un compte" title="Ajouter un compte"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>`;
-  if (!L.movements.length) return hero + buttons + `<div class="empty"><b>Aucun mouvement</b>Commence par alimenter la réserve (bouton Alimenter) ou enregistre un versement : les graphiques apparaissent ensuite.</div>`;
+  const hero = `<div class="hero"><small>Capital total</small><b class="metal" id="f-total">${fe(c.total)}</b></div>`;
+  const snaps = C.snapshots(L, 12);
+  const curve = snaps.length >= 2 ? `<section class="card"><h3>Évolution</h3><p class="sub">Capital total à chaque mise à jour.</p>${G.capitalLine(snaps, fe, F.dateShort, F.dateLong)}</section>` : '';
   const parts = [{name: 'Réserve', value: c.reserve, slot: 0}, ...A.map(n => ({name: n, value: c.acc[n].value, slot: G.slotOf(n, A)}))];
   const rowOf = p => {
     const share = c.total > 0 ? Math.max(0, p.value) / c.total * 100 : 0;
-    return `<div class="row tap" data-acct="${esc(p.name)}"><div class="l has-logo">${G.logo(p.name, 30)}<span><b>${esc(p.name)}</b> <small style="display:inline;margin-left:6px" class="num">${F.pct(share, 0)}</small></span></div>
-      <div class="r"><b class="num">${fe(p.value)}</b></div></div>`;
+    return `<div class="row"><div class="l has-logo">${G.logo(p.name, 30)}<span><b>${esc(p.name)}</b> <small style="display:inline;margin-left:6px" class="num">${F.pct(share, 0)}</small></span></div>
+      <div class="r"><button class="amt num" data-edit="${esc(p.name)}" aria-label="Modifier le montant de ${esc(p.name)}">${fe(p.value)}</button></div></div>`;
   };
   const rows = parts.map(p => p.name === 'Réserve' ? rowOf(p) :
     `<div class="swipe"><button class="swipe-act" data-delacct="${esc(p.name)}" aria-label="Supprimer ${esc(p.name)}"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg>Supprimer</button>${rowOf(p)}</div>`).join('');
-  const snaps = C.snapshots(L, 12);
-  const curve = snaps.length >= 2 ? `<section class="card"><h3>Capital</h3><p class="sub">Évolution du capital total à chaque date de saisie.</p>${G.capitalLine(snaps, fe, F.dateShort, F.dateLong)}</section>` : '';
-  const evo = snaps.length >= 2
-    ? G.stackedColumns(snaps, A, fe, F.dateShort, F.dateLong) + G.legend(parts.map(p => ({name: p.name, slot: p.slot})))
-    : `<p class="section-note">L'évolution apparaît dès la deuxième date de saisie.</p>`;
-  const dumb = G.dumbbell(A.map(n => ({name: n, invested: c.acc[n].invested, value: c.acc[n].value})), fe, F.signed);
-  const all = L.movements.slice().sort((a, b) => b.date.localeCompare(a.date));
-  const hist = (view.histAll ? all : all.slice(0, 5)).map(m => `<div class="row">
-      <div class="l">${esc(MV[m.type])}${m.account ? ' <span style="white-space:nowrap">' + G.logo(m.account, 18) + '<b>' + esc(m.account) + '</b></span>' : ''}<small>${esc(F.dateLong(m.date))}${m.note ? ' · ' + esc(m.note) : ''}</small></div>
-      <div class="r"><b class="num">${fe(m.amount, 2)}</b><small><button class="del" data-del="${esc(m.id)}" aria-label="Supprimer ce mouvement">supprimer</button></small></div></div>`).join('');
-  return `${hero}${buttons}${curve}
-    <section class="card"><h3>Où est ton épargne</h3><p class="sub">Touche une ligne pour le RIB et les virements. Glisse vers la droite pour supprimer un compte.</p>
-      ${G.splitBar(parts, fe)}<div style="margin-top:14px">${rows}</div></section>
-    <section class="card"><h3>Répartition dans le temps</h3><p class="sub">Composition du capital à chaque date de saisie.</p>${evo}</section>
-    ${dumb ? `<section class="card"><h3>Versé et valeur actuelle</h3><p class="sub">Ce que tu as mis sur chaque compte et ce qu'il vaut aujourd'hui.</p>${dumb}${G.dumbKey()}</section>` : ''}
-    <h2>Historique</h2><section class="card" style="margin-top:0">${hist}${all.length > 5 ? `<button class="more" id="hist-more">${view.histAll ? 'Réduire' : 'Tout afficher (' + all.length + ')'}</button>` : ''}</section>
-    <p class="disclaimer">Les montants des comptes sont saisis à la main : aucun lien avec les courtiers.</p>`;
+  return `${hero}${curve}
+    <section class="card"><div class="card-head"><div><h3>Où est ton épargne</h3><p class="sub" style="margin-bottom:0">Touche un montant pour le modifier. Glisse un compte vers la droite pour le supprimer.</p></div>
+      <button class="plus" id="add-account" aria-label="Ajouter un compte" title="Ajouter un compte"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>
+      <div style="margin:16px 0 14px">${G.splitBar(parts, fe)}</div>${rows}</section>`;
 }
 
 /* ---------- rendu ---------- */
@@ -709,16 +641,12 @@ function toggleAlert(card) {
 document.addEventListener('click', e => {
   const card = e.target.closest('.alert[role=button]');
   if (card && !e.target.closest('a,.take')) return toggleAlert(card);
-  const row = e.target.closest('[data-acct]');
-  if (row && !e.target.closest('button')) {
-    const sw = row.closest('.swipe');
-    if (sw && sw._moved) return;
-    if (sw && sw.classList.contains('open')) { sw.classList.remove('open'); sw.style.setProperty('--sx', '0px'); return; }
-    return openAcct(row.dataset.acct);
-  }
+  const sw0 = e.target.closest('.swipe');
+  if (sw0 && sw0._moved) return;
+  if (sw0 && sw0.classList.contains('open') && !e.target.closest('.swipe-act')) { sw0.classList.remove('open'); sw0.style.setProperty('--sx', '0px'); return; }
   const t = e.target.closest('button'); if (!t) return;
   if (t.dataset.delacct) { haptic(); return report(C.deleteAccount(t.dataset.delacct)); }
-  if (t.id === 'fund') return openPay(RESERVE);
+  if (t.dataset.edit) return openEdit(t.dataset.edit);
   if (t.dataset.take) return takeClick(t.dataset.take);
   if (t.dataset.close) return openClose(t.dataset.close);
   if (t.dataset.delpos) { haptic(); return report(C.deletePosition(t.dataset.delpos)); }
@@ -729,10 +657,7 @@ document.addEventListener('click', e => {
   if (t.dataset.filter) { haptic(); view.filter = t.dataset.filter; view.animate = true; return render(); }
   if (t.id === 'refresh') { haptic(); return refreshNow(); }
   if (t.id === 'settings') return openSettings();
-  if (t.id === 'add-move') return openMove();
-  if (t.id === 'hist-more') { view.histAll = !view.histAll; return render(); }
   if (t.id === 'add-account') { fillBanks(); $('#a-name').value = ''; $('#a-err').hidden = true; return $('#dlg-account').showModal(); }
-  if (t.dataset.del) return report(C.deleteMovement(t.dataset.del));
 });
 document.addEventListener('keydown', e => {
   if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('.alert[role=button]')) { e.preventDefault(); toggleAlert(e.target); }
@@ -774,23 +699,6 @@ $('#form-settings').addEventListener('submit', e => {
   C.saveSettings({repo: $('#s-repo').value, branch: $('#s-branch').value, dataBranch: $('#s-data').value, token: $('#s-token').value});
 });
 
-function syncMoveForm() {
-  const ty = $('#m-type').value;
-  $('#m-acc-wrap').hidden = ty === 'deposit' || ty === 'payout';
-  $('#m-amount-label').textContent = ty === 'valuation' ? 'Valeur actuelle du compte (€)' : 'Montant (€)';
-}
-function openMove() {
-  $('#m-acc').innerHTML = S.ledger.accounts.map(a => `<option>${esc(a)}</option>`).join('');
-  $('#m-date').value = C.todayISO(); $('#m-amount').value = ''; $('#m-note').value = ''; syncMoveForm();
-  $('#dlg-move').showModal();
-}
-$('#m-type').addEventListener('change', syncMoveForm);
-$('#form-move').addEventListener('submit', e => {
-  if (e.submitter && e.submitter.value !== 'ok') return;
-  try {
-    report(C.addMovement({type: $('#m-type').value, account: $('#m-acc').value, amount: parseFloat($('#m-amount').value), date: $('#m-date').value, note: $('#m-note').value.trim()}));
-  } catch (err) { e.preventDefault(); toast(err.message); }
-});
 $('#form-account').addEventListener('submit', e => {
   if (e.submitter && e.submitter.value !== 'ok') return;
   try { report(C.addAccount($('#a-name').value)); }
@@ -850,75 +758,20 @@ $('#form-close').addEventListener('submit', e => {
   try { report(C.closePosition(closeId, parseFloat($('#c-price').value))); } catch (err) { e.preventDefault(); toast(err.message); }
 });
 const RESERVE = 'Réserve';
-function openAcct(name) {
-  acctName = name; const c = C.computeLedger(S.ledger), isRes = name === RESERVE, a = isRes ? null : c.acc[name]; if (!isRes && !a) return;
-  $('#x-logo').innerHTML = G.logo(name, 44);
-  $('#x-name').textContent = isRes ? 'Réserve AlgoTrade' : name;
-  $('#x-info').textContent = isRes ? 'Disponible ' + F.eur(c.reserve, 0) : 'Versé ' + F.eur(a.invested, 0) + ' · valeur ' + F.eur(a.value, 0);
-  const r = C.getRib(name);
-  $('#x-rib').innerHTML = r ? `${r.holder ? esc(r.holder) + '<br>' : ''}<span class="iban">${esc(C.fmtIban(r.iban))}</span>` : '<span class="muted">Aucun RIB enregistré.</span>';
-  $('#x-edit').textContent = r ? 'Modifier' : 'Renseigner'; $('#x-copy').hidden = !r;
-  $('#x-send').innerHTML = isRes ? 'Alimenter la réserve' : 'Envoyer de l\'argent vers ' + esc(name);
-  $('#x-del').hidden = isRes; $('#x-del-note').hidden = isRes;
-  $('#dlg-acct').showModal();
+let editName = null;
+function openEdit(name) {
+  const c = C.computeLedger(S.ledger), isRes = name === RESERVE;
+  if (!isRes && !c.acc[name]) return;
+  editName = name; haptic();
+  $('#e-logo').innerHTML = G.logo(name, 44);
+  $('#e-name').textContent = isRes ? 'Réserve AlgoTrade' : name;
+  $('#e-info').textContent = 'Saisis le montant que tu as aujourd\'hui sur ce compte.';
+  $('#e-amount').value = Math.round((isRes ? c.reserve : c.acc[name].value) * 100) / 100;
+  $('#dlg-edit').showModal(); setTimeout(() => $('#e-amount').select(), 80);
 }
-$('#form-acct').addEventListener('submit', e => {
-  if (!e.submitter || e.submitter.value !== 'del') return;
-  try { report(C.deleteAccount(acctName)); } catch (err) { e.preventDefault(); toast(err.message); }
-});
-const copyText = async (t, ok) => { try { await navigator.clipboard.writeText(t); haptic(); toast(ok); } catch (e) { toast('Copie impossible : appuie longuement sur le texte'); } };
-$('#x-copy').addEventListener('click', () => { const r = C.getRib(acctName); if (r) copyText(r.iban, 'IBAN copié'); });
-$('#x-edit').addEventListener('click', () => openRib(acctName));
-$('#x-send').addEventListener('click', () => { $('#dlg-acct').close(); openPay(acctName); });
-
-/* ---------- RIB ---------- */
-let ribName = null, afterRib = null;
-function openRib(name, then) {
-  ribName = name; afterRib = then || null;
-  const r = C.getRib(name) || {}, other = Object.values(S.rib.accounts || {}).find(x => x.holder);
-  $('#r-title').textContent = 'RIB · ' + (name === RESERVE ? 'Réserve AlgoTrade' : name);
-  $('#r-holder').value = r.holder || (other && other.holder) || ''; $('#r-iban').value = r.iban ? C.fmtIban(r.iban) : ''; $('#r-bic').value = r.bic || '';
-  if ($('#dlg-acct').open) $('#dlg-acct').close();
-  $('#dlg-rib').showModal();
-}
-$('#form-rib').addEventListener('submit', e => {
+$('#form-edit').addEventListener('submit', e => {
   if (e.submitter && e.submitter.value !== 'ok') return;
-  try {
-    C.setRib(ribName, {holder: $('#r-holder').value, iban: $('#r-iban').value, bic: $('#r-bic').value});
-    toast('RIB enregistré sur cet appareil'); haptic('success');
-    if (afterRib) { const f = afterRib; setTimeout(f, 250); }
-  } catch (err) { e.preventDefault(); toast(err.message); }
-});
-
-/* ---------- virement : QR SEPA, copie, puis confirmation ---------- */
-let payName = null;
-function qrSvg(text) {
-  const q = qrcode(0, 'M'); q.addData(text, 'Byte'); q.make();
-  const n = q.getModuleCount(); let d = '';
-  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c + 2} ${r + 2}h1v1h-1z`;
-  return `<svg viewBox="0 0 ${n + 4} ${n + 4}" shape-rendering="crispEdges" role="img" aria-label="QR code de virement"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
-}
-function payRefresh() {
-  const r = C.getRib(payName), amt = parseFloat($('#p-amount').value);
-  try { $('#p-qr').innerHTML = qrSvg(C.epcPayload({holder: r.holder || 'AlgoTrade', iban: r.iban, bic: r.bic, amount: amt, ref: $('#p-ref').value})); } catch (e) { $('#p-qr').textContent = 'QR indisponible'; }
-}
-function openPay(name) {
-  if (!C.getRib(name)) { toast('Renseigne d\'abord le RIB'); return openRib(name, () => openPay(name)); }
-  payName = name; const r = C.getRib(name), isRes = name === RESERVE;
-  $('#p-title').textContent = isRes ? 'Alimenter la réserve' : 'Envoyer vers ' + name;
-  $('#p-who').textContent = (isRes ? 'Depuis ta banque vers la réserve AlgoTrade' : 'Depuis la réserve AlgoTrade vers ' + name) + (r.holder ? ' · ' + r.holder : '');
-  $('#p-iban').textContent = C.fmtIban(r.iban); $('#p-amount').value = ''; $('#p-ref').value = 'AlgoTrade';
-  payRefresh(); $('#dlg-pay').showModal();
-}
-$('#p-amount').addEventListener('input', payRefresh); $('#p-ref').addEventListener('input', payRefresh);
-$('#p-copy-iban').addEventListener('click', () => copyText(C.getRib(payName).iban, 'IBAN copié'));
-$('#p-copy-amt').addEventListener('click', () => { const a = parseFloat($('#p-amount').value); if (a > 0) copyText(a.toFixed(2).replace('.', ','), 'Montant copié'); else toast('Saisis un montant'); });
-$('#form-pay').addEventListener('submit', e => {
-  if (e.submitter && e.submitter.value !== 'ok') return;
-  const a = parseFloat($('#p-amount').value);
-  if (!(a > 0)) { e.preventDefault(); return toast('Saisis le montant du virement'); }
-  try { report(payName === RESERVE ? C.addMovement({type: 'deposit', amount: a, date: C.todayISO(), note: 'Virement'}) : C.addMovement({type: 'allocate', account: payName, amount: a, date: C.todayISO(), note: 'Virement'})); }
-  catch (err) { e.preventDefault(); toast(err.message); }
+  try { report(C.setAmount(editName, parseFloat($('#e-amount').value))); } catch (err) { e.preventDefault(); toast(err.message); }
 });
 
 /* ---------- glisser pour supprimer ---------- */
