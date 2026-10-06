@@ -594,16 +594,17 @@ function viewSfc() {
 /* ---------- capital ---------- */
 function viewCapital() {
   const L = S.ledger, A = L.accounts, c = C.computeLedger(L), fe = F.eur;
-  const hero = `<div class="hero"><small>Capital total</small><b class="metal" id="f-total">${fe(c.total)}</b></div>`;
-  const snaps = C.snapshots(L, 12);
+  const total = c.value;   // somme des comptes : la réserve n'est plus affichée ni comptée
+  const hero = `<div class="hero"><small>Capital total</small><b class="metal" id="f-total">${fe(total)}</b></div>`;
+  const snaps = C.snapshots(L, 12).map(x => ({...x, total: Object.values(x.values).reduce((a, v) => a + v, 0)}));
   const curve = snaps.length >= 2 ? `<section class="card"><h3>Évolution</h3><p class="sub">Capital total à chaque mise à jour.</p>${G.capitalLine(snaps, fe, F.dateShort, F.dateLong)}</section>` : '';
-  const parts = [{name: 'Réserve', value: c.reserve, slot: 0}, ...A.map(n => ({name: n, value: c.acc[n].value, slot: G.slotOf(n, A)}))];
+  const parts = A.map(n => ({name: n, value: c.acc[n].value, slot: G.slotOf(n, A)}));
   const rowOf = p => {
-    const share = c.total > 0 ? Math.max(0, p.value) / c.total * 100 : 0;
+    const share = total > 0 ? Math.max(0, p.value) / total * 100 : 0;
     return `<div class="row"><div class="l has-logo">${G.logo(p.name, 30)}<span><b>${esc(p.name)}</b> <small style="display:inline;margin-left:6px" class="num">${F.pct(share, 0)}</small></span></div>
       <div class="r"><button class="amt num" data-edit="${esc(p.name)}" aria-label="Modifier le montant de ${esc(p.name)}">${fe(p.value)}</button></div></div>`;
   };
-  const rows = parts.map(p => p.name === 'Réserve' ? rowOf(p) :
+  const rows = parts.map(p =>
     `<div class="swipe"><button class="swipe-act" data-delacct="${esc(p.name)}" aria-label="Supprimer ${esc(p.name)}"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg>Supprimer</button>${rowOf(p)}</div>`).join('');
   return `${hero}${curve}
     <section class="card"><div class="card-head"><div><h3>Où est ton épargne</h3><p class="sub" style="margin-bottom:0">Touche un montant pour le modifier. Glisse un compte vers la droite pour le supprimer.</p></div>
@@ -621,7 +622,7 @@ function render() {
   const v = $('#view');
   v.classList.toggle('enter', view.animate && !reduceMotion());
   v.innerHTML = view.tab === 'alerts' ? viewAlerts() : view.tab === 'sfc' ? viewSfc() : viewCapital();
-  const ft = $('#f-total'); if (ft) { ft._v = view.lastTotal ?? 0; view.lastTotal = c.total; tween(ft, c.total, v => F.eur(v)); }
+  const ft = $('#f-total'); if (ft) { ft._v = view.lastTotal ?? 0; view.lastTotal = c.value; tween(ft, c.value, v => F.eur(v)); }
   view.animate = false;
   if (!S.loading) $('#ptr').classList.remove('spin');
 }
@@ -757,16 +758,15 @@ $('#form-close').addEventListener('submit', e => {
   if (e.submitter && e.submitter.value !== 'ok') return;
   try { report(C.closePosition(closeId, parseFloat($('#c-price').value))); } catch (err) { e.preventDefault(); toast(err.message); }
 });
-const RESERVE = 'Réserve';
 let editName = null;
 function openEdit(name) {
-  const c = C.computeLedger(S.ledger), isRes = name === RESERVE;
-  if (!isRes && !c.acc[name]) return;
+  const c = C.computeLedger(S.ledger);
+  if (!c.acc[name]) return;
   editName = name; haptic();
   $('#e-logo').innerHTML = G.logo(name, 44);
-  $('#e-name').textContent = isRes ? 'Réserve AlgoTrade' : name;
+  $('#e-name').textContent = name;
   $('#e-info').textContent = 'Saisis le montant que tu as aujourd\'hui sur ce compte.';
-  $('#e-amount').value = Math.round((isRes ? c.reserve : c.acc[name].value) * 100) / 100;
+  $('#e-amount').value = Math.round(c.acc[name].value * 100) / 100;
   $('#dlg-edit').showModal(); setTimeout(() => $('#e-amount').select(), 80);
 }
 $('#form-edit').addEventListener('submit', e => {

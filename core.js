@@ -365,15 +365,9 @@
     if (!isFinite(amount) || amount < 0) throw new Error('Montant invalide');
     amount = Math.round(amount * 100) / 100;
     const c = computeLedger(state.ledger);
-    if (name === 'Réserve') {
-      const d = Math.round((amount - c.reserve) * 100) / 100;
-      if (d === 0) return Promise.resolve('sync');
-      state.ledger.movements.push({id: uid(), date: todayISO(), type: d > 0 ? 'deposit' : 'payout', account: null, amount: Math.abs(d), note: 'Mise à jour', pending: true});
-    } else {
-      if (!c.acc[name]) throw new Error('Compte introuvable');
-      if (Math.round(c.acc[name].value * 100) / 100 === amount) return Promise.resolve('sync');
-      state.ledger.movements.push({id: uid(), date: todayISO(), type: 'valuation', account: name, amount, note: 'Mise à jour', pending: true});
-    }
+    if (!c.acc[name]) throw new Error('Compte introuvable');
+    if (Math.round(c.acc[name].value * 100) / 100 === amount) return Promise.resolve('sync');
+    state.ledger.movements.push({id: uid(), date: todayISO(), type: 'valuation', account: name, amount, note: 'Mise à jour', pending: true});
     return saveLedger('ledger: mise à jour ' + name);
   }
 
