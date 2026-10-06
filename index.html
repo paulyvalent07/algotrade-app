@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#E8EDF1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1620" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AlgoTrade">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
+<title>AlgoTrade</title>
+<style>
+/* ====== Jetons de design : c'est ici (et seulement ici) qu'on change l'apparence ====== */
+:root{
+  --bg:#E8EDF1; --surface:#F6F8FA; --ink:#101C2C; --muted:#566678; --line:#C7D2DB;
+  --up:#0A7A5C; --down:#B5382E; --signal:#2A45F0; --warn:#9A6200; --on-signal:#fff;
+  --text-2:#566678; --text-3:#5F6F80; --grid:#DCE3E9; --axis:#B9C5CF;
+  --series-0:#898781; --series-1:#2a78d6; --series-2:#eb6834; --series-3:#1baf7a; --series-4:#eda100;
+  --series-5:#e87ba4; --series-6:#008300; --series-7:#4a3aa7;
+  --dumb-from:#86b6ef; --dumb-to:#1c5cab;
+  --radius:12px;
+  --font:'Bricolage Grotesque',ui-rounded,system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1620; --surface:#162230; --ink:#E6EDF3; --muted:#8FA1B3; --line:#26364A;
+    --up:#3FCF9F; --down:#FF7A6E; --signal:#8FA2FF; --warn:#E3A93C; --on-signal:#0E1620;
+    --text-2:#B5C2CF; --text-3:#8FA1B3; --grid:#223244; --axis:#33465B;
+    --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70; --series-4:#c98500;
+    --series-5:#d55181; --series-6:#008300; --series-7:#9085e9;
+    --dumb-from:#184f95; --dumb-to:#6da7ec;
+  }
+}
+/* ====== Mise en page ====== */
+*{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.45 var(--font);min-height:100vh;
+  padding:0 16px calc(84px + env(safe-area-inset-bottom));}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto}
+header{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(14px + env(safe-area-inset-top)) 0 12px;border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-weight:700;font-size:20px;letter-spacing:-.01em}
+.icons{display:flex;gap:4px}
+.ibtn{background:none;border:0;padding:8px;border-radius:8px;color:var(--muted);min-width:40px;min-height:40px}
+.ibtn:active{background:var(--line)}
+.figures{display:flex;gap:28px;margin-top:8px}
+.fig small{display:block;color:var(--muted);font-size:13px}
+.fig b{font-size:22px;font-weight:650;letter-spacing:-.01em}
+.up{color:var(--up)} .down{color:var(--down)} .muted{color:var(--muted)}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:6px 16px calc(6px + env(safe-area-inset-bottom));z-index:6}
+nav .wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+nav button{background:none;border:0;padding:10px 4px;border-radius:8px;font-weight:550;color:var(--muted);position:relative}
+nav button[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 -3px 0 var(--signal)}
+.dot{position:absolute;top:6px;margin-left:6px;min-width:18px;height:18px;border-radius:9px;background:var(--signal);color:var(--on-signal);font-size:11px;font-weight:700;line-height:18px;padding:0 5px}
+h2{font-size:18px;font-weight:650;margin:22px 0 8px;letter-spacing:-.005em}
+.section-note{color:var(--muted);font-size:14px;margin-bottom:8px}
+/* alertes */
+.chips{display:flex;gap:6px;overflow-x:auto;padding:14px 0 4px;scrollbar-width:none}
+.chip{white-space:nowrap;border:1px solid var(--line);background:none;border-radius:999px;padding:6px 12px;font-size:14px;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.alert{padding:16px 0 16px 14px;border-bottom:1px solid var(--line);border-left:3px solid var(--line)}
+.alert.long{border-left-color:var(--up)} .alert.short{border-left-color:var(--down)}
+.alert.fresh{background:linear-gradient(90deg,color-mix(in srgb,var(--signal) 8%,transparent),transparent 70%)}
+.a-head{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--muted)}
+.a-title{font-weight:650;font-size:17px;margin:4px 0 2px}
+.dir{font-weight:700}
+.a-sum{margin:6px 0 10px}
+.levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px 12px;margin:8px 0}
+.levels div small{display:block;color:var(--muted);font-size:12px}
+.levels div b{font-weight:600}
+.a-risk{font-size:14px;color:var(--muted)}
+.a-risk b{color:var(--warn);font-weight:600}
+.a-src{margin-top:8px;display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px}
+.a-src a{color:var(--signal)}
+.disclaimer{font-size:12px;color:var(--muted);margin-top:10px}
+/* listes */
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.row .l{min-width:0}
+.row .l small,.row .r small{display:block;color:var(--muted);font-size:13px}
+.row .r{text-align:right;white-space:nowrap}
+.panel .row:last-child{border-bottom:0}
+.badge{display:inline-block;font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:1px 6px;margin-left:6px;color:var(--muted)}
+.badge.real{color:var(--signal);border-color:var(--signal)}
+.status{padding:10px 12px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--line);margin-top:14px;display:flex;gap:10px;align-items:center}
+.pulse{width:10px;height:10px;border-radius:50%;background:var(--up);flex:none}
+.pulse.off{background:var(--down)}
+/* capital et graphiques */
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.btn{border:1px solid var(--ink);background:var(--ink);color:var(--bg);border-radius:8px;padding:10px 14px;font-weight:600}
+.btn.ghost{background:none;color:var(--ink);border-color:var(--line)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-top:12px}
+.panel h3{font-size:16px;font-weight:650}
+.panel .sub{color:var(--muted);font-size:13px;margin:2px 0 12px}
+.split{display:flex;gap:2px;height:36px;border-radius:6px;overflow:hidden;background:var(--surface)}
+.split i{display:block;min-width:3px}
+.split i:hover,.split i:focus-visible{filter:brightness(1.12)}
+.chart{width:100%;height:auto;display:block;overflow:visible}
+.chart .grid{stroke:var(--grid);stroke-width:1}
+.chart .axis{stroke:var(--axis);stroke-width:1}
+.chart .tick{fill:var(--text-3);font-size:10.5px;font-variant-numeric:tabular-nums}
+.chart .value{fill:var(--ink);font-size:12px;font-weight:650}
+.chart .label{fill:var(--ink);font-size:13px}
+.chart .delta{fill:var(--ink);font-size:12.5px;font-weight:650;font-variant-numeric:tabular-nums}
+.chart .delta.up{fill:var(--up)} .chart .delta.down{fill:var(--down)}
+.chart .link{stroke:var(--dumb-to);stroke-width:2;opacity:.45;stroke-linecap:round}
+.chart .dot-from{fill:var(--dumb-from);stroke:var(--surface);stroke-width:2}
+.chart .dot-to{fill:var(--dumb-to);stroke:var(--surface);stroke-width:2}
+.chart .hit{fill:transparent;cursor:pointer}
+.chart .hit:hover,.chart .hit:focus{fill:rgba(128,128,128,.12);outline:none}
+.legend-line{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--text-2);margin-top:10px}
+.key{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+.dotkey{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.dotkey.from{background:var(--dumb-from)} .dotkey.to{background:var(--dumb-to)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px}
+.num{font-variant-numeric:tabular-nums}
+#tip{position:fixed;z-index:20;pointer-events:none;background:var(--ink);color:var(--bg);border-radius:8px;padding:8px 10px;font-size:13px;opacity:0;transition:opacity .1s;max-width:240px}
+#tip.on{opacity:1}
+.tip-t{font-weight:650;margin-bottom:4px}
+.tip-r{display:flex;gap:8px;align-items:center;line-height:1.5}
+.tip-r b{font-weight:650;font-variant-numeric:tabular-nums}
+.tip-r span{opacity:.75}
+.tip-k{width:10px;height:3px;border-radius:2px;flex:none}
+/* feuilles */
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);padding:18px;width:min(92vw,440px);margin:auto}
+dialog::backdrop{background:rgba(8,14,22,.5)}
+dialog h3{font-size:18px;margin-bottom:12px}
+label{display:block;font-size:14px;color:var(--muted);margin:10px 0 4px}
+input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.dlg-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.empty{padding:28px 0;color:var(--muted)}
+.empty b{display:block;color:var(--ink);margin-bottom:4px}
+.err{padding:12px;border-radius:var(--radius);border:1px solid var(--down);color:var(--down);margin-top:14px;font-size:14px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom));background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:8px;font-size:14px;z-index:9;opacity:0;pointer-events:none;transition:opacity .2s}
+#toast.on{opacity:1}
+.loading .panel,.loading #view>*{opacity:.6}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="top">
+      <span class="brand">AlgoTrade</span>
+      <div class="icons">
+        <button class="ibtn" id="refresh" aria-label="Actualiser">&#8635;</button>
+        <button class="ibtn" id="settings" aria-label="Réglages">&#9881;</button>
+      </div>
+    </div>
+    <div class="figures">
+      <div class="fig"><small>Capital total</small><b id="f-total">–</b></div>
+      <div class="fig"><small>SFC, cumul</small><b id="f-sfc">–</b></div>
+    </div>
+  </header>
+  <main id="view"></main>
+</div>
+
+<nav><div class="wrap" role="tablist">
+  <button role="tab" data-tab="alerts" aria-selected="true">Alertes<span class="dot" id="badge" hidden></span></button>
+  <button role="tab" data-tab="sfc" aria-selected="false">SFC</button>
+  <button role="tab" data-tab="capital" aria-selected="false">Capital</button>
+</div></nav>
+
+<dialog id="dlg-settings">
+  <form method="dialog" id="form-settings">
+    <h3>Réglages</h3>
+    <label for="s-repo">Dépôt GitHub</label>
+    <input id="s-repo" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <label for="s-branch">Branche de SFC</label>
+    <input id="s-branch" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <label for="s-data">Branche des données (alertes et capital)</label>
+    <input id="s-data" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <label for="s-token">Jeton GitHub (lecture et écriture sur ce dépôt)</label>
+    <input id="s-token" type="password" autocomplete="off" placeholder="github_pat_…">
+    <p class="section-note" style="margin-top:8px">Le jeton reste sur cet appareil. Sans jeton, les alertes et SFC ne se chargent pas, et le capital reste local.</p>
+    <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-move">
+  <form method="dialog" id="form-move">
+    <h3>Nouveau mouvement</h3>
+    <label for="m-type">Type</label>
+    <select id="m-type">
+      <option value="deposit">Versement vers la réserve</option>
+      <option value="allocate">Répartition : réserve vers un compte</option>
+      <option value="withdraw">Retrait : compte vers la réserve</option>
+      <option value="payout">Retrait : réserve vers ma banque</option>
+      <option value="valuation">Valeur actuelle d'un compte</option>
+    </select>
+    <div id="m-acc-wrap"><label for="m-acc">Compte</label><select id="m-acc"></select></div>
+    <label for="m-amount" id="m-amount-label">Montant (€)</label>
+    <input id="m-amount" type="number" inputmode="decimal" step="0.01" min="0" required>
+    <label for="m-date">Date</label>
+    <input id="m-date" type="date" required>
+    <label for="m-note">Note (facultatif)</label>
+    <input id="m-note" maxlength="80">
+    <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-account">
+  <form method="dialog" id="form-account">
+    <h3>Nouveau compte</h3>
+    <p class="section-note">Un compte ou un portefeuille, par exemple « XTB Actions » ou « XTB Matières ».</p>
+    <label for="a-name">Nom</label>
+    <input id="a-name" maxlength="40" required autocomplete="off">
+    <p class="err" id="a-err" hidden></p>
+    <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Ajouter</button></div>
+  </form>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="core.js"></script>
+<script src="charts.js"></script>
+<script>
+'use strict';
+/* Vue : ne contient que de l'affichage. Toute la logique est dans core.js et charts.js. */
+const C = window.AlgoCore, G = window.AlgoCharts, F = C.fmt, S = C.state;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const view = {tab: 'alerts', filter: 'all'};
+const CAT = {cfd: 'CFD', short_term: 'Action court terme', long_term: 'Action long terme'};
+
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2800); }
+function report(promise) {
+  promise.then(r => toast(r === 'sync' ? 'Enregistré et synchronisé' : r === 'local' ? 'Enregistré sur cet appareil. Ajoute un jeton pour synchroniser.' : 'Enregistré ici, synchronisation échouée (' + r.slice(6) + ')'));
+}
+const num = (cls, html) => `<span class="num ${cls || ''}">${html}</span>`;
+const tokenHelp = () => `<div class="err">Dépôt privé : ajoute ton jeton GitHub dans les réglages (&#9881;) pour charger les données.</div>`;
+
+/* ---------- alertes ---------- */
+function viewAlerts() {
+  if (S.alertsErr === 'token') return tokenHelp();
+  if (S.alertsErr) return `<div class="err">Impossible de lire les alertes : ${esc(S.alertsErr)}.</div>`;
+  if (S.alerts === null) return `<p class="empty">Chargement…</p>`;
+  const chips = [['all', 'Tout'], ['cfd', 'CFD'], ['short_term', 'Court terme'], ['long_term', 'Long terme']]
+    .map(([k, l]) => `<button class="chip" data-filter="${k}" aria-pressed="${view.filter === k}">${l}</button>`).join('');
+  const list = S.alerts.filter(a => view.filter === 'all' || a.category === view.filter);
+  const body = list.length ? list.map(alertHtml).join('') :
+    `<div class="empty"><b>Aucune alerte pour l'instant</b>Les scans publient ici dès qu'un candidat passe leur filtre. Un jour sans alerte est normal.</div>`;
+  return `<div class="chips">${chips}</div>${body}<p class="disclaimer">Aide à la décision, pas un conseil financier. Les CFD à levier peuvent faire perdre plus que la mise.</p>`;
+}
+function alertHtml(a) {
+  const fresh = !S.seen.has(a.id);
+  const dir = a.direction === 'long' ? '<span class="dir up">Achat</span> ' : a.direction === 'short' ? '<span class="dir down">Vente</span> ' : '';
+  const lv = [['Entrée', a.entry], ['Stop', a.stop], ['Objectif', a.target], ['Levier', a.leverage], ['Horizon', a.horizon]]
+    .filter(([, v]) => v).map(([k, v]) => `<div><small>${k}</small><b>${esc(v)}</b></div>`).join('');
+  const src = (a.sources || []).filter(s => /^https?:\/\//.test(s.url)).map(s => `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.name)}</a>`).join('');
+  return `<article class="alert ${esc(a.direction || '')} ${fresh ? 'fresh' : ''}">
+    <div class="a-head"><span>${esc(CAT[a.category] || a.category)}</span><span>${esc(F.dateTime(a.ts))}</span></div>
+    <div class="a-title">${dir}${esc(a.title || a.ticker)}</div>
+    ${a.summary ? `<p class="a-sum">${esc(a.summary)}</p>` : ''}
+    ${lv ? `<div class="levels">${lv}</div>` : ''}
+    ${a.risk ? `<p class="a-risk"><b>Risque principal.</b> ${esc(a.risk)}</p>` : ''}
+    ${src ? `<div class="a-src">${src}</div>` : ''}
+  </article>`;
+}
+
+/* ---------- SFC ---------- */
+function viewSfc() {
+  if (S.sfcErr === 'token') return tokenHelp();
+  if (S.sfcErr) return `<div class="err">Impossible de lire SFC : ${esc(S.sfcErr)}.</div>`;
+  const s = C.sfcSummary(S.sfc);
+  if (!s) return `<p class="empty">Chargement…</p>`;
+  const tone = v => v > 0 ? 'up' : v < 0 ? 'down' : '';
+  const price = v => esc(+v.toPrecision(6));
+  const pos = s.positions.length ? s.positions.map(p => `<div class="row">
+      <div class="l"><b>${esc(p.symbol)}</b> ${p.side === 'long' ? 'achat' : 'vente'}<span class="badge ${p.real ? 'real' : ''}">${p.real ? 'IG réel' : 'simulé'}</span>
+        <small>entrée ${price(p.entry)}, ${F.ago(p.since)}</small></div>
+      <div class="r"><b class="num">${F.eur(p.notional)}</b><small class="num">TP ${price(p.tp)} / SL ${price(p.sl)}</small></div></div>`).join('')
+    : `<div class="empty"><b>Aucune position ouverte</b>Le bot attend un signal au prochain cycle horaire.</div>`;
+  const ex = s.exits.map(r => `<div class="row">
+      <div class="l"><b>${esc(r.symbol)}</b><small>${esc(F.dateTime(r.ts))}${r.reason ? ' · ' + esc(r.reason) : ''}</small></div>
+      <div class="r ${tone(r.pnl)}"><b class="num">${F.signed(r.pnl)}</b></div></div>`).join('');
+  return `<div class="status"><span class="pulse ${s.alive ? '' : 'off'}"></span>
+      <div>${s.alive ? 'Bot actif' : 'Bot silencieux'}<small class="muted" style="display:block;font-size:13px">Dernier cycle ${F.ago(s.lastCycle)}${s.errors24h ? `, ${s.errors24h} erreur${s.errors24h > 1 ? 's' : ''} sur 24 h` : ''}</small></div></div>
+    <div class="row"><div class="l">Résultat cumulé</div><div class="r ${tone(s.cum)}"><b class="num">${F.signed(s.cum)}</b></div></div>
+    <div class="row"><div class="l">7 derniers jours</div><div class="r ${tone(s.week)}"><b class="num">${F.signed(s.week)}</b></div></div>
+    <div class="row"><div class="l">Capital de trading</div><div class="r"><b class="num">${F.eur(s.capital)}</b></div></div>
+    <h2>Positions ouvertes</h2>${pos}
+    <h2>Derniers trades clôturés</h2>${ex || '<p class="empty">Aucun trade clôturé.</p>'}`;
+}
+
+/* ---------- capital ---------- */
+const MV = {deposit: 'Versement vers la réserve', allocate: 'Réserve vers', withdraw: 'Retrait vers la réserve depuis', payout: 'Retrait vers ma banque', valuation: 'Valeur mise à jour'};
+function viewCapital() {
+  const L = S.ledger, A = L.accounts, c = C.computeLedger(L), fe = F.eur;
+  const buttons = `<div class="btns"><button class="btn" id="add-move">Nouveau mouvement</button><button class="btn ghost" id="add-account">Ajouter un compte</button></div>`;
+  if (!L.movements.length) return buttons + `<div class="empty"><b>Aucun mouvement</b>Commence par enregistrer un versement vers la réserve : les graphiques apparaissent ensuite.</div>`;
+  const parts = [{name: 'Réserve', value: c.reserve, slot: 0}, ...A.map(n => ({name: n, value: c.acc[n].value, slot: G.slotOf(n, A)}))];
+  const rows = parts.map(p => {
+    const a = c.acc[p.name], share = c.total > 0 ? Math.max(0, p.value) / c.total * 100 : 0;
+    const perf = a && a.invested ? a.value - a.invested : null;
+    return `<div class="row"><div class="l"><span class="sw" style="background:var(--series-${p.slot})"></span><b>${esc(p.name)}</b>
+        <small>${F.pct(share)}${a ? ', versé ' + fe(a.invested) : ', non investi'}</small></div>
+      <div class="r"><b class="num">${fe(p.value)}</b>${perf !== null ? `<small class="num ${perf > 0 ? 'up' : perf < 0 ? 'down' : ''}">${F.signed(perf, 0)}</small>` : ''}</div></div>`;
+  }).join('');
+  const snaps = C.snapshots(L, 12);
+  const evo = snaps.length >= 2
+    ? G.stackedColumns(snaps, A, fe, F.dateShort, F.dateLong) + G.legend(parts.map(p => ({name: p.name, slot: p.slot})))
+    : `<p class="section-note">L'évolution apparaît dès la deuxième date de saisie.</p>`;
+  const dumb = G.dumbbell(A.map(n => ({name: n, invested: c.acc[n].invested, value: c.acc[n].value})), fe, F.signed);
+  const hist = L.movements.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 12).map(m => `<div class="row">
+      <div class="l">${esc(MV[m.type])}${m.account ? ' <b>' + esc(m.account) + '</b>' : ''}<small>${esc(F.dateLong(m.date))}${m.note ? ' · ' + esc(m.note) : ''}</small></div>
+      <div class="r"><b class="num">${fe(m.amount, 2)}</b><small><button class="chip" data-del="${esc(m.id)}" aria-label="Supprimer ce mouvement">supprimer</button></small></div></div>`).join('');
+  return `${buttons}
+    <section class="panel"><h3>Où est ton épargne</h3><p class="sub">Part de chaque poche dans le capital total.</p>
+      ${G.splitBar(parts, fe)}<div style="margin-top:6px">${rows}</div></section>
+    <section class="panel"><h3>Évolution dans le temps</h3><p class="sub">Composition du capital à chaque date de saisie.</p>${evo}</section>
+    ${dumb ? `<section class="panel"><h3>Versé et valeur actuelle</h3><p class="sub">Ce que tu as mis sur chaque compte et ce qu'il vaut aujourd'hui.</p>${dumb}${G.dumbKey()}</section>` : ''}
+    <h2>Historique</h2>${hist}
+    <p class="disclaimer">Les montants des comptes sont saisis à la main : aucun lien avec les courtiers.</p>`;
+}
+
+/* ---------- rendu ---------- */
+function render() {
+  const c = C.computeLedger(S.ledger);
+  $('#f-total').textContent = F.eur(c.total);
+  const el = $('#f-sfc'), sum = C.sfcSummary(S.sfc);
+  if (sum) { el.textContent = F.signed(sum.cum); el.className = sum.cum > 0 ? 'up' : sum.cum < 0 ? 'down' : ''; }
+  else { el.textContent = '–'; el.className = 'muted'; }
+  const u = C.unseenCount(), b = $('#badge'); b.hidden = u === 0; b.textContent = u;
+  document.querySelectorAll('nav button').forEach(x => x.setAttribute('aria-selected', x.dataset.tab === view.tab));
+  document.body.classList.toggle('loading', S.loading);
+  $('#view').innerHTML = view.tab === 'alerts' ? viewAlerts() : view.tab === 'sfc' ? viewSfc() : viewCapital();
+}
+C.on('change', render);
+
+/* ---------- interactions ---------- */
+function switchTab(t) {
+  if (view.tab === 'alerts') C.markAlertsSeen();
+  view.tab = t; render(); window.scrollTo(0, 0);
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.tab) return switchTab(t.dataset.tab);
+  if (t.dataset.filter) { view.filter = t.dataset.filter; return render(); }
+  if (t.id === 'refresh') return C.loadAll();
+  if (t.id === 'settings') return openSettings();
+  if (t.id === 'add-move') return openMove();
+  if (t.id === 'add-account') { $('#a-name').value = ''; $('#a-err').hidden = true; return $('#dlg-account').showModal(); }
+  if (t.dataset.del) return report(C.deleteMovement(t.dataset.del));
+});
+
+function openSettings() {
+  $('#s-repo').value = S.settings.repo; $('#s-branch').value = S.settings.branch; $('#s-data').value = S.settings.dataBranch; $('#s-token').value = S.settings.token;
+  $('#dlg-settings').showModal();
+}
+$('#form-settings').addEventListener('submit', e => {
+  if (e.submitter && e.submitter.value !== 'ok') return;
+  C.saveSettings({repo: $('#s-repo').value, branch: $('#s-branch').value, dataBranch: $('#s-data').value, token: $('#s-token').value});
+});
+
+function syncMoveForm() {
+  const ty = $('#m-type').value;
+  $('#m-acc-wrap').hidden = ty === 'deposit' || ty === 'payout';
+  $('#m-amount-label').textContent = ty === 'valuation' ? 'Valeur actuelle du compte (€)' : 'Montant (€)';
+}
+function openMove() {
+  $('#m-acc').innerHTML = S.ledger.accounts.map(a => `<option>${esc(a)}</option>`).join('');
+  $('#m-date').value = C.todayISO(); $('#m-amount').value = ''; $('#m-note').value = ''; syncMoveForm();
+  $('#dlg-move').showModal();
+}
+$('#m-type').addEventListener('change', syncMoveForm);
+$('#form-move').addEventListener('submit', e => {
+  if (e.submitter && e.submitter.value !== 'ok') return;
+  try {
+    report(C.addMovement({type: $('#m-type').value, account: $('#m-acc').value, amount: parseFloat($('#m-amount').value), date: $('#m-date').value, note: $('#m-note').value.trim()}));
+  } catch (err) { e.preventDefault(); toast(err.message); }
+});
+$('#form-account').addEventListener('submit', e => {
+  if (e.submitter && e.submitter.value !== 'ok') return;
+  try { report(C.addAccount($('#a-name').value)); }
+  catch (err) { e.preventDefault(); const er = $('#a-err'); er.hidden = false; er.textContent = err.message + '.'; }
+});
+
+G.attachTooltips();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+render(); C.loadAll();
+</script>
+</body>
+</html>
