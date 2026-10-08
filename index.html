@@ -352,12 +352,64 @@ nav.dock.min .dot{top:4px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading #view{opacity:.7;transition:opacity .3s}
 
-/* écran de lancement */
-#splash{position:fixed;inset:0;z-index:50;background:var(--bg);display:grid;place-items:center;transition:opacity .6s ease,visibility .6s}
-#splash.out{opacity:0;visibility:hidden}
-#splash img{width:132px;height:132px;border-radius:30px;animation:splashin 1s cubic-bezier(.2,.8,.2,1) both,glow 2.4s ease-in-out infinite alternate}
+/* écran de lancement : le contour se dessine, le reflet traverse le logo, le nom se pose */
+#splash{position:fixed;inset:0;z-index:50;background:var(--bg);background-image:var(--halo);background-repeat:no-repeat;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;
+  transition:opacity .7s ease,transform .8s cubic-bezier(.3,.7,.2,1),visibility .7s}
+#splash.out{opacity:0;visibility:hidden;transform:scale(1.06)}
+.sp-logo{position:relative;width:132px;height:132px}
+.sp-logo img{width:100%;height:100%;border-radius:30px;display:block;animation:splashin 1s cubic-bezier(.2,.8,.2,1) both,glow 2.4s ease-in-out infinite alternate}
+.sp-logo::after{content:"";position:absolute;inset:0;border-radius:30px;pointer-events:none;background:linear-gradient(110deg,transparent 38%,rgba(255,255,255,.5) 50%,transparent 62%);background-size:260% 100%;background-position:160% 0;animation:sweep 1.5s cubic-bezier(.3,.6,.2,1) .9s both}
+.sp-ring{position:absolute;left:-9px;top:-9px;width:calc(100% + 18px);height:calc(100% + 18px);overflow:visible}
+.sp-ring rect{fill:none;stroke:var(--glacier);stroke-width:1;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1.6s cubic-bezier(.5,.1,.2,1) .3s forwards}
+.sp-word{font-size:14px;font-weight:600;letter-spacing:.42em;padding-left:.42em;text-transform:uppercase;color:var(--text-2);animation:wordin 1.2s cubic-bezier(.2,.8,.2,1) .8s both}
+.sp-line{width:96px;height:2px;border-radius:2px;background:rgba(255,255,255,.1);overflow:hidden}
+.sp-line i{display:block;height:100%;background:var(--glacier);transform:scaleX(0);transform-origin:left;animation:load 1.6s cubic-bezier(.4,.1,.2,1) .4s forwards}
 @keyframes splashin{from{opacity:0;transform:scale(.86);filter:blur(10px)}}
 @keyframes glow{from{box-shadow:0 0 40px rgba(147,190,220,.06)}to{box-shadow:0 0 90px rgba(147,190,220,.22)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes sweep{from{background-position:160% 0}to{background-position:-60% 0}}
+@keyframes wordin{from{opacity:0;letter-spacing:.9em;filter:blur(6px)}to{opacity:1;letter-spacing:.42em}}
+@keyframes load{to{transform:scaleX(1)}}
+
+/* hors connexion */
+#offline{position:fixed;z-index:60;left:50%;top:calc(10px + env(safe-area-inset-top));max-width:calc(100vw - 32px);display:flex;align-items:center;gap:12px;padding:11px 20px 11px 16px;border-radius:999px;font-size:14px;font-weight:600;
+  background:color-mix(in srgb,var(--bg-2) 72%,transparent);border:1px solid color-mix(in srgb,var(--down) 50%,transparent);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);box-shadow:var(--shadow);
+  transform:translate(-50%,-90px);opacity:0;pointer-events:none;transition:transform .5s cubic-bezier(.3,1.25,.4,1),opacity .3s}
+#offline.on{transform:translate(-50%,0);opacity:1}
+#offline svg{width:20px;height:20px;flex:none;stroke:var(--down);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#offline small{display:block;color:var(--muted);font-weight:400;font-size:12px;margin-top:1px}
+
+/* tuiles compactes du suivi : un coup d'oeil sur tout, un toucher pour agrandir */
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
+.tile{position:relative;display:flex;flex-direction:column;gap:2px;min-width:0;text-align:left;padding:11px 12px;border-radius:20px;color:inherit;background:var(--glass);border:1px solid var(--line);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);transition:transform .2s,background .2s,border-color .25s}
+.tile:active{transform:scale(.96);background:var(--glass-2)}
+.tile .t-top{display:flex;justify-content:space-between;align-items:center;gap:4px}
+.tile .t-sym{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .t-dir{font-size:8px;flex:none}
+.tile .t-name{font-size:12.5px;font-weight:600;line-height:1.22;letter-spacing:-.01em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.44em;margin-top:2px}
+.tile .t-pct{font-size:17px;font-weight:620;letter-spacing:-.02em;margin-top:6px;white-space:nowrap}
+.tile .t-eur{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.tile.hit-win{border-color:color-mix(in srgb,var(--up) 55%,transparent)}
+.tile.hit-loss{border-color:color-mix(in srgb,var(--down) 55%,transparent)}
+.tile.done{opacity:.72}
+.tile-full{grid-column:1/-1}
+.tile-full .card{margin-top:0;animation:rise .4s cubic-bezier(.2,.7,.2,1) both}
+.xsym{font-size:11px;font-weight:600;letter-spacing:.07em;color:var(--muted);margin-left:6px;vertical-align:middle;white-space:nowrap}
+
+/* analyse */
+.chart .bar-up{fill:var(--up)} .chart .bar-down{fill:var(--down)}
+.chart .bar-ghost{fill:color-mix(in srgb,var(--glacier) 24%,transparent)} .chart .bar-core{fill:var(--glacier)}
+.chart .zone-loss{fill:color-mix(in srgb,var(--down) 34%,transparent)} .chart .zone-gain{fill:color-mix(in srgb,var(--up) 34%,transparent)}
+.chart .lvl-dot{fill:var(--ink);stroke:var(--surface);stroke-width:2} .chart .lvl-dot.out{fill:var(--surface);stroke:var(--ink);stroke-width:1.5}
+.dotkey.core{background:var(--glacier)} .dotkey.ghost{background:color-mix(in srgb,var(--glacier) 28%,transparent);box-shadow:inset 0 0 0 1px var(--glacier)}
+.bd{margin-top:16px} .bd-h{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;margin-bottom:6px} .bd-h span{color:var(--text-2)}
+.bd-t{height:6px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden} .bd-t i{display:block;height:100%;border-radius:99px;background:var(--glacier)}
+.hero b.neg{--metal:linear-gradient(180deg,#FFD3DF 0%,#FF6E96 45%,#F0245F 100%)}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:18px 12px}
+.kpis small{display:block;color:var(--muted);font-size:12.5px} .kpis b{font-size:19px;font-weight:600;letter-spacing:-.01em}
+.sub-h{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:22px 0 0}
+
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   .metal{background-position:-60% 0,0 0}
@@ -365,7 +417,7 @@ nav.dock.min .dot{top:4px}
 </style>
 </head>
 <body>
-<div id="splash" aria-hidden="true"><img src="icon-512.png" alt=""></div>
+<div id="splash" aria-hidden="true"><div class="sp-logo"><img src="icon-512.png" alt=""><svg class="sp-ring" viewBox="0 0 100 100"><rect x="1" y="1" width="98" height="98" rx="26" pathLength="1"/></svg></div><div class="sp-word">AlgoTrade</div><div class="sp-line"><i></i></div></div>
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v10M7.5 11 12 15.5 16.5 11"/></svg></div>
 
 <div class="wrap">
@@ -384,7 +436,7 @@ nav.dock.min .dot{top:4px}
 <nav class="dock" aria-label="Navigation"><div class="dock-in" role="tablist" id="dock">
   <span class="dock-pill" aria-hidden="true"></span>
   <button role="tab" data-tab="alerts" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M6 17.5V11a6 6 0 0 1 12 0v6.5l1.5 1.5h-15z"/><path d="M10 21.5h4"/></svg>Alertes<span class="dot" id="badge" hidden></span></button>
-  <button role="tab" data-tab="sfc" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>SFC</button>
+  <button role="tab" data-tab="analysis" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M5 20v-7M12 20V4M19 20v-10"/><path d="M3 20h18"/></svg>Analyse</button>
   <button role="tab" data-tab="capital" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 1 0 8.5 8.5H12z"/><path d="M15.5 3.9a8.5 8.5 0 0 1 4.6 4.6h-4.6z"/></svg>Capital</button>
 </div></nav>
 
@@ -401,12 +453,12 @@ nav.dock.min .dot{top:4px}
     <input id="s-token" type="password" autocomplete="off" placeholder="github_pat_…">
     <label for="s-finnhub">Clé Finnhub (cours en direct des actions, facultatif)</label>
     <input id="s-finnhub" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="clé gratuite sur finnhub.io">
-    <p class="section-note" style="margin:10px 4px 0">Le jeton reste sur cet appareil. Sans jeton, les alertes et SFC ne se chargent pas, et le capital reste local.</p>
+    <p class="section-note" style="margin:10px 4px 0">Le jeton reste sur cet appareil. Sans jeton, les alertes ne se chargent pas, et le capital reste local.</p>
     <div class="push-box"><b style="font-size:14px">Notifications</b>
       <p id="push-msg" style="margin-top:6px">Reçois les nouvelles alertes sur l'écran de verrouillage.</p>
       <div class="row2"><button type="button" class="btn" id="push-on">Activer</button><button type="button" class="btn ghost" id="push-test">Tester</button><button type="button" class="btn ghost" id="push-off">Désactiver</button></div>
     </div>
-    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 18 · l'app se met à jour toute seule</p>
+    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 19 · l'app se met à jour toute seule</p>
     <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
   </form>
 </dialog>
@@ -461,18 +513,21 @@ nav.dock.min .dot{top:4px}
 
 <div class="edge top" id="edge-top"></div><div class="edge bot"></div>
 <div id="toast" role="status" aria-live="polite"></div>
+<div id="offline" role="status" aria-live="polite"><svg viewBox="0 0 24 24"><path d="M2 8.8a15 15 0 0 1 20 0M5.2 12.4a10.4 10.4 0 0 1 13.6 0M8.7 16a5.2 5.2 0 0 1 6.6 0"/><path d="M12 19.6h.01"/><path d="M3.5 3.5l17 17"/></svg><div>Hors connexion<small>Derniers cours connus affichés</small></div></div>
 
 <script src="core.js"></script>
 <script src="charts.js"></script>
+<script src="names.js"></script>
+<script src="analysis.js"></script>
 <script>
 'use strict';
 /* Vue : ne contient que de l'affichage. Toute la logique est dans core.js et charts.js. */
-const C = window.AlgoCore, G = window.AlgoCharts, F = C.fmt, S = C.state;
+const C = window.AlgoCore, G = window.AlgoCharts, N = window.AlgoNames, A = window.AlgoAnalysis, F = C.fmt, S = C.state;
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const view = {tab: 'alerts', filter: 'all', open: new Set(), histAll: false, animate: true};
 const CAT = {cfd: 'CFD', short_term: 'Court terme', long_term: 'Long terme'};
-const TABS = ['alerts', 'sfc', 'capital'];
+const TABS = ['alerts', 'analysis', 'capital'];
 const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------- retour haptique (iPhone : bascule native ; Android : vibration) ---------- */
@@ -502,17 +557,24 @@ function tween(el, to, f) {
 }
 
 /* ---------- alertes ---------- */
+const offlineHtml = () => `<div class="empty"><b>Hors connexion</b>Les alertes reviendront dès que le réseau sera de retour. Ton suivi reste consultable.</div>`;
 function viewAlerts() {
-  if (S.alertsErr === 'token') return tokenHelp();
-  if (S.alertsErr) return `<div class="err">Impossible de lire les alertes : ${esc(S.alertsErr)}.</div>`;
-  if (S.alerts === null) return `<p class="empty">Chargement…</p>`;
-  const chips = [['all', 'Tout'], ['cfd', 'CFD'], ['short_term', 'Court terme'], ['long_term', 'Long terme'], ['track', 'Suivi' + (S.positions.positions.some(p => p.status === 'open') ? ' · ' + S.positions.positions.filter(p => p.status === 'open').length : '')]]
-    .map(([k, l]) => `<button class="chip" data-filter="${k}" aria-pressed="${view.filter === k}">${l}</button>`).join('');
-  if (view.filter === 'track') return `<div class="chips">${chips}</div>${viewTrack()}`;
+  const tracked = S.positions.positions.filter(p => p.status === 'open').length;
+  const chips = `<div class="chips">${[['all', 'Tout'], ['cfd', 'CFD'], ['short_term', 'Court terme'], ['long_term', 'Long terme'], ['track', 'Suivi' + (tracked ? ' · ' + tracked : '')]]
+    .map(([k, l]) => `<button class="chip" data-filter="${k}" aria-pressed="${view.filter === k}">${l}</button>`).join('')}</div>`;
+  if (view.filter === 'track') return chips + viewTrack();
+  if (S.alertsErr === 'token') return chips + tokenHelp();
+  if (S.alertsErr) return chips + (navigator.onLine ? `<div class="err">Impossible de lire les alertes : ${esc(S.alertsErr)}.</div>` : offlineHtml());
+  if (S.alerts === null) return chips + `<p class="empty">Chargement…</p>`;
   const list = S.alerts.concat(C.sfcOrders()).filter(a => !S.dismissed.has(a.id) && (view.filter === 'all' || a.category === view.filter)).sort((a, b) => String(b.ts).localeCompare(String(a.ts)));
   const body = list.length ? list.map(a => swipeWrap(a.id, alertHtml(a))).join('') :
     `<div class="empty"><b>Aucune alerte pour l'instant</b>Les scans publient ici dès qu'un candidat passe leur filtre. Un jour sans alerte est normal.</div>`;
-  return `<div class="chips">${chips}</div>${scansHtml()}${body}<p class="disclaimer">Aide à la décision, pas un conseil financier. Les CFD à levier peuvent faire perdre plus que la mise.</p>`;
+  return `${chips}${scansHtml()}${body}<p class="disclaimer">Aide à la décision, pas un conseil financier. Les CFD à levier peuvent faire perdre plus que la mise.</p>`;
+}
+/* titre d'un actif : nom anglais + symbole XTB (la référence) */
+function titleHtml(o, prefix = '', style = '') {
+  const id = N.resolve(o);
+  return `<div class="a-title"${style ? ` style="${style}"` : ''}>${esc(prefix)}${esc(id.name)}${id.xtb ? `<span class="xsym">${esc(id.xtb)}</span>` : ''}</div>`;
 }
 function swipeWrap(id, html) {
   return `<div class="swipe aw"><button class="swipe-act" data-dismiss="${esc(id)}" aria-label="Supprimer"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg>Supprimer</button>${html}</div>`;
@@ -527,7 +589,7 @@ function orderHtml(a) {
   const note = a.real ? "Cet ordre existe sur ton compte démo IG." : "Ordre virtuel : le bot le suit en simulation, rien n'est placé chez IG.";
   return `<article class="alert ${open ? 'open' : ''}" data-alert="${esc(a.id)}" role="button" tabindex="0" aria-expanded="${open}">
     <div class="a-top"><span class="a-cat">SFC · ${where}<span style="font-weight:400;letter-spacing:0;text-transform:none">· ${esc(F.ago(a.ts))}</span></span><span class="a-right">${tag}${a.exit ? '' : a.done && !taken ? '<span class="badge">Clôturé</span>' : `<button class="take ${taken ? 'on' : ''}" data-take="${esc(a.id)}" aria-label="${taken ? 'Position suivie' : 'Suivre cette position'}"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>`}</span></div>
-    <div class="a-title">${esc(a.title)}</div>
+    ${titleHtml(a, a.exit ? 'Clôture · ' : '')}
     ${lvh ? `<div class="lv">${lvh}</div>` : ''}
     <div class="a-more"><div><div class="a-body">
       <p class="a-sum">${a.exit ? esc((a.why || 'Sortie') + (a.pnl != null ? ' · résultat calculé par le bot' : '')) + '. Clôture ta position XTB si tu l\'as ouverte.' : 'À reproduire sur XTB si tu veux la suivre.'}</p>
@@ -548,7 +610,7 @@ function alertHtml(a) {
   const more = a.summary || meta || a.risk || src;
   return `<article class="alert ${open ? 'open' : ''}" data-alert="${esc(a.id)}" ${more ? 'role="button" tabindex="0" aria-expanded="' + open + '"' : ''}>
     <div class="a-top"><span class="a-cat">${fresh ? '<i class="fresh-dot" title="Nouvelle"></i>' : ''}${esc(CAT[a.category] || a.category)}<span style="font-weight:400;letter-spacing:0;text-transform:none">· ${esc(F.ago(a.ts))}</span></span><span class="a-right">${tag}<button class="take ${taken ? 'on' : ''}" data-take="${esc(a.id)}" aria-label="${taken ? 'Position suivie' : 'Suivre cette position'}"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></span></div>
-    <div class="a-title">${esc(a.title || a.ticker)}</div>
+    ${titleHtml(a)}
     ${lv ? `<div class="lv">${lv}</div>` : ''}
     ${more ? `<div class="a-more"><div><div class="a-body">
       ${a.summary ? `<p class="a-sum">${esc(a.summary)}</p>` : ''}
@@ -593,14 +655,25 @@ function posHtml(raw) {
   const badge = closed ? '<span class="badge">Clôturée</span>' : p.hit === 'target' ? '<span class="badge win">Objectif atteint</span>' : p.hit === 'stop' ? '<span class="badge loss">Stop touché</span>' : '<span class="badge">En cours</span>';
   const tag = p.direction === 'short' ? '<span class="tag sell">Vente</span>' : '<span class="tag buy">Achat</span>';
   return `<article class="card pos"><div class="a-top"><span class="a-cat">${p.source === 'sfc' ? 'SFC · ' : ''}${esc(CAT[p.category] || p.category)}</span><span class="a-right">${tag}${badge}</span></div>
-    <div class="a-title" style="margin-top:8px">${esc(p.title)}</div>
+    ${titleHtml(p, '', 'margin-top:8px')}
     <div class="p-pnl ${cls}">${eur == null ? '–' : F.signed(eur)}${pct != null ? `<small>${pct > 0 ? '+' : pct < 0 ? '−' : ''}${F.pct(Math.abs(pct), 1)}</small>` : ''}</div>
     <div class="p-row"><span>Engagé <b class="num">${F.eur(p.amount, 0)}</b>${p.leverage ? ' · levier ' + esc(p.leverage) : ''}</span><span>Entrée <b class="num">${fp(p.entry)}</b></span></div>
     <div class="p-row"><span>${closed ? 'Sortie' : 'Dernier cours'} <b class="num">${(closed ? p.exit.price : p.last) != null ? fp(closed ? p.exit.price : p.last) : '–'}</b></span><span class="muted">${closed ? esc(F.dateLong(p.exit.ts)) : p.last_ts ? esc(F.dateTime(p.last_ts)) : 'en attente de cours'}</span></div>
     ${closed ? '' : gaugeHtml(p)}
     ${p.source === 'sfc' ? `<div class="p-row"><span class="muted">${closed ? (p.exit.by === 'bot' ? 'Clôturée par le bot' + (p.exit.reason ? ' · ' + esc(p.exit.reason) : '') : 'Clôturée à la main') : p.bot ? 'Bot : stop suiveur <b class="num">' + fp(p.bot.trail) + '</b>' : 'Bot : ordre non retrouvé'}</span><span class="muted">${!closed && p.bot && p.bot.cycle ? 'scan ' + esc(F.ago(p.bot.cycle)) : ''}</span></div>` : ''}
-    <div class="p-actions">${closed ? '' : `<button class="btn ghost" data-close="${esc(p.id)}">Clôturer</button>`}<button class="linkbtn" data-delpos="${esc(p.id)}">Supprimer</button></div></article>`;
+    <div class="p-actions">${closed ? '' : `<button class="btn ghost" data-close="${esc(p.id)}">Clôturer</button>`}<button class="linkbtn" data-delpos="${esc(p.id)}">Supprimer</button><button class="linkbtn" data-fold="${esc(p.id)}" style="margin-left:auto">Réduire</button></div></article>`;
 }
+function posTile(raw) {
+  const p = C.positionView(raw), closed = p.status === 'closed', r = closed ? p.exit : p.res, id = N.resolve(p);
+  const eur = r ? r.eur : null, pct = r ? r.pct : null, cls = eur == null ? 'muted' : eur > 0 ? 'up' : eur < 0 ? 'down' : 'muted';
+  const hit = closed ? '' : p.hit === 'target' ? 'hit-win' : p.hit === 'stop' ? 'hit-loss' : '', short = p.direction === 'short';
+  return `<button class="tile ${hit} ${closed ? 'done' : ''}" data-tile="${esc(p.id)}" aria-expanded="false" aria-label="${esc(id.name)}, agrandir">
+    <span class="t-top"><span class="t-sym">${esc(id.xtb || CAT[p.category] || '')}</span><span class="t-dir ${short ? 'down' : 'up'}">${short ? '▼' : '▲'}</span></span>
+    <span class="t-name">${esc(id.name)}</span>
+    <span class="t-pct num ${cls}">${pct == null ? '–' : (pct > 0 ? '+' : pct < 0 ? '−' : '') + F.pct(Math.abs(pct), 1)}</span>
+    <span class="t-eur num">${eur == null ? 'en attente' : F.signed(eur, 0)}</span></button>`;
+}
+const tileOrCard = raw => view.open.has('pos:' + raw.id) ? `<div class="tile-full">${posHtml(raw)}</div>` : posTile(raw);
 function viewTrack() {
   const all = S.positions.positions.slice().sort((a, b) => String(b.openedAt).localeCompare(String(a.openedAt)));
   if (!all.length) return `<div class="empty"><b>Aucune position suivie</b>Coche le rond d'une alerte, indique le montant alloué : l'ordre est considéré comme exécuté et suivi ici.</div>`;
@@ -608,48 +681,42 @@ function viewTrack() {
   const views = open.map(C.positionView);
   const engaged = open.reduce((s, p) => s + p.amount, 0), latent = views.reduce((s, p) => s + (p.res ? p.res.eur : 0), 0), real = done.reduce((s, p) => s + (p.exit ? p.exit.eur : 0), 0);
   const sum = `<section class="card sum-card"><div><small>Engagé</small><b class="num">${F.eur(engaged, 0)}</b></div><div><small>En cours</small><b class="num ${latent > 0 ? 'up' : latent < 0 ? 'down' : 'muted'}">${F.signed(latent)}</b></div><div><small>Réalisé</small><b class="num ${real > 0 ? 'up' : real < 0 ? 'down' : 'muted'}">${F.signed(real)}</b></div></section>`;
-  return sum + open.map(posHtml).join('') + (done.length ? `<h2>Clôturées</h2>` + done.map(posHtml).join('') : '') +
+  return sum + `<div class="tiles">${open.map(tileOrCard).join('')}</div>` + (done.length ? `<h2>Clôturées</h2><div class="tiles">${done.map(tileOrCard).join('')}</div>` : '') +
     `<p class="disclaimer">Cours SFC rafraîchis toutes les ~5 min ; actions US en direct avec une clé Finnhub (réglages). Résultat estimé sur le montant alloué, levier inclus.</p>`;
 }
 
-/* ---------- SFC ---------- */
-function sparkline(s) {
-  const ex = s.exits.slice().sort((a, b) => a.ts.localeCompare(b.ts));
-  if (ex.length < 2) return '';
-  let c = s.cum - ex.reduce((t, r) => t + r.pnl, 0); const pts = [c];
-  ex.forEach(r => { c += r.pnl; pts.push(c); });
-  const W = 340, H = 96, P = 6, mn = Math.min(...pts), mx = Math.max(...pts), span = (mx - mn) || 1;
-  const X = i => P + i * (W - 2 * P) / (pts.length - 1), Y = v => H - P - (v - mn) / span * (H - 2 * P);
-  const d = pts.map((v, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1)).join(' ');
-  const zero = mn < 0 && mx > 0 ? `<line class="zero" x1="${P}" x2="${W - P}" y1="${Y(0)}" y2="${Y(0)}"/>` : '';
-  return `<svg class="spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Résultat cumulé sur les derniers trades clôturés">
-    <defs><linearGradient id="sparkfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--glacier)" stop-opacity=".16"/><stop offset="1" stop-color="var(--glacier)" stop-opacity="0"/></linearGradient></defs>
-    ${zero}<path class="area" d="${d} L${X(pts.length - 1)} ${H - P} L${X(0)} ${H - P} Z"/><path class="ln" d="${d}"/><circle class="end" cx="${X(pts.length - 1)}" cy="${Y(pts[pts.length - 1])}" r="3.2"/></svg>`;
-}
-function viewSfc() {
-  if (S.sfcErr === 'token') return tokenHelp();
-  if (S.sfcErr) return `<div class="err">Impossible de lire SFC : ${esc(S.sfcErr)}.</div>`;
-  const s = C.sfcSummary(S.sfc);
-  if (!s) return `<p class="empty">Chargement…</p>`;
-  const tone = v => v > 0 ? 'up' : v < 0 ? 'down' : '';
-  const price = v => esc(+v.toPrecision(6));
-  const pos = s.positions.length ? s.positions.map(p => `<div class="row">
-      <div class="l"><b>${esc(p.symbol)}</b><span class="badge ${p.real ? 'real' : ''}">${p.real ? 'IG réel' : 'simulé'}</span>
-        <small>${p.side === 'long' ? 'Achat' : 'Vente'} à ${price(p.entry)}, ${F.ago(p.since)}</small></div>
-      <div class="r"><b class="num">${F.eur(p.notional)}</b><small class="num">TP ${price(p.tp)} · SL ${price(p.sl)}</small></div></div>`).join('')
-    : `<div class="empty"><b>Aucune position ouverte</b>Le bot attend un signal au prochain cycle horaire.</div>`;
-  const ex = s.exits.map(r => `<div class="row">
-      <div class="l"><b>${esc(r.symbol)}</b><small>${esc(F.dateTime(r.ts))}${r.reason ? ' · ' + esc(r.reason) : ''}</small></div>
-      <div class="r ${tone(r.pnl)}"><b class="num">${F.signed(r.pnl)}</b></div></div>`).join('');
-  return `<div class="status"><span class="pulse ${s.alive ? '' : 'off'}"></span>
-      <div>${s.alive ? 'Bot actif' : 'Bot silencieux'}<small>Dernier cycle ${F.ago(s.lastCycle)}${s.errors24h ? `, ${s.errors24h} erreur${s.errors24h > 1 ? 's' : ''} sur 24 h` : ''}</small></div></div>
-    <section class="card"><small class="muted" style="font-size:13.5px">Résultat cumulé</small>
-      <b class="big metal num ${s.cum < 0 ? 'neg' : ''}">${F.signed(s.cum)}</b>
-      ${sparkline(s)}
-      <div class="stats"><div><small>7 derniers jours</small><b class="num ${tone(s.week)}">${F.signed(s.week)}</b></div>
-        <div><small>Capital de trading</small><b class="num">${F.eur(s.capital)}</b></div></div></section>
-    <h2>Positions ouvertes</h2><section class="card" style="margin-top:0">${pos}</section>
-    <h2>Derniers trades</h2>${ex ? `<section class="card" style="margin-top:0">${ex}</section>` : '<p class="empty">Aucun trade clôturé.</p>'}`;
+/* ---------- analyse des positions ---------- */
+function viewAnalysis() {
+  const all = S.positions.positions;
+  if (!all.length) return `<div class="empty"><b>Rien à analyser pour l'instant</b>Coche une alerte et indique le montant alloué : la position apparaît ici avec ses graphiques.</div>`;
+  const open = all.filter(p => p.status !== 'closed'), done = all.filter(p => p.status === 'closed' && p.exit);
+  const rs = A.rows(open.map(C.positionView), C, N), tot = A.sum, tone = v => v > 0 ? 'up' : v < 0 ? 'down' : 'muted';
+  const latent = tot(rs, r => r.eur), engaged = tot(rs, r => r.amount), expo = tot(rs, r => r.notional);
+  const maxLoss = tot(rs, r => r.lossAtStop), maxGain = tot(rs, r => r.gainAtTarget), waiting = rs.filter(r => r.eur == null).length;
+  const card = (h, sub, body) => body ? `<section class="card"><h3>${h}</h3><p class="sub">${sub}</p>${body}</section>` : '';
+  let out = '';
+  if (open.length) {
+    out += `<div class="hero"><small>Résultat latent · ${open.length} position${open.length > 1 ? 's' : ''} en cours</small><b class="metal num ${latent < 0 ? 'neg' : ''}">${F.signed(latent)}</b>
+      ${waiting ? `<div class="hero-sub"><span class="pill-dot"></span>${waiting} position${waiting > 1 ? 's' : ''} en attente de cours</div>` : ''}</div>
+      <section class="card"><div class="kpis">
+        <div><small>Engagé</small><b class="num">${F.eur(engaged, 0)}</b></div>
+        <div><small>Exposition${engaged > 0 ? ' · x' + (expo / engaged).toFixed(1).replace('.', ',') : ''}</small><b class="num">${F.eur(expo, 0)}</b></div>
+        <div><small>Perte si tous les stops sont touchés</small><b class="num down">${maxLoss ? F.signed(maxLoss, 0) : '–'}</b></div>
+        <div><small>Gain si tous les objectifs sont atteints</small><b class="num up">${maxGain ? F.signed(maxGain, 0) : '–'}</b></div></div></section>`;
+    out += card('Résultat par position', 'Résultat latent estimé sur le montant engagé, levier inclus.', A.pnlBars(rs, F, N));
+    out += card('Répartition', 'Où est engagé ton capital de trading.',
+      A.allocation(rs, F, N) + `<p class="sub-h">Par type</p>` + A.breakdown(rs, F, r => CAT[r.cat] || r.cat) + `<p class="sub-h">Par sens</p>` + A.breakdown(rs, F, r => r.dir === 'short' ? 'Vente' : 'Achat'));
+    out += card('Exposition', 'Le levier multiplie ce que tu risques vraiment.', A.exposure(rs, F, N) + A.exposureKey());
+    const lv = A.levels(rs, F, N);
+    out += card('Entre stop et objectif', 'Le point blanc est le dernier cours, le trait vertical ton entrée.', lv ? lv + `<div class="legend-line"><span><i class="key" style="background:color-mix(in srgb,var(--down) 55%,transparent)"></i>Zone de perte</span><span><i class="key" style="background:color-mix(in srgb,var(--up) 55%,transparent)"></i>Zone de gain</span></div>` : '');
+  } else out += `<div class="empty"><b>Aucune position en cours</b>Les graphiques reviennent dès que tu suis une nouvelle alerte.</div>`;
+  if (done.length) {
+    const real = tot(done, p => p.exit.eur), wins = done.filter(p => p.exit.eur > 0).length;
+    const curve = A.realised(done.map(p => ({...p, name: N.resolve(p).name})), F, F.dateShort, F.dateLong);
+    out += `<section class="card"><h3>Résultat réalisé</h3><p class="sub">Positions clôturées, cumul dans l'ordre des clôtures.</p>${curve}
+      <div class="stats"><div><small>Total réalisé</small><b class="num ${tone(real)}">${F.signed(real, 0)}</b></div><div><small>Trades gagnants</small><b class="num">${wins} sur ${done.length}</b></div></div></section>`;
+  }
+  return out + `<p class="disclaimer">Estimations d'après les derniers cours connus. Rien ici n'est un conseil financier.</p>`;
 }
 
 /* ---------- capital ---------- */
@@ -682,7 +749,7 @@ function render() {
   document.body.classList.toggle('loading', S.loading);
   const v = $('#view');
   v.classList.toggle('enter', view.animate && !reduceMotion());
-  v.innerHTML = view.tab === 'alerts' ? viewAlerts() : view.tab === 'sfc' ? viewSfc() : viewCapital();
+  v.innerHTML = view.tab === 'alerts' ? viewAlerts() : view.tab === 'analysis' ? viewAnalysis() : viewCapital();
   const ft = $('#f-total'); if (ft) { ft._v = view.lastTotal ?? 0; view.lastTotal = c.value; tween(ft, c.value, v => F.eur(v)); }
   view.animate = false;
   if (!S.loading) $('#ptr').classList.remove('spin');
@@ -703,6 +770,8 @@ function toggleAlert(card) {
 document.addEventListener('click', e => {
   const sc = e.target.closest('.scan');
   if (sc) { const id = 'scan:' + sc.dataset.scan, o = !sc.classList.contains('open'); sc.classList.toggle('open', o); sc.setAttribute('aria-expanded', o); o ? view.open.add(id) : view.open.delete(id); haptic(); return; }
+  const tl = e.target.closest('[data-tile],[data-fold]');
+  if (tl) { const k = 'pos:' + (tl.dataset.tile || tl.dataset.fold); view.open.has(k) ? view.open.delete(k) : view.open.add(k); haptic(); return render(); }
   const sw0 = e.target.closest('.swipe');
   if (sw0 && sw0._moved) return;
   if (sw0 && sw0.classList.contains('open') && !e.target.closest('.swipe-act')) { sw0.classList.remove('open'); sw0.style.setProperty('--sx', '0px'); return; }
@@ -775,7 +844,18 @@ $('#form-account').addEventListener('submit', e => {
   const sp = $('#splash'); let shown = false;
   try { shown = sessionStorage.getItem('at.splash') === '1'; sessionStorage.setItem('at.splash', '1'); } catch {}
   if (shown || reduceMotion()) { sp.remove(); return; }
-  setTimeout(() => { sp.classList.add('out'); setTimeout(() => sp.remove(), 700); }, 1300);
+  setTimeout(() => { sp.classList.add('out'); setTimeout(() => sp.remove(), 900); }, 2300);
+})();
+
+/* hors connexion : bandeau verre, et rechargement automatique au retour du réseau */
+(function () {
+  const bar = $('#offline'); let was = navigator.onLine;
+  const sync = () => {
+    const on = navigator.onLine; bar.classList.toggle('on', !on);
+    if (on && !was) { toast('Connexion rétablie'); C.loadAll(); } else if (!on && was) { haptic(); render(); }
+    was = on;
+  };
+  addEventListener('online', sync); addEventListener('offline', sync); sync();
 })();
 
 G.attachTooltips();
@@ -799,7 +879,7 @@ function takeClick(id) {
   const a = (S.alerts || []).concat(C.sfcOrders()).find(x => x.id === id); if (!a) return;
   if (C.takenIds().has(id)) { haptic(); view.filter = 'track'; view.animate = true; return render(); }
   takeAlert = a; haptic();
-  $('#t-title').textContent = a.title + (a.direction ? ' · ' + (a.direction === 'short' ? 'vente' : 'achat') : '');
+  $('#t-title').textContent = N.resolve(a).name + (a.direction ? ' · ' + (a.direction === 'short' ? 'vente' : 'achat') : '');
   const v = x => x == null ? '' : x;
   $('#t-amount').value = ''; $('#t-entry').value = v(C.parseLevel(a.entry, 'entry')); $('#t-stop').value = v(C.parseLevel(a.stop, 'stop')); $('#t-target').value = v(C.parseLevel(a.target, 'target'));
   $('#t-note').textContent = a.kind === 'sfc' ? "Niveaux du bot (futures Yahoo) : remplace-les par ton prix d'exécution réel sur XTB. La position se clôturera ici au prochain scan où le bot sortira de l'ordre." : "L'ordre est considéré comme exécuté à ce prix. Corrige les niveaux si ton ordre réel est différent.";
@@ -816,7 +896,7 @@ $('#form-take').addEventListener('submit', e => {
 function openClose(id) {
   const p = S.positions.positions.find(x => x.id === id); if (!p) return;
   closeId = id; const q = C.positionView(p);
-  $('#c-title').textContent = p.title; $('#c-price').value = q.last != null ? q.last : p.entry;
+  $('#c-title').textContent = N.resolve(p).name; $('#c-price').value = q.last != null ? q.last : p.entry;
   $('#dlg-close').showModal();
 }
 $('#form-close').addEventListener('submit', e => {
