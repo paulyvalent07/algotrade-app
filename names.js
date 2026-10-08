@@ -57,6 +57,18 @@
     for (const w of strip(cleanTitle(o.title)).split(/[^a-z]+/)) if (FR[w]) return {name: COMMO[FR[w]][0], xtb: COMMO[FR[w]][1]};
     return {name: cleanTitle(o.title) || key || 'Unknown', xtb: ''};
   }
+  /* Levier maximal XTB pour un client particulier européen (plafonds ESMA, appliqués par XTB) : or 20, autres matières premières 10,
+   * indices majeurs 20, forex majeurs 30 (autres paires 20), actions 5, crypto 2. À vérifier sur xStation (marge de chaque instrument). */
+  const LEV = {GOLD: 20, SILVER: 10, 'OIL.WTI': 10, OIL: 10, NATGAS: 10, WHEAT: 10, CORN: 10, COTTON: 10, COCOA: 10, COPPER: 10, SOYBEAN: 10, COFFEE: 10, SUGAR: 10,
+    PLATINUM: 10, PALLADIUM: 10, US500: 20, US100: 20, US30: 20, DE40: 20, FR40: 20, UK100: 20, JP225: 20, BITCOIN: 2, ETHEREUM: 2};
+  const FX_MAJORS = new Set(['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'USDCAD', 'AUDUSD', 'EURGBP', 'EURJPY', 'EURCHF', 'NZDUSD']);
+  function xtbLeverage(o) {
+    const k = resolve(o).xtb;
+    if (LEV[k]) return LEV[k];
+    if (/^[A-Z]{6}$/.test(k)) return FX_MAJORS.has(k) ? 30 : 20;
+    if (/\.(US|FR|DE|UK|NL|ES|IT|BE)$/.test(k)) return 5;
+    return null;
+  }
   const short = (n, max = 15) => n.length > max ? n.slice(0, max - 1) + '…' : n;
-  window.AlgoNames = {resolve, short};
+  window.AlgoNames = {resolve, short, xtbLeverage};
 })();

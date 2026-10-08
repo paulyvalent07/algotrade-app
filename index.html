@@ -458,7 +458,7 @@ nav.dock.min .dot{top:4px}
       <p id="push-msg" style="margin-top:6px">Reçois les nouvelles alertes sur l'écran de verrouillage.</p>
       <div class="row2"><button type="button" class="btn" id="push-on">Activer</button><button type="button" class="btn ghost" id="push-test">Tester</button><button type="button" class="btn ghost" id="push-off">Désactiver</button></div>
     </div>
-    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 19 · l'app se met à jour toute seule</p>
+    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 20 · l'app se met à jour toute seule</p>
     <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
   </form>
 </dialog>
@@ -479,7 +479,7 @@ nav.dock.min .dot{top:4px}
   <form method="dialog" id="form-take">
     <h3>Suivre cette position</h3>
     <p class="section-note" style="margin:0 4px" id="t-title"></p>
-    <label for="t-amount">Montant alloué (€)</label>
+    <label for="t-amount">Mise sur XTB (€, marge, hors levier)</label>
     <input id="t-amount" type="number" inputmode="decimal" step="0.01" min="0" required>
     <label for="t-entry">Prix d'entrée</label>
     <input id="t-entry" type="number" inputmode="decimal" step="any" min="0" required>
@@ -582,7 +582,9 @@ function swipeWrap(id, html) {
 function orderHtml(a) {
   const open = view.open.has(a.id), pl = a.pnl, taken = C.takenIds().has(a.id);
   const where = a.real ? 'IG démo' : 'Simulé';
-  const tag = a.exit ? `<span class="tag ${pl != null && pl < 0 ? 'sell' : 'buy'}">${pl != null ? (pl >= 0 ? '+' : '−') + Math.abs(pl).toFixed(2).replace('.', ',') + ' €' : 'Clôture'}</span>`
+  const lev = parseFloat(String(a.leverage || '').replace(/[^\d.]/g, '')) || null, mv = a.move, per100 = mv != null && lev ? mv * lev : null;
+  const sgn = v => (v > 0 ? '+' : v < 0 ? '−' : '') + F.num2(Math.abs(v));
+  const tag = a.exit ? `<span class="tag ${(mv != null ? mv : pl) < 0 ? 'sell' : 'buy'}">${mv != null ? sgn(mv) + ' %' : pl != null ? (pl >= 0 ? '+' : '−') + Math.abs(pl).toFixed(2).replace('.', ',') + ' €' : 'Clôture'}</span>`
     : a.direction === 'short' ? '<span class="tag sell">Vente</span>' : '<span class="tag buy">Achat</span>';
   const lv = a.exit ? [['Sortie', a.exitPrice]] : [['Entrée', a.entry], ['Stop', a.stop], ['Objectif', a.target]];
   const lvh = lv.filter(([, v]) => v).map(([k, v]) => `<span>${k}<b class="num">${esc(v)}</b></span>`).join('');
@@ -592,8 +594,8 @@ function orderHtml(a) {
     ${titleHtml(a, a.exit ? 'Clôture · ' : '')}
     ${lvh ? `<div class="lv">${lvh}</div>` : ''}
     <div class="a-more"><div><div class="a-body">
-      <p class="a-sum">${a.exit ? esc((a.why || 'Sortie') + (a.pnl != null ? ' · résultat calculé par le bot' : '')) + '. Clôture ta position XTB si tu l\'as ouverte.' : 'À reproduire sur XTB si tu veux la suivre.'}</p>
-      <div class="a-meta"><span>XTB <b>${esc(a.xtb)}</b></span><span>${esc(F.dateTime(a.ts))}</span></div>
+      <p class="a-sum">${a.exit ? esc((a.why || 'Sortie') + '. ') + (per100 != null ? `Variation du cours ${sgn(mv)} %. Sur XTB (levier x${lev}) cela fait environ <b>${sgn(per100 * 1)} €</b> pour 100 € de mise. ` : '') + (a.pnl != null ? `Le bot a fait ${(a.pnl >= 0 ? '+' : '−') + Math.abs(a.pnl).toFixed(2).replace('.', ',')} € sur sa propre taille, qui n'est pas la tienne. ` : '') + 'Clôture ta position XTB si tu l\'as ouverte.' : 'À reproduire sur XTB si tu veux la suivre.'}</p>
+      <div class="a-meta"><span>XTB <b>${esc(a.xtb)}</b></span>${lev ? `<span>Levier XTB <b>x${lev}</b></span>` : ''}<span>${esc(F.dateTime(a.ts))}</span></div>
       <p class="a-risk">${note} Les niveaux sont ceux des futures Yahoo : sur XTB le cours peut différer (surtout l'or, de plusieurs dizaines de points).</p>
     </div></div></div>
   </article>`;
@@ -605,7 +607,7 @@ function alertHtml(a) {
   const tag = a.direction === 'long' ? '<span class="tag buy">Achat</span>' : a.direction === 'short' ? '<span class="tag sell">Vente</span>' : '';
   const lv = [['Entrée', a.entry], ['Stop', a.stop], ['Objectif', a.target]].filter(([, v]) => v)
     .map(([k, v]) => `<span>${k}<b class="num">${esc(v)}</b></span>`).join('');
-  const meta = [['Levier', a.leverage], ['Horizon', a.horizon]].filter(([, v]) => v).map(([k, v]) => `<span>${k} <b>${esc(v)}</b></span>`).join('');
+  const xl = a.category === 'cfd' ? N.xtbLeverage(a) : null, meta = [['Levier', xl ? 'x' + xl + ' (XTB)' : a.leverage], ['Horizon', a.horizon]].filter(([, v]) => v).map(([k, v]) => `<span>${k} <b>${esc(v)}</b></span>`).join('');
   const src = (a.sources || []).filter(s => /^https?:\/\//.test(s.url)).map(s => `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.name)}</a>`).join('');
   const more = a.summary || meta || a.risk || src;
   return `<article class="alert ${open ? 'open' : ''}" data-alert="${esc(a.id)}" ${more ? 'role="button" tabindex="0" aria-expanded="' + open + '"' : ''}>
@@ -657,7 +659,7 @@ function posHtml(raw) {
   return `<article class="card pos"><div class="a-top"><span class="a-cat">${p.source === 'sfc' ? 'SFC · ' : ''}${esc(CAT[p.category] || p.category)}</span><span class="a-right">${tag}${badge}</span></div>
     ${titleHtml(p, '', 'margin-top:8px')}
     <div class="p-pnl ${cls}">${eur == null ? '–' : F.signed(eur)}${pct != null ? `<small>${pct > 0 ? '+' : pct < 0 ? '−' : ''}${F.pct(Math.abs(pct), 1)}</small>` : ''}</div>
-    <div class="p-row"><span>Engagé <b class="num">${F.eur(p.amount, 0)}</b>${p.leverage ? ' · levier ' + esc(p.leverage) : ''}</span><span>Entrée <b class="num">${fp(p.entry)}</b></span></div>
+    <div class="p-row"><span>Engagé <b class="num">${F.eur(p.amount, 0)}</b>${C.levOf(p) > 1 ? ' · levier x' + C.levOf(p) : ''}</span><span>Entrée <b class="num">${fp(p.entry)}</b></span></div>
     <div class="p-row"><span>${closed ? 'Sortie' : 'Dernier cours'} <b class="num">${(closed ? p.exit.price : p.last) != null ? fp(closed ? p.exit.price : p.last) : '–'}</b></span><span class="muted">${closed ? esc(F.dateLong(p.exit.ts)) : p.last_ts ? esc(F.dateTime(p.last_ts)) : 'en attente de cours'}</span></div>
     ${closed ? '' : gaugeHtml(p)}
     ${p.source === 'sfc' ? `<div class="p-row"><span class="muted">${closed ? (p.exit.by === 'bot' ? 'Clôturée par le bot' + (p.exit.reason ? ' · ' + esc(p.exit.reason) : '') : 'Clôturée à la main') : p.bot ? 'Bot : stop suiveur <b class="num">' + fp(p.bot.trail) + '</b>' : 'Bot : ordre non retrouvé'}</span><span class="muted">${!closed && p.bot && p.bot.cycle ? 'scan ' + esc(F.ago(p.bot.cycle)) : ''}</span></div>` : ''}
@@ -679,7 +681,7 @@ function viewTrack() {
   if (!all.length) return `<div class="empty"><b>Aucune position suivie</b>Coche le rond d'une alerte, indique le montant alloué : l'ordre est considéré comme exécuté et suivi ici.</div>`;
   const open = all.filter(p => p.status !== 'closed'), done = all.filter(p => p.status === 'closed');
   const views = open.map(C.positionView);
-  const engaged = open.reduce((s, p) => s + p.amount, 0), latent = views.reduce((s, p) => s + (p.res ? p.res.eur : 0), 0), real = done.reduce((s, p) => s + (p.exit ? p.exit.eur : 0), 0);
+  const engaged = open.reduce((s, p) => s + p.amount, 0), latent = views.reduce((s, p) => s + (p.res ? p.res.eur : 0), 0), real = done.map(C.positionView).reduce((s, p) => s + (p.exit ? p.exit.eur : 0), 0);
   const sum = `<section class="card sum-card"><div><small>Engagé</small><b class="num">${F.eur(engaged, 0)}</b></div><div><small>En cours</small><b class="num ${latent > 0 ? 'up' : latent < 0 ? 'down' : 'muted'}">${F.signed(latent)}</b></div><div><small>Réalisé</small><b class="num ${real > 0 ? 'up' : real < 0 ? 'down' : 'muted'}">${F.signed(real)}</b></div></section>`;
   return sum + `<div class="tiles">${open.map(tileOrCard).join('')}</div>` + (done.length ? `<h2>Clôturées</h2><div class="tiles">${done.map(tileOrCard).join('')}</div>` : '') +
     `<p class="disclaimer">Cours SFC rafraîchis toutes les ~5 min ; actions US en direct avec une clé Finnhub (réglages). Résultat estimé sur le montant alloué, levier inclus.</p>`;
@@ -689,7 +691,7 @@ function viewTrack() {
 function viewAnalysis() {
   const all = S.positions.positions;
   if (!all.length) return `<div class="empty"><b>Rien à analyser pour l'instant</b>Coche une alerte et indique le montant alloué : la position apparaît ici avec ses graphiques.</div>`;
-  const open = all.filter(p => p.status !== 'closed'), done = all.filter(p => p.status === 'closed' && p.exit);
+  const open = all.filter(p => p.status !== 'closed'), done = all.filter(p => p.status === 'closed' && p.exit).map(C.positionView);
   const rs = A.rows(open.map(C.positionView), C, N), tot = A.sum, tone = v => v > 0 ? 'up' : v < 0 ? 'down' : 'muted';
   const latent = tot(rs, r => r.eur), engaged = tot(rs, r => r.amount), expo = tot(rs, r => r.notional);
   const maxLoss = tot(rs, r => r.lossAtStop), maxGain = tot(rs, r => r.gainAtTarget), waiting = rs.filter(r => r.eur == null).length;
@@ -882,7 +884,8 @@ function takeClick(id) {
   $('#t-title').textContent = N.resolve(a).name + (a.direction ? ' · ' + (a.direction === 'short' ? 'vente' : 'achat') : '');
   const v = x => x == null ? '' : x;
   $('#t-amount').value = ''; $('#t-entry').value = v(C.parseLevel(a.entry, 'entry')); $('#t-stop').value = v(C.parseLevel(a.stop, 'stop')); $('#t-target').value = v(C.parseLevel(a.target, 'target'));
-  $('#t-note').textContent = a.kind === 'sfc' ? "Niveaux du bot (futures Yahoo) : remplace-les par ton prix d'exécution réel sur XTB. La position se clôturera ici au prochain scan où le bot sortira de l'ordre." : "L'ordre est considéré comme exécuté à ce prix. Corrige les niveaux si ton ordre réel est différent.";
+  const xl = a.category === 'cfd' ? N.xtbLeverage(a) : null;
+  $('#t-note').textContent = (xl ? 'Levier XTB x' + xl + ' : le résultat suivi ici = variation du cours × ta mise × ' + xl + '. ' : '') + (a.kind === 'sfc' ? "Niveaux du bot (futures Yahoo) : remplace-les par ton prix d'exécution réel sur XTB. La position se clôturera ici au prochain scan où le bot sortira de l'ordre." : "L'ordre est considéré comme exécuté à ce prix. Corrige les niveaux si ton ordre réel est différent.");
   $('#dlg-take').showModal();
 }
 $('#form-take').addEventListener('submit', e => {

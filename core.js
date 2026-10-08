@@ -16,6 +16,7 @@
     signed: (n, d = 2) => (n > 0 ? '+' : n < 0 ? '−' : '') + fmt.eur(Math.abs(n), d),
     pct: (n, d = 1) => nf(d, d).format(n) + ' %',
     num: n => nf(0, 0).format(n),
+    num2: n => nf(2, 2).format(n),
     ago(iso) {
       const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
       if (!isFinite(m)) return 'date inconnue';
@@ -97,11 +98,17 @@
     const realNow = {}, lastEntry = {}; const out = [];
     for (const r of rows) {
       const [name, xtb] = SFC_NAMES[r.symbol];
+      const le = lastEntry[r.symbol], xl = window.AlgoNames && window.AlgoNames.xtbLeverage({symbol: r.symbol});
+      let move = null;   // variation du sous-jacent entre l'entrée et la sortie (en %), indépendante de la taille de l'ordre
+      if (r.event === 'EXIT' && le) {
+        const ref = (r.pnl_source === 'ig' && le.igEntry) ? le.igEntry : +le.entry, px = +r.exit;
+        if (ref > 0 && isFinite(px)) move = (px / ref - 1) * (le.direction === 'short' ? -1 : 1) * 100;
+      }
       if (r.event === 'ENTRY') realNow[r.symbol] = !!r.deal_id;
-      else if (lastEntry[r.symbol]) lastEntry[r.symbol].done = true;
+      else if (le) le.done = true;
       const real = r.event === 'ENTRY' ? !!r.deal_id : (r.pnl_source === 'ig' || !!realNow[r.symbol]);
       const n = v => (v === '' || v == null || isNaN(+v)) ? '' : String(Math.round(+v * 10000) / 10000);
-      const o = {id: 'sfc:' + r.symbol + ':' + r.ts, kind: 'sfc', category: 'cfd', ts: r.ts, exit: r.event === 'EXIT', real, xtb, symbol: r.symbol, ticker: r.symbol, leverage: 'x3',
+      const o = {id: 'sfc:' + r.symbol + ':' + r.ts, kind: 'sfc', category: 'cfd', ts: r.ts, exit: r.event === 'EXIT', real, xtb, symbol: r.symbol, ticker: r.symbol, leverage: 'x' + (xl || 3), move, igEntry: r.event === 'ENTRY' ? +((/ig_entry=([\d.]+)/.exec(r.detail || '') || [])[1]) || null : null,
         title: (r.event === 'ENTRY' ? '' : 'Clôture · ') + name,
         direction: r.event === 'ENTRY' ? (r.side === 'short' ? 'short' : 'long') : null,
         entry: r.event === 'ENTRY' ? n(r.entry) : '', stop: r.event === 'ENTRY' ? n(r.sl) : '', target: r.event === 'ENTRY' ? n(r.tp) : '',
@@ -312,10 +319,16 @@
     return nums[0];
   }
   const levNum = l => parseFloat(String(l ?? '').replace(',', '.').replace(/[^\d.]/g, '')) || 1;
+  /* Levier réel : celui de XTB (la référence) pour les CFD, sinon celui indiqué sur l'alerte. */
+  function levOf(p) {
+    const N = window.AlgoNames;
+    if (N && p.category === 'cfd') { const x = N.xtbLeverage(p); if (x) return x; }
+    return levNum(p.leverage);
+  }
   /* Résultat d'une position à un prix donné : sur le sous-jacent, puis sur le montant alloué (levier inclus). */
   function pnlAt(p, price) {
     if (!isFinite(price) || !isFinite(p.entry) || p.entry <= 0) return null;
-    const move = (price / p.entry - 1) * (p.direction === 'short' ? -1 : 1), lev = levNum(p.leverage);
+    const move = (price / p.entry - 1) * (p.direction === 'short' ? -1 : 1), lev = levOf(p);
     return {underlying: move * 100, pct: move * lev * 100, eur: p.amount * move * lev};
   }
   /* Position enrichie du dernier cours connu (écrit par le suivi planifié). */
@@ -343,7 +356,7 @@
       const bp = (state.sfc.state.positions || {})[p.sfc.symbol];
       if (bp) bot = {trail: +bp.trail, tp: +bp.tp, sl: +bp.sl, lastBar: bp.last_bar_ts, cycle: state.sfc.heartbeat && state.sfc.heartbeat.ts};
     }
-    return {...p, last, last_ts: q.last_ts || null, hit, res, bot};
+    return {...p, last, last_ts: q.last_ts || null, hit, res, bot, exit: p.status === 'closed' && p.exit && res ? {...p.exit, pct: res.pct, eur: res.eur} : p.exit};
   }
   /* Positions SFC suivies : quand le bot clôture l'ordre (scan horaire), la position se clôture ici avec le prix de sortie du bot. */
   let syncing = false;
@@ -355,7 +368,13 @@
         if (p.source !== 'sfc' || p.status === 'closed') continue;
         const ex = state.sfc.log.filter(r => r.event === 'EXIT' && r.symbol === p.sfc.symbol && r.ts > p.sfc.ts && isFinite(parseFloat(r.exit))).sort((a, b) => a.ts.localeCompare(b.ts))[0];
         if (!ex) continue;
-        const price = parseFloat(ex.exit), r = pnlAt(p, price);
+        let price = parseFloat(ex.exit);
+        if (ex.pnl_source === 'ig') {   // sortie en points IG : on la ramène à l'échelle de ton prix d'entrée par la variation
+          const en = state.sfc.log.find(r => r.event === 'ENTRY' && r.symbol === p.sfc.symbol && r.ts === p.sfc.ts), m = en && /ig_entry=([\d.]+)/.exec(en.detail || '');
+          if (!m || !(+m[1] > 0)) continue;
+          price = p.entry * (price / +m[1]);
+        }
+        const r = pnlAt(p, price);
         Object.assign(p, {status: 'closed', pending: true, exit: {price, ts: ex.ts, pct: r.pct, eur: r.eur, reason: ex.reason || '', by: 'bot'}}); changed = true;
       }
       if (changed) await savePositions('suivi: clôture par le bot SFC');
@@ -387,7 +406,7 @@
     if (!isFinite(entry) || entry <= 0) throw new Error("Prix d'entrée invalide");
     if (takenIds().has(alert.id)) throw new Error('Déjà suivie');
     state.positions.positions.push({id: uid(), alertId: alert.id, ticker: alert.ticker || '', title: alert.title || alert.ticker, category: alert.category,
-      direction: alert.direction || 'long', leverage: alert.leverage || null, amount: Math.round(amount * 100) / 100, entry,
+      direction: alert.direction || 'long', leverage: (alert.category === 'cfd' && window.AlgoNames && window.AlgoNames.xtbLeverage(alert) ? 'x' + window.AlgoNames.xtbLeverage(alert) : alert.leverage) || null, amount: Math.round(amount * 100) / 100, entry,
       stop: isFinite(stop) ? stop : null, target: isFinite(target) ? target : null, status: 'open', openedAt: new Date().toISOString(), pending: true,
       ...(alert.kind === 'sfc' ? {source: 'sfc', sfc: {symbol: alert.symbol, ts: alert.ts}, ticker: alert.symbol} : {})});
     return savePositions('suivi: ouverture ' + (alert.ticker || alert.title));
@@ -481,7 +500,7 @@
     (state.alerts || []).forEach(a => state.seen.add(a.id)); ls.set('at.seen', [...state.seen]); emit();
   }
 
-  window.AlgoCore = {loadLive, dismissAlert, sfcOrders, state, on, fmt, todayISO, computeLedger, snapshots, sfcSummary, loadAll, saveSettings,
+  window.AlgoCore = {levOf, loadLive, dismissAlert, sfcOrders, state, on, fmt, todayISO, computeLedger, snapshots, sfcSummary, loadAll, saveSettings,
     addMovement, deleteMovement, addAccount, deleteAccount, unseenCount, markAlertsSeen,
     parseLevel, pnlAt, positionView, takePosition, updatePosition, closePosition, deletePosition, takenIds,
     setAmount, pushStatus, enablePush, disablePush, testNotification};

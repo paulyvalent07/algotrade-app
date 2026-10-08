@@ -12,7 +12,7 @@
   /* Positions suivies -> lignes prêtes pour les graphiques (résultat, exposition, résultat au stop et à l'objectif). */
   function rows(views, C, N) {
     return views.map(p => {
-      const id = N.resolve(p), lev = parseFloat(String(p.leverage ?? '').replace(',', '.').replace(/[^\d.]/g, '')) || 1;
+      const id = N.resolve(p), lev = C.levOf(p);
       const at = v => (v != null && isFinite(v)) ? C.pnlAt(p, v) : null, s = at(p.stop), t = at(p.target);
       return {id: p.id, name: id.name, sym: id.xtb, cat: p.category, dir: p.direction === 'short' ? 'short' : 'long', lev, amount: p.amount, notional: p.amount * lev,
         eur: p.res ? p.res.eur : null, pct: p.res ? p.res.pct : null, entry: p.entry, stop: p.stop, target: p.target, last: p.last,
