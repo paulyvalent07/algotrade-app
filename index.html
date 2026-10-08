@@ -408,6 +408,11 @@ nav.dock.min .dot{top:4px}
 .hero b.neg{--metal:linear-gradient(180deg,#FFD3DF 0%,#FF6E96 45%,#F0245F 100%)}
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:18px 12px}
 .kpis small{display:block;color:var(--muted);font-size:12.5px} .kpis b{font-size:19px;font-weight:600;letter-spacing:-.01em}
+.chart .capline.ghost{stroke:var(--text-2);stroke-dasharray:5 5;stroke-width:1.4}
+.chart .capdot.ghost{fill:var(--surface);stroke:var(--text-2)}
+.chart .capdot.live{stroke-dasharray:2 2}
+.card.ghost-card{border-style:dashed;background:transparent}
+.badge.ghost{background:none;border:1px dashed var(--text-3);color:var(--text-2)}
 .sub-h{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:22px 0 0}
 
 @media (prefers-reduced-motion:reduce){
@@ -453,12 +458,14 @@ nav.dock.min .dot{top:4px}
     <input id="s-token" type="password" autocomplete="off" placeholder="github_pat_…">
     <label for="s-finnhub">Clé Finnhub (cours en direct des actions, facultatif)</label>
     <input id="s-finnhub" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="clé gratuite sur finnhub.io">
+    <label for="s-stake">Mise par signal pour le graphique « si tu avais tout pris » (€)</label>
+    <input id="s-stake" type="number" inputmode="decimal" min="1" step="1">
     <p class="section-note" style="margin:10px 4px 0">Le jeton reste sur cet appareil. Sans jeton, les alertes ne se chargent pas, et le capital reste local.</p>
     <div class="push-box"><b style="font-size:14px">Notifications</b>
       <p id="push-msg" style="margin-top:6px">Reçois les nouvelles alertes sur l'écran de verrouillage.</p>
       <div class="row2"><button type="button" class="btn" id="push-on">Activer</button><button type="button" class="btn ghost" id="push-test">Tester</button><button type="button" class="btn ghost" id="push-off">Désactiver</button></div>
     </div>
-    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 20 · l'app se met à jour toute seule</p>
+    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 21 · l'app se met à jour toute seule</p>
     <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
   </form>
 </dialog>
@@ -581,22 +588,21 @@ function swipeWrap(id, html) {
 }
 function orderHtml(a) {
   const open = view.open.has(a.id), pl = a.pnl, taken = C.takenIds().has(a.id);
-  const where = a.real ? 'IG démo' : 'Simulé';
   const lev = parseFloat(String(a.leverage || '').replace(/[^\d.]/g, '')) || null, mv = a.move, per100 = mv != null && lev ? mv * lev : null;
   const sgn = v => (v > 0 ? '+' : v < 0 ? '−' : '') + F.num2(Math.abs(v));
-  const tag = a.exit ? `<span class="tag ${(mv != null ? mv : pl) < 0 ? 'sell' : 'buy'}">${mv != null ? sgn(mv) + ' %' : pl != null ? (pl >= 0 ? '+' : '−') + Math.abs(pl).toFixed(2).replace('.', ',') + ' €' : 'Clôture'}</span>`
+  const tag = a.exit ? `<span class="tag ${mv != null && mv < 0 ? 'sell' : 'buy'}">${mv != null ? sgn(mv) + ' %' : 'Clôture'}</span>`
     : a.direction === 'short' ? '<span class="tag sell">Vente</span>' : '<span class="tag buy">Achat</span>';
   const lv = a.exit ? [['Sortie', a.exitPrice]] : [['Entrée', a.entry], ['Stop', a.stop], ['Objectif', a.target]];
   const lvh = lv.filter(([, v]) => v).map(([k, v]) => `<span>${k}<b class="num">${esc(v)}</b></span>`).join('');
-  const note = a.real ? "Cet ordre existe sur ton compte démo IG." : "Ordre virtuel : le bot le suit en simulation, rien n'est placé chez IG.";
+  const note = a.exit ? "Signal de sortie du bot : ne fais rien si tu n'avais pas pris la position." : "Signal du bot : coche-le si tu le prends sur XTB, sinon il n'a aucun effet.";
   return `<article class="alert ${open ? 'open' : ''}" data-alert="${esc(a.id)}" role="button" tabindex="0" aria-expanded="${open}">
-    <div class="a-top"><span class="a-cat">SFC · ${where}<span style="font-weight:400;letter-spacing:0;text-transform:none">· ${esc(F.ago(a.ts))}</span></span><span class="a-right">${tag}${a.exit ? '' : a.done && !taken ? '<span class="badge">Clôturé</span>' : `<button class="take ${taken ? 'on' : ''}" data-take="${esc(a.id)}" aria-label="${taken ? 'Position suivie' : 'Suivre cette position'}"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>`}</span></div>
+    <div class="a-top"><span class="a-cat">SFC · ${a.exit ? 'Clôture' : 'Signal'}<span style="font-weight:400;letter-spacing:0;text-transform:none">· ${esc(F.ago(a.ts))}</span></span><span class="a-right">${tag}${a.exit ? '' : a.done && !taken ? '<span class="badge">Clôturé</span>' : `<button class="take ${taken ? 'on' : ''}" data-take="${esc(a.id)}" aria-label="${taken ? 'Position suivie' : 'Suivre cette position'}"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>`}</span></div>
     ${titleHtml(a, a.exit ? 'Clôture · ' : '')}
     ${lvh ? `<div class="lv">${lvh}</div>` : ''}
     <div class="a-more"><div><div class="a-body">
-      <p class="a-sum">${a.exit ? esc((a.why || 'Sortie') + '. ') + (per100 != null ? `Variation du cours ${sgn(mv)} %. Sur XTB (levier x${lev}) cela fait environ <b>${sgn(per100 * 1)} €</b> pour 100 € de mise. ` : '') + (a.pnl != null ? `Le bot a fait ${(a.pnl >= 0 ? '+' : '−') + Math.abs(a.pnl).toFixed(2).replace('.', ',')} € sur sa propre taille, qui n'est pas la tienne. ` : '') + 'Clôture ta position XTB si tu l\'as ouverte.' : 'À reproduire sur XTB si tu veux la suivre.'}</p>
+      <p class="a-sum">${a.exit ? esc((a.why || 'Sortie') + '. ') + (per100 != null ? `Variation du cours ${sgn(mv)} %. Sur XTB (levier x${lev}) cela fait environ <b>${sgn(per100 * 1)} €</b> pour 100 € de mise. ` : '') + 'Clôture ta position XTB si tu l\'as ouverte.' : 'À reproduire sur XTB si tu veux la suivre.'}</p>
       <div class="a-meta"><span>XTB <b>${esc(a.xtb)}</b></span>${lev ? `<span>Levier XTB <b>x${lev}</b></span>` : ''}<span>${esc(F.dateTime(a.ts))}</span></div>
-      <p class="a-risk">${note} Les niveaux sont ceux des futures Yahoo : sur XTB le cours peut différer (surtout l'or, de plusieurs dizaines de points).</p>
+      <p class="a-risk">${note} Niveaux calculés sur les futures : sur XTB le cours peut différer (surtout l'or, de plusieurs dizaines de points).</p>
     </div></div></div>
   </article>`;
 }
@@ -687,11 +693,31 @@ function viewTrack() {
     `<p class="disclaimer">Cours SFC rafraîchis toutes les ~5 min ; actions US en direct avec une clé Finnhub (réglages). Résultat estimé sur le montant alloué, levier inclus.</p>`;
 }
 
+/* Deux courbes distinctes, même échelle : ce que tu as vraiment pris (trait plein) et ce que donnerait chaque signal du bot (pointillé). */
+function compareHtml(all, sig) {
+  const now = new Date().toISOString(), stake = S.settings.simStake || 100, tone = v => v > 0 ? 'up' : v < 0 ? 'down' : 'muted';
+  const realEv = all.map(C.positionView).filter(p => p.status === 'closed' ? p.exit && isFinite(p.exit.eur) : p.res)
+    .map(p => { const name = N.resolve(p).name; return p.status === 'closed' ? {ts: p.exit.ts, start: p.openedAt, d: p.exit.eur, name} : {ts: p.openedAt, start: p.openedAt, d: p.res.eur, name, open: true}; });
+  const sigEv = sig.map(s => ({ts: s.open ? s.ts : s.exitTs, start: s.ts, d: stake * s.lev * s.move / 100, name: s.name + (s.taken ? ' · pris' : ' · non pris'), open: s.open, taken: s.taken}));
+  const rp = A.series(realEv, now), sp = A.series(sigEv, now), dom = A.domain([rp, sp], now);
+  const fin = pts => pts ? pts[pts.length - 1].v : 0, closedOf = ev => ev.filter(e => !e.open), winsOf = ev => closedOf(ev).filter(e => e.d > 0).length;
+  const skipped = sigEv.filter(e => !e.taken), skippedEur = skipped.reduce((s, e) => s + e.d, 0);
+  const real = `<section class="card"><div class="card-head"><div><h3>Tes positions</h3><p class="sub">Ce que tu as vraiment pris, avec ta mise. Trait plein.</p></div><span class="badge win">Réel</span></div>
+    ${A.curve(rp, F, dom, F.dateShort, F.dateLong, {id: 'real'}) || `<p class="empty">Pas encore assez de positions pour tracer une courbe.</p>`}
+    <div class="stats"><div><small>Résultat (latent inclus)</small><b class="num ${tone(fin(rp))}">${F.signed(fin(rp), 0)}</b></div><div><small>Positions</small><b class="num">${realEv.length}${closedOf(realEv).length ? ' · ' + winsOf(realEv) + ' gagnantes' : ''}</b></div></div></section>`;
+  if (!sigEv.length) return real;
+  const hyp = `<section class="card ghost-card"><div class="card-head"><div><h3>Si tu avais tout pris</h3><p class="sub">Chaque signal du bot avec ${F.eur(stake, 0)} de mise, levier XTB. Pointillé, c'est une hypothèse.</p></div><span class="badge ghost">Hypothèse</span></div>
+    ${A.curve(sp, F, dom, F.dateShort, F.dateLong, {ghost: true, id: 'hyp'}) || `<p class="empty">Pas encore assez de signaux pour tracer une courbe.</p>`}
+    <div class="stats"><div><small>Résultat (latent inclus)</small><b class="num ${tone(fin(sp))}">${F.signed(fin(sp), 0)}</b></div><div><small>Signaux</small><b class="num">${sigEv.length}${closedOf(sigEv).length ? ' · ' + winsOf(sigEv) + ' gagnants' : ''}</b></div>
+      <div><small>Non pris (${skipped.length})</small><b class="num ${tone(skippedEur)}">${F.signed(skippedEur, 0)}</b></div><div><small>Pris (${sigEv.length - skipped.length})</small><b class="num">${F.signed(fin(sp) - skippedEur, 0)}</b></div></div></section>`;
+  return real + hyp;
+}
+
 /* ---------- analyse des positions ---------- */
 function viewAnalysis() {
-  const all = S.positions.positions;
-  if (!all.length) return `<div class="empty"><b>Rien à analyser pour l'instant</b>Coche une alerte et indique le montant alloué : la position apparaît ici avec ses graphiques.</div>`;
-  const open = all.filter(p => p.status !== 'closed'), done = all.filter(p => p.status === 'closed' && p.exit).map(C.positionView);
+  const all = S.positions.positions, sig = C.sfcSignals();
+  if (!all.length && !sig.length) return `<div class="empty"><b>Rien à analyser pour l'instant</b>Coche une alerte et indique ta mise : la position apparaît ici avec ses graphiques.</div>`;
+  const open = all.filter(p => p.status !== 'closed');
   const rs = A.rows(open.map(C.positionView), C, N), tot = A.sum, tone = v => v > 0 ? 'up' : v < 0 ? 'down' : 'muted';
   const latent = tot(rs, r => r.eur), engaged = tot(rs, r => r.amount), expo = tot(rs, r => r.notional);
   const maxLoss = tot(rs, r => r.lossAtStop), maxGain = tot(rs, r => r.gainAtTarget), waiting = rs.filter(r => r.eur == null).length;
@@ -712,12 +738,7 @@ function viewAnalysis() {
     const lv = A.levels(rs, F, N);
     out += card('Entre stop et objectif', 'Le point blanc est le dernier cours, le trait vertical ton entrée.', lv ? lv + `<div class="legend-line"><span><i class="key" style="background:color-mix(in srgb,var(--down) 55%,transparent)"></i>Zone de perte</span><span><i class="key" style="background:color-mix(in srgb,var(--up) 55%,transparent)"></i>Zone de gain</span></div>` : '');
   } else out += `<div class="empty"><b>Aucune position en cours</b>Les graphiques reviennent dès que tu suis une nouvelle alerte.</div>`;
-  if (done.length) {
-    const real = tot(done, p => p.exit.eur), wins = done.filter(p => p.exit.eur > 0).length;
-    const curve = A.realised(done.map(p => ({...p, name: N.resolve(p).name})), F, F.dateShort, F.dateLong);
-    out += `<section class="card"><h3>Résultat réalisé</h3><p class="sub">Positions clôturées, cumul dans l'ordre des clôtures.</p>${curve}
-      <div class="stats"><div><small>Total réalisé</small><b class="num ${tone(real)}">${F.signed(real, 0)}</b></div><div><small>Trades gagnants</small><b class="num">${wins} sur ${done.length}</b></div></div></section>`;
-  }
+  out += compareHtml(all, sig);
   return out + `<p class="disclaimer">Estimations d'après les derniers cours connus. Rien ici n'est un conseil financier.</p>`;
 }
 
@@ -827,12 +848,12 @@ function refreshNow() { $('#ptr').classList.add('spin'); return C.loadAll(); }
 })();
 
 function openSettings() {
-  $('#s-repo').value = S.settings.repo; $('#s-branch').value = S.settings.branch; $('#s-data').value = S.settings.dataBranch; $('#s-token').value = S.settings.token; $('#s-finnhub').value = S.settings.finnhub || '';
+  $('#s-repo').value = S.settings.repo; $('#s-branch').value = S.settings.branch; $('#s-data').value = S.settings.dataBranch; $('#s-token').value = S.settings.token; $('#s-finnhub').value = S.settings.finnhub || ''; $('#s-stake').value = S.settings.simStake || 100;
   refreshPush(); $('#dlg-settings').showModal();
 }
 $('#form-settings').addEventListener('submit', e => {
   if (e.submitter && e.submitter.value !== 'ok') return;
-  C.saveSettings({repo: $('#s-repo').value, branch: $('#s-branch').value, dataBranch: $('#s-data').value, token: $('#s-token').value, finnhub: $('#s-finnhub').value});
+  C.saveSettings({repo: $('#s-repo').value, branch: $('#s-branch').value, dataBranch: $('#s-data').value, token: $('#s-token').value, finnhub: $('#s-finnhub').value, simStake: $('#s-stake').value});
 });
 
 $('#form-account').addEventListener('submit', e => {

@@ -100,27 +100,52 @@
     return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="Position de chaque trade entre son stop et son objectif">${out}</svg>`;
   }
 
-  /* 5. Résultat réalisé cumulé des positions clôturées */
-  function realised(closed, F, dateShort, dateLong) {
-    const C = closed.filter(p => p.exit && isFinite(p.exit.eur)).sort((a, b) => String(a.exit.ts).localeCompare(String(b.exit.ts)));
-    if (C.length < 2) return '';
-    let c = 0; const pts = C.map(p => { c += p.exit.eur; return {v: c, d: p.exit.eur, ts: p.exit.ts, name: p.name}; });
-    const W = 340, H = 180, L = 46, R = 14, T = 18, B = 26, iw = W - L - R, ih = H - T - B;
-    const lo0 = Math.min(0, ...pts.map(p => p.v)), hi0 = Math.max(0, ...pts.map(p => p.v)), pad = (hi0 - lo0) * .15 || 1;
-    const step = niceStep((hi0 - lo0 + 2 * pad) / 3), lo = Math.floor((lo0 - pad) / step) * step, hi = Math.ceil((hi0 + pad) / step) * step;
-    const x = i => L + (pts.length === 1 ? 0 : i / (pts.length - 1)) * iw, y = v => T + ih - (v - lo) / (hi - lo || 1) * ih;
-    let out = `<defs><linearGradient id="realfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--glacier)" stop-opacity=".16"/><stop offset="1" stop-color="var(--glacier)" stop-opacity="0"/></linearGradient></defs>`;
-    for (let v = lo; v <= hi + 1e-9; v += step) out += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" class="${Math.abs(v) < 1e-9 ? 'axis' : 'grid'}"/><text x="${L - 6}" y="${y(v) + 4}" class="tick" text-anchor="end">${nfInt(v)}</text>`;
-    const d = pts.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ',' + y(p.v).toFixed(1)).join(' ');
-    out += `<path d="${d} L${x(pts.length - 1)},${y(0)} L${x(0)},${y(0)} Z" fill="url(#realfill)"/><path d="${d}" class="capline"/>`;
+  /* 5. Évolution du résultat cumulé, en escalier (il ne bouge qu'à chaque clôture).
+   * events : [{ts, d, name, open?}] dans le désordre ; `ghost` = trait pointillé gris (hypothèse), sinon trait plein (réel).
+   * Les deux courbes d'un même écran partagent la même échelle (dom) pour pouvoir être comparées. */
+  function series(events, now) {
+    const ev = events.slice().sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
+    if (!ev.length) return null;
+    const closed = ev.filter(e => !e.open), openSum = ev.filter(e => e.open).reduce((s, e) => s + e.d, 0), hasOpen = ev.some(e => e.open);
+    let c = 0; const pts = [{ts: ev.map(e => e.start || e.ts).sort()[0], v: 0, d: 0, name: 'Départ', origin: true}];
+    closed.forEach(e => { c += e.d; pts.push({ts: e.ts, v: c, d: e.d, name: e.name}); });
+    if (hasOpen) pts.push({ts: now, v: c + openSum, d: openSum, name: 'En cours (latent)', live: true});
+    return pts;
+  }
+  function domain(list, now) {
+    const all = list.filter(Boolean).flat();
+    if (!all.length) return null;
+    const t = all.map(p => new Date(p.ts).getTime()), v = all.map(p => p.v);
+    const lo0 = Math.min(0, ...v), hi0 = Math.max(0, ...v), pad = (hi0 - lo0) * .15 || 1;
+    const step = niceStep((hi0 - lo0 + 2 * pad) / 3);
+    return {t0: Math.min(...t), t1: Math.max(new Date(now).getTime(), ...t), lo: Math.floor((lo0 - pad) / step) * step, hi: Math.ceil((hi0 + pad) / step) * step, step};
+  }
+  function curve(pts, F, dom, dateShort, dateLong, {ghost = false, id = 'c'} = {}) {
+    if (!pts || pts.length < 2 || !dom) return '';
+    const W = 340, H = 180, L = 46, R = 14, T = 18, B = 26, iw = W - L - R, ih = H - T - B, span = (dom.t1 - dom.t0) || 1;
+    const x = p => L + (new Date(p.ts).getTime() - dom.t0) / span * iw, y = v => T + ih - (v - dom.lo) / (dom.hi - dom.lo || 1) * ih;
+    let out = `<defs><linearGradient id="fill-${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--glacier)" stop-opacity="${ghost ? 0 : .16}"/><stop offset="1" stop-color="var(--glacier)" stop-opacity="0"/></linearGradient></defs>`;
+    for (let v = dom.lo; v <= dom.hi + 1e-9; v += dom.step) out += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" class="${Math.abs(v) < 1e-9 ? 'axis' : 'grid'}"/><text x="${L - 6}" y="${y(v) + 4}" class="tick" text-anchor="end">${nfInt(v)}</text>`;
+    let d = `M${x(pts[0]).toFixed(1)},${y(pts[0].v).toFixed(1)}`;
+    for (let i = 1; i < pts.length; i++) d += ` H${x(pts[i]).toFixed(1)} V${y(pts[i].v).toFixed(1)}`;
+    const end = Math.min(W - R, L + iw);
+    d += ` H${Math.max(end, x(pts[pts.length - 1])).toFixed(1)}`;
+    const xl = Math.max(end, x(pts[pts.length - 1]));
+    if (!ghost) out += `<path d="${d} V${y(0)} H${x(pts[0]).toFixed(1)} Z" fill="url(#fill-${id})"/>`;
+    out += `<path d="${d}" class="capline${ghost ? ' ghost' : ''}"/>`;
     pts.forEach((p, i) => {
-      out += `<circle cx="${x(i)}" cy="${y(p.v)}" r="${i === pts.length - 1 ? 4 : 2.6}" class="${i === pts.length - 1 ? 'capdot last' : 'capdot'}"/>
-        <rect class="hit" x="${x(i) - Math.max(10, iw / pts.length / 2)}" y="${T}" width="${Math.max(20, iw / pts.length)}" height="${ih}" tabindex="0" aria-label="${esc(p.name)}"
-          data-tip="${tip(p.name, [{n: 'Clôture', v: dateLong(p.ts)}, {n: 'Résultat du trade', v: F.signed(p.d, 2)}, {n: 'Cumul', v: F.signed(p.v, 2)}])}"/>`;
-      if (pts.length <= 6 || i % Math.ceil(pts.length / 5) === 0 || i === pts.length - 1) out += `<text x="${Math.min(Math.max(x(i), L + 12), W - R - 12)}" y="${H - 8}" class="tick" text-anchor="middle">${esc(dateShort(p.ts))}</text>`;
+      if (p.origin) return;
+      const last = i === pts.length - 1;
+      out += `<circle cx="${x(p)}" cy="${y(p.v)}" r="${last ? 4 : 2.6}" class="${ghost ? 'capdot ghost' : last ? 'capdot last' : 'capdot'}${p.live ? ' live' : ''}"/>
+        <rect class="hit" x="${x(p) - 10}" y="${T}" width="20" height="${ih}" tabindex="0" aria-label="${esc(p.name)}"
+          data-tip="${tip(p.name, [{n: p.live ? 'À cette heure' : 'Clôture', v: dateLong(p.ts)}, {n: p.live ? 'Latent' : 'Résultat du trade', v: F.signed(p.d, 2)}, {n: 'Cumul', v: F.signed(p.v, 2)}])}"/>`;
     });
-    return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="Résultat réalisé cumulé">${out}</svg>`;
+    const ticks = [dom.t0, dom.t0 + span / 2, dom.t1];
+    ticks.forEach((t, k) => { out += `<text x="${L + (t - dom.t0) / span * iw}" y="${H - 8}" class="tick" text-anchor="${k === 0 ? 'start' : k === 2 ? 'end' : 'middle'}">${esc(dateShort(new Date(t).toISOString()))}</text>`; });
+    const lp = pts[pts.length - 1];
+    out += `<text x="${Math.min(xl, W - R - 4)}" y="${y(lp.v) - 10}" class="value" text-anchor="end">${esc(F.signed(lp.v, 0))}</text>`;
+    return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="${ghost ? 'Résultat cumulé hypothétique si tous les signaux avaient été pris' : 'Résultat cumulé de tes positions'}">${out}</svg>`;
   }
 
-  window.AlgoAnalysis = {rows, pnlBars, allocation, breakdown, exposure, exposureKey, levels, realised, sum};
+  window.AlgoAnalysis = {rows, pnlBars, allocation, breakdown, exposure, exposureKey, levels, series, domain, curve, sum};
 })();

@@ -33,7 +33,7 @@
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
 
   /* ---------- état ---------- */
-  const DEFAULTS = {repo: 'paulyvalent07/AlgoTrade', branch: 'main', dataBranch: 'app-data', token: '', finnhub: ''};
+  const DEFAULTS = {repo: 'paulyvalent07/AlgoTrade', branch: 'main', dataBranch: 'app-data', token: '', finnhub: '', simStake: 100};
   const state = {
     settings: {...DEFAULTS, ...ls.get('at.settings', {})},
     ledger: ls.get('at.ledger', {version: 1, accounts: ['XTB', 'Revolut', 'IG', 'Boursorama', 'Trade Republic'], movements: []}),
@@ -100,15 +100,15 @@
       const [name, xtb] = SFC_NAMES[r.symbol];
       const le = lastEntry[r.symbol], xl = window.AlgoNames && window.AlgoNames.xtbLeverage({symbol: r.symbol});
       let move = null;   // variation du sous-jacent entre l'entrée et la sortie (en %), indépendante de la taille de l'ordre
-      if (r.event === 'EXIT' && le) {
-        const ref = (r.pnl_source === 'ig' && le.igEntry) ? le.igEntry : +le.entry, px = +r.exit;
-        if (ref > 0 && isFinite(px)) move = (px / ref - 1) * (le.direction === 'short' ? -1 : 1) * 100;
+      if (r.event === 'EXIT' && le && le.row) {
+        const k = exitRatio(le.row, r);
+        if (k != null) move = (k - 1) * (le.direction === 'short' ? -1 : 1) * 100;
       }
       if (r.event === 'ENTRY') realNow[r.symbol] = !!r.deal_id;
       else if (le) le.done = true;
       const real = r.event === 'ENTRY' ? !!r.deal_id : (r.pnl_source === 'ig' || !!realNow[r.symbol]);
       const n = v => (v === '' || v == null || isNaN(+v)) ? '' : String(Math.round(+v * 10000) / 10000);
-      const o = {id: 'sfc:' + r.symbol + ':' + r.ts, kind: 'sfc', category: 'cfd', ts: r.ts, exit: r.event === 'EXIT', real, xtb, symbol: r.symbol, ticker: r.symbol, leverage: 'x' + (xl || 3), move, igEntry: r.event === 'ENTRY' ? +((/ig_entry=([\d.]+)/.exec(r.detail || '') || [])[1]) || null : null,
+      const o = {id: 'sfc:' + r.symbol + ':' + r.ts, kind: 'sfc', category: 'cfd', ts: r.ts, exit: r.event === 'EXIT', real, xtb, symbol: r.symbol, ticker: r.symbol, leverage: 'x' + (xl || 3), move, row: r.event === 'ENTRY' ? r : null, igEntry: r.event === 'ENTRY' ? +((/ig_entry=([\d.]+)/.exec(r.detail || '') || [])[1]) || null : null,
         title: (r.event === 'ENTRY' ? '' : 'Clôture · ') + name,
         direction: r.event === 'ENTRY' ? (r.side === 'short' ? 'short' : 'long') : null,
         entry: r.event === 'ENTRY' ? n(r.entry) : '', stop: r.event === 'ENTRY' ? n(r.sl) : '', target: r.event === 'ENTRY' ? n(r.tp) : '',
@@ -119,6 +119,45 @@
     return out.reverse().slice(0, 30);
   }
 
+  /* Tous les signaux du bot (entrée puis sortie), pris ou non, avec la variation du cours : base du graphique « si tu avais tout pris ».
+   * Le résultat en € se calcule ensuite avec une mise fixe (réglage) et le levier XTB. */
+  function sfcSignals() {
+    const log = state.sfc && state.sfc.log; if (!log) return [];
+    const N = window.AlgoNames, rows = log.filter(r => (r.event === 'ENTRY' || r.event === 'EXIT') && SFC_NAMES[r.symbol]).sort((a, b) => a.ts.localeCompare(b.ts));
+    const taken = takenIds(), open = {}, out = [];
+    for (const r of rows) {
+      if (r.event === 'ENTRY') {
+        const ig = (/ig_entry=([\d.]+)/.exec(r.detail || '') || [])[1];
+        const s = {id: 'sfc:' + r.symbol + ':' + r.ts, symbol: r.symbol, ts: r.ts, side: r.side === 'short' ? 'short' : 'long', entry: +r.entry, igEntry: ig ? +ig : null, row: r, exitTs: null, move: null, open: true};
+        open[r.symbol] = s; out.push(s);
+      } else if (open[r.symbol]) {
+        const s = open[r.symbol], k = exitRatio(s.row, r);
+        if (k != null) s.move = (k - 1) * (s.side === 'short' ? -1 : 1) * 100;
+        s.exitTs = r.ts; s.open = false; delete open[r.symbol];
+      }
+    }
+    const live = (state.live && state.live.prices) || {};
+    for (const s of out) {
+      if (s.open) { const l = live[s.symbol]; if (l && isFinite(l.last) && s.entry > 0) s.move = (l.last / s.entry - 1) * (s.side === 'short' ? -1 : 1) * 100; }
+      s.lev = (N && N.xtbLeverage({symbol: s.symbol})) || 1;
+      s.name = N ? N.resolve({symbol: s.symbol}).name : s.symbol;
+      s.taken = taken.has(s.id);
+    }
+    return out.filter(s => s.move != null);
+  }
+
+  /* Rapport sortie / entrée d'un signal, à l'échelle du signal (cours des futures) : un « objectif atteint » vaut l'objectif du signal,
+   * un stop vaut son stop. Les prix en points IG ne servent qu'en dernier recours, ramenés à l'échelle par la variation. */
+  function exitRatio(en, ex) {
+    const entry = +en.entry, tp = +en.tp, sl = +en.sl, px = +ex.exit;
+    if (ex.pnl_source === 'ig') {
+      if (/^tp/.test(ex.reason) && tp > 0 && entry > 0) return tp / entry;
+      if (/^sl/.test(ex.reason) && sl > 0 && entry > 0) return sl / entry;
+      const m = /ig_entry=([\d.]+)/.exec(en.detail || '');
+      return m && +m[1] > 0 && isFinite(px) ? px / +m[1] : null;
+    }
+    return entry > 0 && isFinite(px) ? px / entry : null;
+  }
   function sfcSummary(sfc) {
     if (!sfc) return null;
     const {state: st, heartbeat: hb, log} = sfc;
@@ -368,11 +407,12 @@
         if (p.source !== 'sfc' || p.status === 'closed') continue;
         const ex = state.sfc.log.filter(r => r.event === 'EXIT' && r.symbol === p.sfc.symbol && r.ts > p.sfc.ts && isFinite(parseFloat(r.exit))).sort((a, b) => a.ts.localeCompare(b.ts))[0];
         if (!ex) continue;
+        const en = state.sfc.log.find(r => r.event === 'ENTRY' && r.symbol === p.sfc.symbol && r.ts === p.sfc.ts);
         let price = parseFloat(ex.exit);
-        if (ex.pnl_source === 'ig') {   // sortie en points IG : on la ramène à l'échelle de ton prix d'entrée par la variation
-          const en = state.sfc.log.find(r => r.event === 'ENTRY' && r.symbol === p.sfc.symbol && r.ts === p.sfc.ts), m = en && /ig_entry=([\d.]+)/.exec(en.detail || '');
-          if (!m || !(+m[1] > 0)) continue;
-          price = p.entry * (price / +m[1]);
+        if (ex.pnl_source === 'ig') {   // sortie en points IG : on la remplace par le niveau du signal, à l'échelle de ton prix d'entrée
+          const k = en ? exitRatio(en, ex) : null;
+          if (k == null) continue;
+          price = p.entry * k;
         }
         const r = pnlAt(p, price);
         Object.assign(p, {status: 'closed', pending: true, exit: {price, ts: ex.ts, pct: r.pct, eur: r.eur, reason: ex.reason || '', by: 'bot'}}); changed = true;
@@ -491,7 +531,8 @@
   /* ---------- autres actions ---------- */
   function saveSettings(s) {
     state.settings = {repo: (s.repo || '').trim() || DEFAULTS.repo, branch: (s.branch || '').trim() || DEFAULTS.branch,
-      dataBranch: (s.dataBranch || '').trim() || DEFAULTS.dataBranch, token: (s.token || '').trim(), finnhub: (s.finnhub || '').trim()};
+      dataBranch: (s.dataBranch || '').trim() || DEFAULTS.dataBranch, token: (s.token || '').trim(), finnhub: (s.finnhub || '').trim(),
+      simStake: parseFloat(s.simStake) > 0 ? parseFloat(s.simStake) : DEFAULTS.simStake};
     ls.set('at.settings', state.settings); state.ledgerSha = null; return loadAll();
   }
   const unseenCount = () => (state.alerts || []).filter(a => !state.seen.has(a.id) && !state.dismissed.has(a.id)).length;
@@ -500,7 +541,7 @@
     (state.alerts || []).forEach(a => state.seen.add(a.id)); ls.set('at.seen', [...state.seen]); emit();
   }
 
-  window.AlgoCore = {levOf, loadLive, dismissAlert, sfcOrders, state, on, fmt, todayISO, computeLedger, snapshots, sfcSummary, loadAll, saveSettings,
+  window.AlgoCore = {sfcSignals, levOf, loadLive, dismissAlert, sfcOrders, state, on, fmt, todayISO, computeLedger, snapshots, sfcSummary, loadAll, saveSettings,
     addMovement, deleteMovement, addAccount, deleteAccount, unseenCount, markAlertsSeen,
     parseLevel, pnlAt, positionView, takePosition, updatePosition, closePosition, deletePosition, takenIds,
     setAmount, pushStatus, enablePush, disablePush, testNotification};
