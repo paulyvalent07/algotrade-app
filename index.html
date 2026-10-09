@@ -507,9 +507,9 @@ body{background:#06080B;background-image:none}
 .wrap{position:relative;z-index:1}
 .aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
 .aurora i{position:absolute;border-radius:50%;will-change:transform}
-.aurora i:nth-child(1){width:90vw;height:90vw;left:-28vw;top:-26vw;background:radial-gradient(circle,rgba(157,183,204,.34),transparent 66%);animation:drift1 24s ease-in-out infinite alternate}
-.aurora i:nth-child(2){width:80vw;height:80vw;right:-34vw;top:34vh;background:radial-gradient(circle,rgba(56,198,148,.17),transparent 66%);animation:drift2 30s ease-in-out infinite alternate}
-.aurora i:nth-child(3){width:90vw;height:90vw;left:-6vw;bottom:-40vw;background:radial-gradient(circle,rgba(142,143,214,.22),transparent 66%);animation:drift3 36s ease-in-out infinite alternate}
+.aurora i:nth-child(1){width:90vw;height:90vw;left:-28vw;top:-26vw;background:radial-gradient(circle,rgba(157,183,204,.34),transparent 66%);animation:drift1 48s ease-in-out infinite alternate}
+.aurora i:nth-child(2){width:80vw;height:80vw;right:-34vw;top:34vh;background:radial-gradient(circle,rgba(56,198,148,.17),transparent 66%);animation:drift2 60s ease-in-out infinite alternate}
+.aurora i:nth-child(3){width:90vw;height:90vw;left:-6vw;bottom:-40vw;background:radial-gradient(circle,rgba(142,143,214,.22),transparent 66%);animation:drift3 72s ease-in-out infinite alternate}
 @keyframes drift1{to{transform:translate(18vw,14vh) scale(1.12)}}
 @keyframes drift2{to{transform:translate(-20vw,-18vh) scale(.9)}}
 @keyframes drift3{to{transform:translate(14vw,-16vh) scale(1.1)}}
@@ -584,7 +584,7 @@ dialog[open]::backdrop{animation:fadein .4s ease}
 #toast.on{transform:translate(-50%,0) scale(1)}
 
 /* capital : couleurs franches */
-#view[data-tab="capital"]{--series-1:#4C9AFF;--series-2:#FF7A3D;--series-3:#22C493;--series-4:#F2B53C;--series-5:#F0689B;--series-6:#4FD16B;--series-7:#9B8CFF}
+#view[data-tab="capital"]{--series-1:#6FA6F0;--series-2:#F08C5E;--series-3:#4FBFA0;--series-4:#E8BD66;--series-5:#E583A8;--series-6:#76C98A;--series-7:#A99BF0}
 #view[data-tab="capital"] .split{height:13px;gap:4px}
 #view[data-tab="capital"] .split i{position:relative}
 #view[data-tab="capital"] .split i::after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(180deg,rgba(255,255,255,.34),transparent 62%)}
@@ -600,22 +600,22 @@ dialog[open]::backdrop{animation:fadein .4s ease}
    Reflet de bord : lumineux en haut à gauche et en bas à droite, comme la lumière sur un verre épais. */
 :root{
   --lq:rgba(255,255,255,.07);
-  --lq-blur:blur(22px) saturate(190%) brightness(1.1);
+  --lq-blur:blur(24px) saturate(140%) brightness(1.08);
   --lq-edge:inset 1.5px 1.5px 1px -1px rgba(255,255,255,.8),inset -1.5px -1.5px 1px -1px rgba(255,255,255,.5),inset 0 0 0 1px rgba(255,255,255,.1),inset 0 0 22px rgba(255,255,255,.06);
   --lq-drop:0 12px 32px -10px rgba(0,0,0,.5);
 }
 body{background:#04060B}
 .aurora i{opacity:1}
-.aurora i:nth-child(1){width:110vw;height:110vw;left:-40vw;top:-34vw;background:radial-gradient(circle,rgba(64,118,255,.62),rgba(64,118,255,.16) 46%,transparent 68%)}
-.aurora i:nth-child(2){width:100vw;height:100vw;right:-50vw;top:22vh;background:radial-gradient(circle,rgba(32,206,170,.5),rgba(32,206,170,.12) 46%,transparent 68%)}
-.aurora i:nth-child(3){width:110vw;height:110vw;left:-24vw;bottom:-52vw;background:radial-gradient(circle,rgba(150,92,255,.55),rgba(150,92,255,.14) 46%,transparent 68%)}
+.aurora i:nth-child(1){width:110vw;height:110vw;left:-40vw;top:-34vw;background:radial-gradient(circle,rgba(96,132,226,.34),rgba(96,132,226,.1) 50%,transparent 72%)}
+.aurora i:nth-child(2){width:100vw;height:100vw;right:-50vw;top:22vh;background:radial-gradient(circle,rgba(84,184,168,.24),rgba(84,184,168,.07) 50%,transparent 72%)}
+.aurora i:nth-child(3){width:110vw;height:110vw;left:-24vw;bottom:-52vw;background:radial-gradient(circle,rgba(138,118,222,.3),rgba(138,118,222,.09) 50%,transparent 72%)}
 
 /* surfaces : verre pour tout ce qui est une carte, un bouton, une barre */
 .card,.alert,.tile,.scan,.card.milled{background:var(--lq);-webkit-backdrop-filter:var(--lq-blur);backdrop-filter:var(--lq-blur);border:0;box-shadow:var(--lq-edge),var(--lq-drop)}
 .card.milled{background:rgba(255,255,255,.085)}
 #view[data-tab="analysis"] .card,#view[data-tab="capital"] .card{-webkit-backdrop-filter:var(--lq-blur);backdrop-filter:var(--lq-blur)}
 .chips,.seg,.ibtn,.pill,.more-row,.plus,.btn.ghost,.take,nav.dock{background:var(--lq);-webkit-backdrop-filter:var(--lq-blur);backdrop-filter:var(--lq-blur);border:0;box-shadow:var(--lq-edge),var(--lq-drop)}
-nav.dock{background:rgba(255,255,255,.06);-webkit-backdrop-filter:blur(26px) saturate(210%) brightness(1.12);backdrop-filter:blur(26px) saturate(210%) brightness(1.12);border-radius:999px;box-shadow:var(--lq-edge),0 18px 40px -10px rgba(0,0,0,.6)}
+nav.dock{background:rgba(255,255,255,.06);-webkit-backdrop-filter:blur(28px) saturate(150%) brightness(1.1);backdrop-filter:blur(28px) saturate(150%) brightness(1.1);border-radius:999px;box-shadow:var(--lq-edge),0 18px 40px -10px rgba(0,0,0,.6)}
 .take:not(.on){background:rgba(255,255,255,.08)}
 
 /* pastille sélectionnée : une lentille de verre plus claire (onglets, filtres, périodes) */
@@ -626,8 +626,8 @@ nav.dock{background:rgba(255,255,255,.06);-webkit-backdrop-filter:blur(26px) sat
 .dock button[aria-selected="true"] svg .f{fill-opacity:.3}
 
 /* boutons : capsules de verre, le bouton principal est un verre teinté */
-.btn{border:0;border-radius:999px;color:#fff;background:linear-gradient(180deg,rgba(130,170,255,.55),rgba(80,120,230,.45));-webkit-backdrop-filter:var(--lq-blur);backdrop-filter:var(--lq-blur);
-  box-shadow:var(--lq-edge),0 10px 26px -10px rgba(70,110,230,.7);text-shadow:0 1px 2px rgba(0,0,0,.25)}
+.btn{border:0;border-radius:999px;color:#fff;background:linear-gradient(180deg,rgba(150,180,235,.4),rgba(110,140,215,.3));-webkit-backdrop-filter:var(--lq-blur);backdrop-filter:var(--lq-blur);
+  box-shadow:var(--lq-edge),0 10px 24px -12px rgba(100,130,210,.55);text-shadow:0 1px 2px rgba(0,0,0,.25)}
 .btn.ghost{color:var(--ink);text-shadow:none}
 .btn.danger,.danger{background:rgba(216,102,125,.22);color:#FFB3C0;box-shadow:var(--lq-edge)}
 .riskbox .rk-use{background:rgba(255,255,255,.14);color:#fff;box-shadow:inset 1px 1px 1px -1px rgba(255,255,255,.8),inset 0 0 0 1px rgba(255,255,255,.12)}
@@ -635,7 +635,7 @@ input,select,textarea{background:rgba(255,255,255,.06);border:0;border-radius:18
 input:focus,select:focus,textarea:focus{box-shadow:inset 0 1px 3px rgba(0,0,0,.35),inset 0 0 0 1.5px rgba(160,190,255,.65),0 0 0 4px rgba(120,160,255,.18)}
 
 /* feuilles : grandes plaques de verre avec une poignée */
-dialog{background:rgba(40,52,76,.38);-webkit-backdrop-filter:blur(40px) saturate(200%) brightness(1.12);backdrop-filter:blur(40px) saturate(200%) brightness(1.12);border:0;border-radius:38px;
+dialog{background:rgba(40,52,76,.38);-webkit-backdrop-filter:blur(40px) saturate(150%) brightness(1.1);backdrop-filter:blur(40px) saturate(150%) brightness(1.1);border:0;border-radius:38px;
   box-shadow:var(--lq-edge),0 30px 70px -10px rgba(0,0,0,.65);padding-top:30px}
 dialog::before{content:"";position:absolute;top:9px;left:50%;width:38px;height:5px;margin-left:-19px;border-radius:3px;background:rgba(255,255,255,.35)}
 dialog::backdrop{background:rgba(2,4,10,.38);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
@@ -700,7 +700,7 @@ dialog::backdrop{background:rgba(2,4,10,.38);-webkit-backdrop-filter:blur(3px);b
       <p id="push-msg" style="margin-top:6px">Reçois les nouvelles alertes sur l'écran de verrouillage.</p>
       <div class="row2"><button type="button" class="btn" id="push-on">Activer</button><button type="button" class="btn ghost" id="push-test">Tester</button><button type="button" class="btn ghost" id="push-off">Désactiver</button></div>
     </div>
-    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 25 · l'app se met à jour toute seule</p>
+    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 26 · l'app se met à jour toute seule</p>
     <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
   </form>
 </dialog>
