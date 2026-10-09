@@ -513,11 +513,6 @@ body{background:#06080B;background-image:none}
 @keyframes drift1{to{transform:translate(18vw,14vh) scale(1.12)}}
 @keyframes drift2{to{transform:translate(-20vw,-18vh) scale(.9)}}
 @keyframes drift3{to{transform:translate(14vw,-16vh) scale(1.1)}}
-.bubbles{position:fixed;inset:0;z-index:4;pointer-events:none;overflow:hidden}
-.bubbles b{position:absolute;bottom:-70px;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;opacity:0;
-  mix-blend-mode:screen;background:radial-gradient(circle at 30% 26%,rgba(255,255,255,.8),rgba(170,205,235,.26) 34%,rgba(130,170,215,.1) 62%,transparent 76%);
-  border:1px solid rgba(255,255,255,.2);box-shadow:inset 0 -6px 14px rgba(157,183,204,.14);animation:bubble var(--d) linear var(--o) infinite}
-@keyframes bubble{0%{transform:translate(0,0) scale(.8);opacity:0}8%{opacity:.9}50%{transform:translate(22px,-55vh) scale(1)}92%{opacity:.7}100%{transform:translate(-16px,-112vh) scale(1.12);opacity:0}}
 
 /* cartes translucides : le fond animé transparaît derrière, avec un reflet en haut à gauche */
 .card,.alert,.tile,.scan{background:radial-gradient(130% 90% at 0% 0%,rgba(255,255,255,.085),transparent 52%),rgba(14,19,26,.6);
@@ -573,9 +568,6 @@ nav.dock{background:rgba(20,27,36,.5);-webkit-backdrop-filter:blur(30px) saturat
 @keyframes tickpop{0%{transform:scale(.78)}55%{transform:scale(1.22)}100%{transform:scale(1)}}
 @keyframes ripple{from{opacity:.9;transform:scale(1)}to{opacity:0;transform:scale(2.4)}}
 @keyframes tickdraw{from{stroke-dashoffset:24}to{stroke-dashoffset:0}}
-i.burst{position:fixed;z-index:30;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);
-  background:radial-gradient(circle at 30% 28%,rgba(255,255,255,.75),rgba(116,227,188,.28) 50%,transparent 72%);border:1px solid rgba(255,255,255,.4);animation:burst 1s cubic-bezier(.2,.8,.3,1) both}
-@keyframes burst{from{opacity:1;transform:translate(-50%,-50%) scale(.4)}to{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.15)}}
 
 /* en-tête : trois boutons sans écraser le titre */
 .ibtn{width:40px;height:40px;margin-left:4px}
@@ -596,20 +588,68 @@ dialog[open]::backdrop{animation:fadein .4s ease}
 #view[data-tab="capital"] .split{height:13px;gap:4px}
 #view[data-tab="capital"] .split i{position:relative}
 #view[data-tab="capital"] .split i::after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(180deg,rgba(255,255,255,.34),transparent 62%)}
-#view[data-tab="capital"] .row .logo{box-shadow:0 0 0 2px var(--c),0 0 16px -2px color-mix(in srgb,var(--c) 70%,transparent)}
+#view[data-tab="capital"] .row .logo{box-shadow:0 0 0 2px var(--c)}
+.row .l.has-logo{padding-left:4px}
 .row .l.has-logo>span:not(.logo){display:block;min-width:0}
 .sbar{display:block;height:4px;width:min(140px,100%);margin-top:7px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
 .sbar i{display:block;height:100%;border-radius:99px;background:var(--c,var(--glacier));box-shadow:0 0 10px color-mix(in srgb,var(--c,var(--glacier)) 70%,transparent)}
 #view.enter .sbar i{transform-origin:left;animation:barin 1s cubic-bezier(.2,.85,.25,1) .3s both}
 @keyframes barin{from{transform:scaleX(0)}}
-@media (prefers-reduced-motion:reduce){.bubbles{display:none}}
+/* ====== v25 : Liquid Glass d'Apple ======
+   Verre quasi transparent (flou + saturation + reflet directionnel), posé sur un fond coloré vivant.
+   Reflet de bord : lumineux en haut à gauche et en bas à droite, comme la lumière sur un verre épais. */
+:root{
+  --lq:rgba(255,255,255,.07);
+  --lq-blur:blur(22px) saturate(190%) brightness(1.1);
+  --lq-edge:inset 1.5px 1.5px 1px -1px rgba(255,255,255,.8),inset -1.5px -1.5px 1px -1px rgba(255,255,255,.5),inset 0 0 0 1px rgba(255,255,255,.1),inset 0 0 22px rgba(255,255,255,.06);
+  --lq-drop:0 12px 32px -10px rgba(0,0,0,.5);
+}
+body{background:#04060B}
+.aurora i{opacity:1}
+.aurora i:nth-child(1){width:110vw;height:110vw;left:-40vw;top:-34vw;background:radial-gradient(circle,rgba(64,118,255,.62),rgba(64,118,255,.16) 46%,transparent 68%)}
+.aurora i:nth-child(2){width:100vw;height:100vw;right:-50vw;top:22vh;background:radial-gradient(circle,rgba(32,206,170,.5),rgba(32,206,170,.12) 46%,transparent 68%)}
+.aurora i:nth-child(3){width:110vw;height:110vw;left:-24vw;bottom:-52vw;background:radial-gradient(circle,rgba(150,92,255,.55),rgba(150,92,255,.14) 46%,transparent 68%)}
+
+/* surfaces : verre pour tout ce qui est une carte, un bouton, une barre */
+.card,.alert,.tile,.scan,.card.milled{background:var(--lq);-webkit-backdrop-filter:var(--lq-blur);backdrop-filter:var(--lq-blur);border:0;box-shadow:var(--lq-edge),var(--lq-drop)}
+.card.milled{background:rgba(255,255,255,.085)}
+#view[data-tab="analysis"] .card,#view[data-tab="capital"] .card{-webkit-backdrop-filter:var(--lq-blur);backdrop-filter:var(--lq-blur)}
+.chips,.seg,.ibtn,.pill,.more-row,.plus,.btn.ghost,.take,nav.dock{background:var(--lq);-webkit-backdrop-filter:var(--lq-blur);backdrop-filter:var(--lq-blur);border:0;box-shadow:var(--lq-edge),var(--lq-drop)}
+nav.dock{background:rgba(255,255,255,.06);-webkit-backdrop-filter:blur(26px) saturate(210%) brightness(1.12);backdrop-filter:blur(26px) saturate(210%) brightness(1.12);border-radius:999px;box-shadow:var(--lq-edge),0 18px 40px -10px rgba(0,0,0,.6)}
+.take:not(.on){background:rgba(255,255,255,.08)}
+
+/* pastille sélectionnée : une lentille de verre plus claire (onglets, filtres, périodes) */
+.dock-pill,.chip[aria-pressed="true"],.seg button[aria-pressed="true"]{background:rgba(255,255,255,.16);-webkit-backdrop-filter:blur(8px) brightness(1.25);backdrop-filter:blur(8px) brightness(1.25);
+  box-shadow:inset 1.5px 1.5px 1px -1px rgba(255,255,255,.9),inset -1.5px -1.5px 1px -1px rgba(255,255,255,.55),inset 0 0 0 1px rgba(255,255,255,.14),0 6px 18px -6px rgba(0,0,0,.45)}
+.dock button[aria-selected="true"],.chip[aria-pressed="true"],.seg button[aria-pressed="true"]{color:#fff}
+.dock button{font-size:10.5px;font-weight:600}
+.dock button[aria-selected="true"] svg .f{fill-opacity:.3}
+
+/* boutons : capsules de verre, le bouton principal est un verre teinté */
+.btn{border:0;border-radius:999px;color:#fff;background:linear-gradient(180deg,rgba(130,170,255,.55),rgba(80,120,230,.45));-webkit-backdrop-filter:var(--lq-blur);backdrop-filter:var(--lq-blur);
+  box-shadow:var(--lq-edge),0 10px 26px -10px rgba(70,110,230,.7);text-shadow:0 1px 2px rgba(0,0,0,.25)}
+.btn.ghost{color:var(--ink);text-shadow:none}
+.btn.danger,.danger{background:rgba(216,102,125,.22);color:#FFB3C0;box-shadow:var(--lq-edge)}
+.riskbox .rk-use{background:rgba(255,255,255,.14);color:#fff;box-shadow:inset 1px 1px 1px -1px rgba(255,255,255,.8),inset 0 0 0 1px rgba(255,255,255,.12)}
+input,select,textarea{background:rgba(255,255,255,.06);border:0;border-radius:18px;box-shadow:inset 0 1px 3px rgba(0,0,0,.35),inset 0 0 0 1px rgba(255,255,255,.1);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+input:focus,select:focus,textarea:focus{box-shadow:inset 0 1px 3px rgba(0,0,0,.35),inset 0 0 0 1.5px rgba(160,190,255,.65),0 0 0 4px rgba(120,160,255,.18)}
+
+/* feuilles : grandes plaques de verre avec une poignée */
+dialog{background:rgba(40,52,76,.38);-webkit-backdrop-filter:blur(40px) saturate(200%) brightness(1.12);backdrop-filter:blur(40px) saturate(200%) brightness(1.12);border:0;border-radius:38px;
+  box-shadow:var(--lq-edge),0 30px 70px -10px rgba(0,0,0,.65);padding-top:30px}
+dialog::before{content:"";position:absolute;top:9px;left:50%;width:38px;height:5px;margin-left:-19px;border-radius:3px;background:rgba(255,255,255,.35)}
+dialog::backdrop{background:rgba(2,4,10,.38);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+#toast{background:rgba(255,255,255,.1);-webkit-backdrop-filter:var(--lq-blur);backdrop-filter:var(--lq-blur);border:0;box-shadow:var(--lq-edge),0 14px 34px -10px rgba(0,0,0,.6)}
+.riskbox,.push-box,.p-note{background:rgba(255,255,255,.05);border:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.09)}
+.tag,.badge{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.logo-badge{box-shadow:var(--lq-edge)}
+
+/* lisibilité sur verre : textes secondaires un peu plus clairs */
+:root{--muted:#A3AEBD;--text-2:#C6CEDA}
 </style>
 </head>
 <body>
 <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
-<div class="bubbles" aria-hidden="true">
-  <b style="--s:46px;--x:8%;--d:34s;--o:-6s"></b><b style="--s:20px;--x:22%;--d:26s;--o:-19s"></b><b style="--s:34px;--x:41%;--d:38s;--o:-27s"></b>
-  <b style="--s:16px;--x:58%;--d:24s;--o:-3s"></b><b style="--s:52px;--x:72%;--d:42s;--o:-14s"></b><b style="--s:26px;--x:90%;--d:30s;--o:-22s"></b></div>
 <div id="splash" aria-hidden="true"><div class="sp-logo"><img src="icon-512.png" alt=""><svg class="sp-ring" viewBox="0 0 100 100"><rect x="1" y="1" width="98" height="98" rx="26" pathLength="1"/></svg></div><div class="sp-word">AlgoTrade</div><div class="sp-line"><i></i></div></div>
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v10M7.5 11 12 15.5 16.5 11"/></svg></div>
 
@@ -660,7 +700,7 @@ dialog[open]::backdrop{animation:fadein .4s ease}
       <p id="push-msg" style="margin-top:6px">Reçois les nouvelles alertes sur l'écran de verrouillage.</p>
       <div class="row2"><button type="button" class="btn" id="push-on">Activer</button><button type="button" class="btn ghost" id="push-test">Tester</button><button type="button" class="btn ghost" id="push-off">Désactiver</button></div>
     </div>
-    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 24 · l'app se met à jour toute seule</p>
+    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 25 · l'app se met à jour toute seule</p>
     <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
   </form>
 </dialog>
@@ -783,16 +823,6 @@ function report(promise) {
 const tokenHelp = () => `<div class="err">Dépôt privé : ajoute ton jeton GitHub dans les réglages pour charger les données.</div>`;
 
 /* chiffres qui se posent en douceur */
-/* petites bulles qui s'échappent de la case cochée */
-function burst(el) {
-  if (reduceMotion()) return;
-  const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-  for (let i = 0; i < 9; i++) {
-    const b = document.createElement('i'), a = Math.random() * Math.PI * 2, d = 26 + Math.random() * 34, sz = 5 + Math.random() * 9;
-    b.className = 'burst'; b.style.cssText = `left:${cx}px;top:${cy}px;width:${sz}px;height:${sz}px;--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d - 18}px;animation-delay:${i * 18}ms`;
-    document.body.appendChild(b); setTimeout(() => b.remove(), 1200);
-  }
-}
 function tween(el, to, f) {
   const from = el._v ?? 0; el._v = to; cancelAnimationFrame(el._r);
   if (reduceMotion() || from === to) { el.textContent = f(to); return; }
@@ -1037,7 +1067,7 @@ function render() {
   v.innerHTML = view.tab === 'alerts' ? viewAlerts() : view.tab === 'analysis' ? viewAnalysis() : viewCapital();
   const ft = $('#f-total'); if (ft) { ft._v = view.lastTotal ?? 0; view.lastTotal = c.value; tween(ft, c.value, v => F.eur(v)); }
   const fr = $('#f-real'); if (fr) { fr._v = view.lastReal ?? 0; view.lastReal = +fr.dataset.v; tween(fr, +fr.dataset.v, v => F.signed(v, 0)); }
-  if (view.popId) { const b = document.querySelector(`[data-take="${CSS.escape(view.popId)}"]`); view.popId = null; if (b) { b.classList.add('pop'); burst(b); } }
+  if (view.popId) { const b = document.querySelector(`[data-take="${CSS.escape(view.popId)}"]`); view.popId = null; if (b) b.classList.add('pop'); }
   view.animate = false;
   if (!S.loading) $('#ptr').classList.remove('spin');
 }
