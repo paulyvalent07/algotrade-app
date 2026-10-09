@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#05070A">
+<meta name="theme-color" content="#07090C">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AlgoTrade">
@@ -13,7 +13,7 @@
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&display=swap" rel="stylesheet">
 <title>AlgoTrade</title>
 <style>
 /* ====== Jetons de design : c'est ici (et seulement ici) qu'on change l'apparence ======
@@ -21,23 +21,24 @@
    Toujours sombre, quel que soit le réglage de l'iPhone. */
 :root{
   color-scheme:dark;
-  --bg:#05070A; --bg-2:#0B1016;
-  --surface:#0E1319;                       /* fond opaque des cartes (traits des graphiques) */
+  --bg:#07090C; --bg-2:#0D1116;
+  --surface:#121820;                       /* fond opaque des cartes (traits des graphiques) */
   --glass:rgba(255,255,255,.045); --glass-2:rgba(255,255,255,.08);
-  --ink:#F2F5F8; --muted:#8A94A3; --text-2:#B4BDC9; --text-3:#7F8998;
+  --ink:#F5F7FA; --muted:#8B949E; --text-2:#B3BBC5; --text-3:#6F7985;
   --line:rgba(255,255,255,.085); --grid:rgba(255,255,255,.055); --axis:rgba(255,255,255,.18);
-  --glacier:#93BEDC; --up:#93BEDC; --down:#F0245F; --signal:#93BEDC; --warn:#F0245F; --on-signal:#05070A;
-  --series-0:#6E7681; --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70; --series-4:#c98500;
-  --series-5:#d55181; --series-6:#2fb344; --series-7:#9085e9;
+  --glacier:#9DB7CC; --up:#38C694; --down:#D8667D; --signal:#9DB7CC; --warn:#D8667D; --on-signal:#07090C;
+  --series-0:#5D6672; --series-1:#9DB7CC; --series-2:#8E8FD6; --series-3:#5FB8A6; --series-4:#C58BA3;
+  --series-5:#A7B0BC; --series-6:#7BA6D9; --series-7:#B59BE0;
   --dumb-from:#4C7DB4; --dumb-to:#9CC4EA;
-  --metal:linear-gradient(180deg,#FFFFFF 0%,#E4E9EE 30%,#A3AEBB 58%,rgba(214,222,231,.78) 100%);
+  --metal:linear-gradient(180deg,#FFFFFF 0%,#E3E8EE 28%,#9DB7CC 62%,#5D6C7C 100%);
   --sheen:rgba(255,255,255,.95);
   --btn:linear-gradient(180deg,#F7F9FB,#C3CBD4); --on-btn:#0B0F14;
   --dock:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.006)); --dock-line:rgba(255,255,255,.2); --dock-pill:rgba(255,255,255,.1);
   --shadow:0 18px 50px rgba(0,0,0,.55);
   --halo:radial-gradient(120% 60% at 50% -10%,rgba(147,190,220,.16),transparent 60%);
   --r-card:28px; --r-ctl:18px;
-  --font:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Inter,system-ui,'Segoe UI',sans-serif;
+  --font:'Geist',-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',system-ui,'Segoe UI',sans-serif;
+  --lg-bg:rgba(18,24,32,.65); --lg-blur:blur(28px) saturate(180%); --lg-rim:1px solid rgba(255,255,255,.1); --lg-spec:inset 0 1px 1px rgba(255,255,255,.12); --lg-shadow:0 16px 36px -8px rgba(0,0,0,.6);
 }
 /* ====== Mise en page ====== */
 *{box-sizing:border-box;margin:0}
@@ -161,7 +162,7 @@ h2{font-size:13px;font-weight:600;margin:30px 4px 10px;letter-spacing:.09em;text
 .pulse.off{background:var(--down);animation:none}
 @keyframes pulse{70%{box-shadow:0 0 0 9px transparent}100%{box-shadow:0 0 0 0 transparent}}
 .big{display:block;font-size:46px;font-weight:650;letter-spacing:-.03em;line-height:1.05;font-variant-numeric:tabular-nums;margin-top:4px}
-.big.neg{--metal:linear-gradient(180deg,#FFD3DF 0%,#FF6E96 45%,#F0245F 100%)}
+.big.neg{--metal:linear-gradient(180deg,#FFE3E8 0%,#E58FA1 50%,#D8667D 100%)}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
 .stats small{display:block;color:var(--muted);font-size:12.5px}
 .stats b{font-size:19px;font-weight:600;letter-spacing:-.01em}
@@ -321,7 +322,7 @@ nav.dock.min .dot{top:4px}
 .take.on{background:var(--glacier);border-color:var(--glacier);color:var(--on-signal)}
 .sum-card{display:flex;justify-content:space-between;gap:12px;align-items:flex-end}
 .sum-card small{display:block;color:var(--muted);font-size:12.5px;margin-bottom:4px}
-.sum-card b{font-size:26px;font-weight:620;letter-spacing:-.02em}
+.sum-card b{font-size:21px;font-weight:620;letter-spacing:-.02em}
 .pos .p-pnl{font-size:26px;font-weight:620;letter-spacing:-.02em;margin-top:6px}
 .pos .p-pnl small{font-size:14px;font-weight:500;margin-left:8px;color:var(--muted)}
 .pos .p-row{display:flex;justify-content:space-between;gap:10px;color:var(--text-2);font-size:13.5px;margin-top:8px}
@@ -405,7 +406,7 @@ nav.dock.min .dot{top:4px}
 .dotkey.core{background:var(--glacier)} .dotkey.ghost{background:color-mix(in srgb,var(--glacier) 28%,transparent);box-shadow:inset 0 0 0 1px var(--glacier)}
 .bd{margin-top:16px} .bd-h{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;margin-bottom:6px} .bd-h span{color:var(--text-2)}
 .bd-t{height:6px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden} .bd-t i{display:block;height:100%;border-radius:99px;background:var(--glacier)}
-.hero b.neg{--metal:linear-gradient(180deg,#FFD3DF 0%,#FF6E96 45%,#F0245F 100%)}
+.hero b.neg{--metal:linear-gradient(180deg,#FFE3E8 0%,#E58FA1 50%,#D8667D 100%)}
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:18px 12px}
 .kpis small{display:block;color:var(--muted);font-size:12.5px} .kpis b{font-size:19px;font-weight:600;letter-spacing:-.01em}
 .chart .capline.ghost{stroke:var(--text-2);stroke-dasharray:5 5;stroke-width:1.4}
@@ -419,6 +420,71 @@ nav.dock.min .dot{top:4px}
   *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   .metal{background-position:-60% 0,0 0}
 }
+
+/* ====== v22 : Liquid Glass & Titanium ======
+   Cartes plates (tier 2) ; le verre liquide est réservé à ce qui flotte : barre d'onglets, feuilles, puces, bannières. */
+body{background-image:radial-gradient(70% 38% at 18% -4%,rgba(157,183,204,.14),transparent 70%),radial-gradient(55% 34% at 105% 40%,rgba(157,183,204,.07),transparent 70%);background-attachment:fixed}
+.num,.hero b,.big,.t-pct,.t-eur,.sum-card b,.kpis b,.stats b,.a-title{font-feature-settings:"tnum","zero"}
+.brand{gap:12px;min-width:0}
+.logo-badge{flex:none;width:44px;height:44px;border-radius:16px;padding:2px;display:grid;place-items:center;overflow:hidden;background:linear-gradient(135deg,rgba(255,255,255,.2),rgba(30,40,52,.75) 50%,rgba(10,14,20,.9));border:1px solid rgba(255,255,255,.2);box-shadow:inset 0 1px 1.5px rgba(255,255,255,.35),0 4px 10px rgba(0,0,0,.5)}
+.logo-badge img{width:100%;height:100%;border-radius:13px;display:block}
+.brand-t{display:flex;flex-direction:column;min-width:0}
+.brand-t b{font-size:20px;font-weight:600;letter-spacing:-.02em;line-height:1.15}
+.brand-t small{font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.brand-t small::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--up);box-shadow:0 0 8px var(--up);margin-right:7px;vertical-align:1px}
+.brand-t small.off::before{background:var(--down);box-shadow:0 0 8px var(--down)}
+.ibtn{background:var(--lg-bg);border:var(--lg-rim);box-shadow:var(--lg-spec);-webkit-backdrop-filter:var(--lg-blur);backdrop-filter:var(--lg-blur);margin-left:6px}
+
+.card,.alert,.tile,.scan{background:var(--surface);border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.card.milled{background:linear-gradient(145deg,rgba(25,33,44,.62),rgba(13,17,22,.72));border-color:rgba(255,255,255,.13);box-shadow:inset 0 1px 2px rgba(255,255,255,.22),inset 0 -1px 1px rgba(0,0,0,.6),0 24px 44px -16px rgba(0,0,0,.75)}
+.tile{border-radius:20px}
+.tag{border:1px solid color-mix(in srgb,currentColor 28%,transparent)}
+.tag.buy::before{content:"↗ "} .tag.sell::before{content:"↘ "}
+.badge.win::before{content:"↗ "} .badge.loss::before{content:"↘ "}
+
+/* verre liquide : puces, barre d'onglets, feuilles */
+nav.dock{background:var(--lg-bg);border:1px solid rgba(255,255,255,.14);-webkit-backdrop-filter:blur(34px) saturate(210%);backdrop-filter:blur(34px) saturate(210%);box-shadow:inset 0 1.5px 2px rgba(255,255,255,.3),inset 0 -1px 2px rgba(0,0,0,.6),0 24px 50px -10px rgba(0,0,0,.85)}
+.dock-pill{background:rgba(157,183,204,.13);box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+.dock button[aria-selected="true"]{color:var(--glacier)}
+.chips,.seg{background:var(--lg-bg);border:var(--lg-rim);-webkit-backdrop-filter:var(--lg-blur);backdrop-filter:var(--lg-blur);box-shadow:var(--lg-spec)}
+.chip[aria-pressed="true"],.seg button[aria-pressed="true"]{background:rgba(157,183,204,.16);color:var(--ink);box-shadow:inset 0 0 0 1px rgba(157,183,204,.4)}
+dialog{background:rgba(18,24,32,.8);border:1px solid rgba(255,255,255,.12);box-shadow:var(--lg-spec),var(--lg-shadow);-webkit-backdrop-filter:blur(34px) saturate(180%);backdrop-filter:blur(34px) saturate(180%)}
+.btn{border-radius:20px;background:linear-gradient(180deg,#B8D3E8,#9DB7CC);color:#07090C;box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 6px 18px rgba(0,0,0,.25)}
+.btn.ghost{background:var(--lg-bg);color:var(--ink);border:var(--lg-rim);box-shadow:var(--lg-spec);-webkit-backdrop-filter:var(--lg-blur);backdrop-filter:var(--lg-blur)}
+.btn.danger,.danger{background:color-mix(in srgb,var(--down) 16%,transparent);color:var(--down)}
+.plus{background:var(--lg-bg);border:var(--lg-rim);box-shadow:var(--lg-spec)}
+input,select{border-radius:20px;background:var(--bg-2)}
+.edge.top::after,.edge.bot::after{background:linear-gradient(to bottom,var(--bg),transparent)}
+.edge.bot::after{background:linear-gradient(to top,var(--bg),transparent)}
+
+/* alertes : une ligne, le détail à l'ouverture */
+.alert:not(.open) .lv{display:none}
+.a-line{color:var(--muted);font-size:14px;margin-top:2px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.alert.open .a-line{display:none}
+.xsym{letter-spacing:.07em}
+.a-top{flex-wrap:nowrap}.a-cat{white-space:nowrap;overflow:hidden;min-width:0}.a-right{flex:none}.tag,.badge{white-space:nowrap}
+.t-dir{font-size:13px !important;font-weight:700}
+
+/* analyse */
+.hero.c{text-align:center;padding:18px 0 4px}
+.hero.c b{font-size:clamp(44px,14vw,60px);margin-top:12px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 13px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);background:var(--lg-bg);border:var(--lg-rim);box-shadow:var(--lg-spec);-webkit-backdrop-filter:var(--lg-blur);backdrop-filter:var(--lg-blur)}
+.pill i{width:6px;height:6px;border-radius:50%;background:var(--up);box-shadow:0 0 8px var(--up)}
+.hero-pct{display:block;margin-top:8px;font-size:15px;font-weight:600}
+.hero-cap{display:block;margin-top:4px;color:var(--muted);font-size:13.5px}
+.seg{display:inline-flex;gap:4px;padding:4px;border-radius:999px;margin-top:18px}
+.seg button{border:0;background:none;height:34px;padding:0 15px;border-radius:999px;font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--muted);transition:background .25s,color .25s}
+.lgd{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:12.5px;margin-bottom:6px}
+.lgd span{display:flex;align-items:center;gap:7px;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;font-size:11px;font-weight:600}
+.lgd b{font-size:13px;letter-spacing:0;text-transform:none;font-weight:650}
+.ln-key{width:16px;height:3px;border-radius:2px;background:var(--glacier);box-shadow:0 0 8px var(--glacier)}
+.ln-key.d{background:repeating-linear-gradient(90deg,var(--text-2) 0 4px,transparent 4px 8px);box-shadow:none}
+.gap-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);font-size:12px;color:var(--muted)}
+.k{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.k-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+.more-row{width:100%;margin-top:16px;padding:14px;border-radius:20px;background:var(--lg-bg);border:var(--lg-rim);box-shadow:var(--lg-spec);-webkit-backdrop-filter:var(--lg-blur);backdrop-filter:var(--lg-blur);color:var(--text-2);font-weight:600;font-size:14px}
+.more-row svg{width:14px;height:14px;vertical-align:-2px;margin-left:6px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .3s}
+.more-row[aria-expanded="true"] svg{transform:rotate(180deg)}
 </style>
 </head>
 <body>
@@ -428,7 +494,7 @@ nav.dock.min .dot{top:4px}
 <div class="wrap">
   <header>
     <div class="top">
-      <span class="brand"><img src="icon-192.png" alt="" width="34" height="34">AlgoTrade</span>
+      <span class="brand"><span class="logo-badge"><img src="icon-192.png" alt="AlgoTrade" width="40" height="40"></span><span class="brand-t"><b id="h-title">Alertes</b><small id="h-sub"></small></span></span>
       <div class="icons">
         <button class="ibtn" id="refresh" aria-label="Actualiser"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v4.5h-4.5"/></svg></button>
         <button class="ibtn" id="settings" aria-label="Réglages"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.7 7.7 0 0 0 0-3l1.9-1.5-1.8-3.1-2.3.9a7.6 7.6 0 0 0-2.6-1.5L14 2.5h-3.6l-.6 2.3a7.6 7.6 0 0 0-2.6 1.5l-2.3-.9-1.8 3.1 1.9 1.5a7.7 7.7 0 0 0 0 3l-1.9 1.5 1.8 3.1 2.3-.9a7.6 7.6 0 0 0 2.6 1.5l.6 2.3H14l.6-2.3a7.6 7.6 0 0 0 2.6-1.5l2.3.9 1.8-3.1z" transform="translate(-1 0)"/></svg></button>
@@ -465,7 +531,7 @@ nav.dock.min .dot{top:4px}
       <p id="push-msg" style="margin-top:6px">Reçois les nouvelles alertes sur l'écran de verrouillage.</p>
       <div class="row2"><button type="button" class="btn" id="push-on">Activer</button><button type="button" class="btn ghost" id="push-test">Tester</button><button type="button" class="btn ghost" id="push-off">Désactiver</button></div>
     </div>
-    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 21 · l'app se met à jour toute seule</p>
+    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 22 · l'app se met à jour toute seule</p>
     <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
   </form>
 </dialog>
@@ -532,7 +598,7 @@ nav.dock.min .dot{top:4px}
 const C = window.AlgoCore, G = window.AlgoCharts, N = window.AlgoNames, A = window.AlgoAnalysis, F = C.fmt, S = C.state;
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const view = {tab: 'alerts', filter: 'all', open: new Set(), histAll: false, animate: true};
+const view = {tab: 'alerts', period: '30J', filter: 'all', open: new Set(), histAll: false, animate: true};
 const CAT = {cfd: 'CFD', short_term: 'Court terme', long_term: 'Long terme'};
 const TABS = ['alerts', 'analysis', 'capital'];
 const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -598,6 +664,7 @@ function orderHtml(a) {
   return `<article class="alert ${open ? 'open' : ''}" data-alert="${esc(a.id)}" role="button" tabindex="0" aria-expanded="${open}">
     <div class="a-top"><span class="a-cat">SFC · ${a.exit ? 'Clôture' : 'Signal'}<span style="font-weight:400;letter-spacing:0;text-transform:none">· ${esc(F.ago(a.ts))}</span></span><span class="a-right">${tag}${a.exit ? '' : a.done && !taken ? '<span class="badge">Clôturé</span>' : `<button class="take ${taken ? 'on' : ''}" data-take="${esc(a.id)}" aria-label="${taken ? 'Position suivie' : 'Suivre cette position'}"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>`}</span></div>
     ${titleHtml(a, a.exit ? 'Clôture · ' : '')}
+    <div class="a-line">${a.exit ? esc(a.why || 'Sortie') + (a.exitPrice ? ' · ' + esc(a.exitPrice) : '') : a.entry ? 'Entrée ' + esc(a.entry) : 'Signal'}</div>
     ${lvh ? `<div class="lv">${lvh}</div>` : ''}
     <div class="a-more"><div><div class="a-body">
       <p class="a-sum">${a.exit ? esc((a.why || 'Sortie') + '. ') + (per100 != null ? `Variation du cours ${sgn(mv)} %. Sur XTB (levier x${lev}) cela fait environ <b>${sgn(per100 * 1)} €</b> pour 100 € de mise. ` : '') + 'Clôture ta position XTB si tu l\'as ouverte.' : 'À reproduire sur XTB si tu veux la suivre.'}</p>
@@ -619,6 +686,7 @@ function alertHtml(a) {
   return `<article class="alert ${open ? 'open' : ''}" data-alert="${esc(a.id)}" ${more ? 'role="button" tabindex="0" aria-expanded="' + open + '"' : ''}>
     <div class="a-top"><span class="a-cat">${fresh ? '<i class="fresh-dot" title="Nouvelle"></i>' : ''}${esc(CAT[a.category] || a.category)}<span style="font-weight:400;letter-spacing:0;text-transform:none">· ${esc(F.ago(a.ts))}</span></span><span class="a-right">${tag}<button class="take ${taken ? 'on' : ''}" data-take="${esc(a.id)}" aria-label="${taken ? 'Position suivie' : 'Suivre cette position'}"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></span></div>
     ${titleHtml(a)}
+    ${a.summary ? `<div class="a-line">${esc(a.summary)}</div>` : ''}
     ${lv ? `<div class="lv">${lv}</div>` : ''}
     ${more ? `<div class="a-more"><div><div class="a-body">
       ${a.summary ? `<p class="a-sum">${esc(a.summary)}</p>` : ''}
@@ -676,7 +744,7 @@ function posTile(raw) {
   const eur = r ? r.eur : null, pct = r ? r.pct : null, cls = eur == null ? 'muted' : eur > 0 ? 'up' : eur < 0 ? 'down' : 'muted';
   const hit = closed ? '' : p.hit === 'target' ? 'hit-win' : p.hit === 'stop' ? 'hit-loss' : '', short = p.direction === 'short';
   return `<button class="tile ${hit} ${closed ? 'done' : ''}" data-tile="${esc(p.id)}" aria-expanded="false" aria-label="${esc(id.name)}, agrandir">
-    <span class="t-top"><span class="t-sym">${esc(id.xtb || CAT[p.category] || '')}</span><span class="t-dir ${short ? 'down' : 'up'}">${short ? '▼' : '▲'}</span></span>
+    <span class="t-top"><span class="t-sym">${esc(id.xtb || CAT[p.category] || '')}</span><span class="t-dir ${short ? 'down' : 'up'}">${short ? '↘' : '↗'}</span></span>
     <span class="t-name">${esc(id.name)}</span>
     <span class="t-pct num ${cls}">${pct == null ? '–' : (pct > 0 ? '+' : pct < 0 ? '−' : '') + F.pct(Math.abs(pct), 1)}</span>
     <span class="t-eur num">${eur == null ? 'en attente' : F.signed(eur, 0)}</span></button>`;
@@ -693,53 +761,65 @@ function viewTrack() {
     `<p class="disclaimer">Cours SFC rafraîchis toutes les ~5 min ; actions US en direct avec une clé Finnhub (réglages). Résultat estimé sur le montant alloué, levier inclus.</p>`;
 }
 
-/* Deux courbes distinctes, même échelle : ce que tu as vraiment pris (trait plein) et ce que donnerait chaque signal du bot (pointillé). */
-function compareHtml(all, sig) {
-  const now = new Date().toISOString(), stake = S.settings.simStake || 100, tone = v => v > 0 ? 'up' : v < 0 ? 'down' : 'muted';
-  const realEv = all.map(C.positionView).filter(p => p.status === 'closed' ? p.exit && isFinite(p.exit.eur) : p.res)
-    .map(p => { const name = N.resolve(p).name; return p.status === 'closed' ? {ts: p.exit.ts, start: p.openedAt, d: p.exit.eur, name} : {ts: p.openedAt, start: p.openedAt, d: p.res.eur, name, open: true}; });
-  const sigEv = sig.map(s => ({ts: s.open ? s.ts : s.exitTs, start: s.ts, d: stake * s.lev * s.move / 100, name: s.name + (s.taken ? ' · pris' : ' · non pris'), open: s.open, taken: s.taken}));
-  const rp = A.series(realEv, now), sp = A.series(sigEv, now), dom = A.domain([rp, sp], now);
-  const fin = pts => pts ? pts[pts.length - 1].v : 0, closedOf = ev => ev.filter(e => !e.open), winsOf = ev => closedOf(ev).filter(e => e.d > 0).length;
-  const skipped = sigEv.filter(e => !e.taken), skippedEur = skipped.reduce((s, e) => s + e.d, 0);
-  const real = `<section class="card"><div class="card-head"><div><h3>Tes positions</h3><p class="sub">Ce que tu as vraiment pris, avec ta mise. Trait plein.</p></div><span class="badge win">Réel</span></div>
-    ${A.curve(rp, F, dom, F.dateShort, F.dateLong, {id: 'real'}) || `<p class="empty">Pas encore assez de positions pour tracer une courbe.</p>`}
-    <div class="stats"><div><small>Résultat (latent inclus)</small><b class="num ${tone(fin(rp))}">${F.signed(fin(rp), 0)}</b></div><div><small>Positions</small><b class="num">${realEv.length}${closedOf(realEv).length ? ' · ' + winsOf(realEv) + ' gagnantes' : ''}</b></div></div></section>`;
-  if (!sigEv.length) return real;
-  const hyp = `<section class="card ghost-card"><div class="card-head"><div><h3>Si tu avais tout pris</h3><p class="sub">Chaque signal du bot avec ${F.eur(stake, 0)} de mise, levier XTB. Pointillé, c'est une hypothèse.</p></div><span class="badge ghost">Hypothèse</span></div>
-    ${A.curve(sp, F, dom, F.dateShort, F.dateLong, {ghost: true, id: 'hyp'}) || `<p class="empty">Pas encore assez de signaux pour tracer une courbe.</p>`}
-    <div class="stats"><div><small>Résultat (latent inclus)</small><b class="num ${tone(fin(sp))}">${F.signed(fin(sp), 0)}</b></div><div><small>Signaux</small><b class="num">${sigEv.length}${closedOf(sigEv).length ? ' · ' + winsOf(sigEv) + ' gagnants' : ''}</b></div>
-      <div><small>Non pris (${skipped.length})</small><b class="num ${tone(skippedEur)}">${F.signed(skippedEur, 0)}</b></div><div><small>Pris (${sigEv.length - skipped.length})</small><b class="num">${F.signed(fin(sp) - skippedEur, 0)}</b></div></div></section>`;
-  return real + hyp;
+/* ---------- analyse : un chiffre, un graphique, deux blocs, le reste sur demande ---------- */
+const PERIODS = [['30J', '30J'], ['3M', '3M'], ['YTD', 'YTD'], ['ALL', 'Tout']];
+function periodStart(k) {
+  const d = new Date();
+  if (k === '30J') d.setDate(d.getDate() - 30); else if (k === '3M') d.setMonth(d.getMonth() - 3); else if (k === 'YTD') return new Date(d.getFullYear(), 0, 1).toISOString(); else return null;
+  return d.toISOString();
 }
-
-/* ---------- analyse des positions ---------- */
+const arr = v => v > 0 ? '↗' : v < 0 ? '↘' : '';
+const sg = (v, d = 0) => (arr(v) ? arr(v) + ' ' : '') + F.signed(v, d);
+const toneOf = v => v > 0 ? 'up' : v < 0 ? 'down' : 'muted';
 function viewAnalysis() {
   const all = S.positions.positions, sig = C.sfcSignals();
   if (!all.length && !sig.length) return `<div class="empty"><b>Rien à analyser pour l'instant</b>Coche une alerte et indique ta mise : la position apparaît ici avec ses graphiques.</div>`;
-  const open = all.filter(p => p.status !== 'closed');
-  const rs = A.rows(open.map(C.positionView), C, N), tot = A.sum, tone = v => v > 0 ? 'up' : v < 0 ? 'down' : 'muted';
-  const latent = tot(rs, r => r.eur), engaged = tot(rs, r => r.amount), expo = tot(rs, r => r.notional);
-  const maxLoss = tot(rs, r => r.lossAtStop), maxGain = tot(rs, r => r.gainAtTarget), waiting = rs.filter(r => r.eur == null).length;
-  const card = (h, sub, body) => body ? `<section class="card"><h3>${h}</h3><p class="sub">${sub}</p>${body}</section>` : '';
-  let out = '';
-  if (open.length) {
-    out += `<div class="hero"><small>Résultat latent · ${open.length} position${open.length > 1 ? 's' : ''} en cours</small><b class="metal num ${latent < 0 ? 'neg' : ''}">${F.signed(latent)}</b>
-      ${waiting ? `<div class="hero-sub"><span class="pill-dot"></span>${waiting} position${waiting > 1 ? 's' : ''} en attente de cours</div>` : ''}</div>
-      <section class="card"><div class="kpis">
+  const now = new Date().toISOString(), stake = S.settings.simStake || 100, since = periodStart(view.period), inP = ts => !since || String(ts) >= since;
+  const views = all.map(C.positionView), open = views.filter(p => p.status !== 'closed');
+  /* événements des deux courbes, limités à la période */
+  const realEv = views.filter(p => p.status === 'closed' ? p.exit && isFinite(p.exit.eur) && inP(p.exit.ts) : p.res)
+    .map(p => { const name = N.resolve(p).name; return p.status === 'closed' ? {ts: p.exit.ts, start: p.openedAt, d: p.exit.eur, amt: p.amount, name} : {ts: p.openedAt, start: p.openedAt, d: p.res.eur, amt: p.amount, name, open: true}; });
+  const sigEv = sig.filter(s => s.open || inP(s.exitTs)).map(s => ({ts: s.open ? s.ts : s.exitTs, start: s.ts, d: stake * s.lev * s.move / 100, name: s.name + (s.taken ? ' · pris' : ' · non pris'), open: s.open, taken: s.taken}));
+  const starts = realEv.concat(sigEv).map(e => e.start).sort(), origin = starts.length ? (since && starts[0] < since ? since : starts[0]) : now;
+  realEv.concat(sigEv).forEach(e => { e.start = origin; });
+  const rp = A.series(realEv, now), sp = A.series(sigEv, now), dom = A.domain([rp, sp], now);
+  const fin = pts => pts ? pts[pts.length - 1].v : 0, closedOf = ev => ev.filter(e => !e.open), winsOf = ev => closedOf(ev).filter(e => e.d > 0).length;
+  const real = fin(rp), hyp = fin(sp), base = realEv.reduce((t, e) => t + e.amt, 0), pct = base > 0 ? real / base * 100 : null;
+  const skipped = sigEv.filter(e => !e.taken), skippedEur = skipped.reduce((t, e) => t + e.d, 0);
+  const rs = A.rows(open, C, N), tot = A.sum;
+  const hero = `<section class="hero c"><span class="pill"><i></i>${open.length} position${open.length > 1 ? 's' : ''} en cours</span>
+      <b class="metal num ${real < 0 ? 'neg' : ''}">${F.signed(real, 0)}</b>
+      ${pct != null ? `<span class="hero-pct num ${toneOf(pct)}">${pct > 0 ? '+' : pct < 0 ? '−' : ''}${F.pct(Math.abs(pct), 1)} <span class="muted" style="font-weight:400">sur ${F.eur(base, 0)} engagés</span></span>` : ''}
+      <span class="hero-cap">Résultat net, latent inclus</span>
+      <div class="seg" role="group" aria-label="Période">${PERIODS.map(([k, l]) => `<button data-period="${k}" aria-pressed="${view.period === k}">${l}</button>`).join('')}</div></section>`;
+  const chart = A.duo(rp, sp, F, dom, F.dateShort, F.dateLong);
+  const curveCard = `<section class="card milled"><div class="lgd"><span><i class="ln-key"></i>Tes positions <b class="num ${toneOf(real)}">${F.signed(real, 0)}</b></span>${sigEv.length ? `<span><i class="ln-key d"></i>Si tout pris <b class="num ${toneOf(hyp)}">${F.signed(hyp, 0)}</b></span>` : ''}</div>
+    ${chart || `<p class="empty">Pas encore assez de données pour tracer les courbes.</p>`}
+    ${skipped.length ? `<div class="gap-row"><span>Signaux non pris · ${skipped.length}</span><b class="num ${toneOf(skippedEur)}" style="font-size:13px">${sg(skippedEur)}</b></div>` : ''}</section>`;
+  const pnl = A.pnlBars(rs, F, N);
+  const pnlCard = pnl ? `<section class="card"><div class="k-row"><span class="k">P&amp;L par actif</span><span class="badge">${rs.length} position${rs.length > 1 ? 's' : ''}</span></div>${pnl}</section>` : '';
+  const alloc = A.allocation(rs, F, N);
+  const allocCard = alloc ? `<section class="card"><div class="k-row"><span class="k">Répartition du capital engagé</span></div>${alloc}</section>` : '';
+  /* le reste, sur demande */
+  const more = view.open.has('more');
+  const engaged = tot(rs, r => r.amount), expo = tot(rs, r => r.notional), maxLoss = tot(rs, r => r.lossAtStop), maxGain = tot(rs, r => r.gainAtTarget);
+  const card = (h, body) => body ? `<section class="card"><div class="k-row"><span class="k">${h}</span></div>${body}</section>` : '';
+  const lv = A.levels(rs, F, N);
+  const extra = !more ? '' :
+    (rs.length ? `<section class="card"><div class="kpis">
         <div><small>Engagé</small><b class="num">${F.eur(engaged, 0)}</b></div>
         <div><small>Exposition${engaged > 0 ? ' · x' + (expo / engaged).toFixed(1).replace('.', ',') : ''}</small><b class="num">${F.eur(expo, 0)}</b></div>
-        <div><small>Perte si tous les stops sont touchés</small><b class="num down">${maxLoss ? F.signed(maxLoss, 0) : '–'}</b></div>
-        <div><small>Gain si tous les objectifs sont atteints</small><b class="num up">${maxGain ? F.signed(maxGain, 0) : '–'}</b></div></div></section>`;
-    out += card('Résultat par position', 'Résultat latent estimé sur le montant engagé, levier inclus.', A.pnlBars(rs, F, N));
-    out += card('Répartition', 'Où est engagé ton capital de trading.',
-      A.allocation(rs, F, N) + `<p class="sub-h">Par type</p>` + A.breakdown(rs, F, r => CAT[r.cat] || r.cat) + `<p class="sub-h">Par sens</p>` + A.breakdown(rs, F, r => r.dir === 'short' ? 'Vente' : 'Achat'));
-    out += card('Exposition', 'Le levier multiplie ce que tu risques vraiment.', A.exposure(rs, F, N) + A.exposureKey());
-    const lv = A.levels(rs, F, N);
-    out += card('Entre stop et objectif', 'Le point blanc est le dernier cours, le trait vertical ton entrée.', lv ? lv + `<div class="legend-line"><span><i class="key" style="background:color-mix(in srgb,var(--down) 55%,transparent)"></i>Zone de perte</span><span><i class="key" style="background:color-mix(in srgb,var(--up) 55%,transparent)"></i>Zone de gain</span></div>` : '');
-  } else out += `<div class="empty"><b>Aucune position en cours</b>Les graphiques reviennent dès que tu suis une nouvelle alerte.</div>`;
-  out += compareHtml(all, sig);
-  return out + `<p class="disclaimer">Estimations d'après les derniers cours connus. Rien ici n'est un conseil financier.</p>`;
+        <div><small>Si tous les stops sont touchés</small><b class="num down">${maxLoss ? sg(maxLoss) : '–'}</b></div>
+        <div><small>Si tous les objectifs sont atteints</small><b class="num up">${maxGain ? sg(maxGain) : '–'}</b></div></div></section>` : '') +
+    card('Par type et par sens', rs.length ? A.breakdown(rs, F, r => CAT[r.cat] || r.cat) + `<p class="sub-h">Par sens</p>` + A.breakdown(rs, F, r => r.dir === 'short' ? 'Vente' : 'Achat') : '') +
+    card('Exposition avec levier', rs.length ? A.exposure(rs, F, N) + A.exposureKey() : '') +
+    card('Entre stop et objectif', lv ? lv + `<div class="legend-line"><span><i class="key" style="background:color-mix(in srgb,var(--down) 55%,transparent)"></i>Zone de perte</span><span><i class="key" style="background:color-mix(in srgb,var(--up) 55%,transparent)"></i>Zone de gain</span></div>` : '') +
+    (sigEv.length ? card('Signaux du bot', `<div class="stats" style="margin-top:0;padding-top:0;border:0"><div><small>Signaux sur la période</small><b class="num">${sigEv.length}${closedOf(sigEv).length ? ' · ' + winsOf(sigEv) + ' gagnants' : ''}</b></div>
+        <div><small>Pris / non pris</small><b class="num">${sigEv.length - skipped.length} / ${skipped.length}</b></div></div><p class="sub" style="margin:12px 0 0">Chaque signal est compté avec ${F.eur(stake, 0)} de mise et le levier XTB (réglable dans les réglages).</p>`) : '') +
+    (realEv.length ? card('Tes positions', `<div class="stats" style="margin-top:0;padding-top:0;border:0"><div><small>Positions sur la période</small><b class="num">${realEv.length}${closedOf(realEv).length ? ' · ' + winsOf(realEv) + ' gagnantes' : ''}</b></div></div>`) : '');
+  return hero + curveCard + pnlCard + allocCard +
+    `<button class="more-row" data-more="1" aria-expanded="${more}">${more ? 'Voir moins' : 'Voir plus de métriques'}<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>` + extra +
+    `<p class="disclaimer">Estimations d'après les derniers cours connus. Rien ici n'est un conseil financier.</p>`;
 }
 
 /* ---------- capital ---------- */
@@ -764,7 +844,15 @@ function viewCapital() {
 }
 
 /* ---------- rendu ---------- */
+const TITLE = {alerts: 'Alertes', analysis: 'Analyse', capital: 'Capital'};
+function renderHead() {
+  if (view.wasLoading && !S.loading) view.lastLoad = Date.now(); view.wasLoading = S.loading;
+  const off = !navigator.onLine, sub = $('#h-sub');
+  $('#h-title').textContent = TITLE[view.tab];
+  sub.className = off ? 'off' : ''; sub.textContent = off ? 'Hors connexion' : S.loading ? 'Actualisation…' : view.lastLoad ? 'Mis à jour ' + F.ago(new Date(view.lastLoad).toISOString()) : 'Connecté';
+}
 function render() {
+  renderHead();
   const c = C.computeLedger(S.ledger);
   const u = C.unseenCount(), b = $('#badge'); b.hidden = u === 0; b.textContent = u;
   document.querySelectorAll('.dock button').forEach(x => x.setAttribute('aria-selected', x.dataset.tab === view.tab));
@@ -804,6 +892,8 @@ document.addEventListener('click', e => {
   if (t.dataset.dismiss) { haptic(); const w = t.closest('.swipe'); w.classList.add('gone'); return setTimeout(() => C.dismissAlert(t.dataset.dismiss), 260); }
   if (t.dataset.delacct) { haptic(); return report(C.deleteAccount(t.dataset.delacct)); }
   if (t.dataset.edit) return openEdit(t.dataset.edit);
+  if (t.dataset.period) { haptic(); view.period = t.dataset.period; return render(); }
+  if (t.dataset.more) { haptic(); view.open.has('more') ? view.open.delete('more') : view.open.add('more'); return render(); }
   if (t.dataset.take) return takeClick(t.dataset.take);
   if (t.dataset.close) return openClose(t.dataset.close);
   if (t.dataset.delpos) { haptic(); return report(C.deletePosition(t.dataset.delpos)); }

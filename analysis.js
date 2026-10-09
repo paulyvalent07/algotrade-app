@@ -32,7 +32,7 @@
       const cy = T + i * rowH + rowH / 2, xv = x(r.eur), w = Math.max(2, Math.abs(xv - x0)), up = r.eur >= 0;
       out += `<text x="0" y="${cy + 4}" class="label">${esc(N.short(r.name, 16))}</text>
         <rect class="${up ? 'bar-up' : 'bar-down'}" x="${Math.min(xv, x0)}" y="${cy - 7}" width="${w}" height="14" rx="7"/>
-        <text x="${W}" y="${cy + 4}" class="delta ${up ? 'up' : 'down'}" text-anchor="end">${esc(F.signed(r.eur, 0))}</text>
+        <text x="${W}" y="${cy + 4}" class="delta ${up ? 'up' : 'down'}" text-anchor="end">${up ? '↗' : '↘'} ${esc(F.signed(r.eur, 0))}</text>
         <rect class="hit" x="0" y="${cy - rowH / 2}" width="${W}" height="${rowH}" tabindex="0" aria-label="${esc(r.name)} : ${esc(F.signed(r.eur, 2))}"
           data-tip="${tip(r.name, [{n: 'Résultat', v: F.signed(r.eur, 2)}, {n: 'Sur le montant engagé', v: (r.pct > 0 ? '+' : r.pct < 0 ? '−' : '') + F.pct(Math.abs(r.pct), 1)}, {n: 'Engagé', v: F.eur(r.amount, 0)}])}"/>`;
     });
@@ -147,5 +147,21 @@
     return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="${ghost ? 'Résultat cumulé hypothétique si tous les signaux avaient été pris' : 'Résultat cumulé de tes positions'}">${out}</svg>`;
   }
 
-  window.AlgoAnalysis = {rows, pnlBars, allocation, breakdown, exposure, exposureKey, levels, series, domain, curve, sum};
+  /* Les deux courbes sur le même graphique et la même échelle : « Tes positions » en trait plein, « Si tu avais tout pris » en pointillé. */
+  function duo(real, hyp, F, dom, dateShort, dateLong) {
+    if (!dom || ((!real || real.length < 2) && (!hyp || hyp.length < 2))) return '';
+    const W = 340, H = 190, L = 44, R = 12, T = 16, B = 26, iw = W - L - R, ih = H - T - B, span = (dom.t1 - dom.t0) || 1;
+    const x = p => L + (new Date(p.ts).getTime() - dom.t0) / span * iw, y = v => T + ih - (v - dom.lo) / (dom.hi - dom.lo || 1) * ih;
+    const stair = pts => { let d = `M${x(pts[0]).toFixed(1)},${y(pts[0].v).toFixed(1)}`; for (let i = 1; i < pts.length; i++) d += ` H${x(pts[i]).toFixed(1)} V${y(pts[i].v).toFixed(1)}`; return d + ` H${(L + iw).toFixed(1)}`; };
+    let out = `<defs><linearGradient id="duo-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--glacier)" stop-opacity=".18"/><stop offset="1" stop-color="var(--glacier)" stop-opacity="0"/></linearGradient></defs>`;
+    for (let v = dom.lo; v <= dom.hi + 1e-9; v += dom.step) out += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" class="${Math.abs(v) < 1e-9 ? 'axis' : 'grid'}"/><text x="${L - 6}" y="${y(v) + 4}" class="tick" text-anchor="end">${nfInt(v)}</text>`;
+    const dots = (pts, ghost) => pts.map((p, i) => p.origin ? '' : `${i === pts.length - 1 && !ghost ? `<circle cx="${x(p)}" cy="${y(p.v)}" r="4" class="capdot last"/>` : ''}
+      <rect class="hit" x="${x(p) - 9}" y="${T}" width="18" height="${ih}" tabindex="0" aria-label="${esc(p.name)}" data-tip="${tip((ghost ? 'Si tu avais tout pris · ' : 'Tes positions · ') + p.name, [{n: p.live ? 'À cette heure' : 'Clôture', v: dateLong(p.ts)}, {n: p.live ? 'Latent' : 'Résultat du trade', v: F.signed(p.d, 2)}, {n: 'Cumul', v: F.signed(p.v, 2)}])}"/>`).join('');
+    if (hyp && hyp.length > 1) out += `<path d="${stair(hyp)}" class="capline ghost"/>` + dots(hyp, true);
+    if (real && real.length > 1) out += `<path d="${stair(real)} V${y(0)} H${x(real[0]).toFixed(1)} Z" fill="url(#duo-fill)"/><path d="${stair(real)}" class="capline"/>` + dots(real, false);
+    [dom.t0, dom.t0 + span / 2, dom.t1].forEach((t, k) => { out += `<text x="${L + (t - dom.t0) / span * iw}" y="${H - 8}" class="tick" text-anchor="${k === 0 ? 'start' : k === 2 ? 'end' : 'middle'}">${esc(dateShort(new Date(t).toISOString()))}</text>`; });
+    return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="Résultat cumulé : tes positions (trait plein) et si tu avais tout pris (pointillé)">${out}</svg>`;
+  }
+
+  window.AlgoAnalysis = {rows, pnlBars, allocation, breakdown, exposure, exposureKey, levels, series, domain, curve, duo, sum};
 })();
