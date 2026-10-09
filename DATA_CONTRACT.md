@@ -46,3 +46,6 @@ Règles d'écriture pour un scan : cloner uniquement la branche `app-data`, reli
 ## `data/ledger.json`
 
 Source de vérité : la liste `movements`. Types : `deposit` (vers la réserve), `allocate` (réserve vers compte), `withdraw` (compte vers réserve), `payout` (réserve vers ta banque), `valuation` (valeur actuelle d'un compte, saisie à la main). `accounts` liste les comptes dans l'ordre (leur couleur dans les graphiques suit cet ordre).
+
+## Journal (v23)
+Chaque position peut porter `note` (texte, 600 caractères max) et `reason` (Signal solide, Tendance confirmée, Actualité, Intuition, Autre). Réglage local `riskEur` : risque fixe par trade, utilisé par le calculateur.

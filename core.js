@@ -33,7 +33,7 @@
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
 
   /* ---------- état ---------- */
-  const DEFAULTS = {repo: 'paulyvalent07/AlgoTrade', branch: 'main', dataBranch: 'app-data', token: '', finnhub: '', simStake: 100};
+  const DEFAULTS = {repo: 'paulyvalent07/AlgoTrade', branch: 'main', dataBranch: 'app-data', token: '', finnhub: '', simStake: 100, riskEur: 10};
   const state = {
     settings: {...DEFAULTS, ...ls.get('at.settings', {})},
     ledger: ls.get('at.ledger', {version: 1, accounts: ['XTB', 'Revolut', 'IG', 'Boursorama', 'Trade Republic'], movements: []}),
@@ -440,14 +440,39 @@
       } catch (e2) { return 'echec:' + e2.message; }
     }
   }
+  /* ---------- risque fixe par trade ---------- */
+  /* Mise (marge XTB) qui perd exactement `risk` € si le stop est touché : perte = mise × levier × écart au stop.
+   * Si `stake` est donné, calcule à la place la perte, le gain et le rapport gain/risque de cette mise. */
+  function calcRisk({risk, entry, stop, target, leverage, stake}) {
+    const ok = v => isFinite(v) && v > 0;
+    if (!ok(entry) || !ok(stop) || entry === stop) return null;
+    const lev = ok(leverage) ? leverage : 1, dist = Math.abs(entry - stop) / entry;
+    const suggested = ok(risk) ? Math.floor(risk / (dist * lev) * 100) / 100 : null;
+    const st = ok(stake) ? stake : suggested; if (!ok(st)) return null;
+    const loss = st * lev * dist, gain = ok(target) ? st * lev * Math.abs(target - entry) / entry : null;
+    return {lev, dist, suggested, stake: st, notional: st * lev, loss, gain, rr: gain != null && loss > 0 ? gain / loss : null};
+  }
+  const REASONS = ['Signal solide', 'Tendance confirmée', 'Actualité', 'Intuition', 'Autre'];
+  function cleanJournal(note, reason) {
+    const out = {}, n = String(note || '').trim().slice(0, 600);
+    if (n) out.note = n;
+    if (REASONS.includes(reason)) out.reason = reason;
+    return out;
+  }
+  function saveJournal(id, note, reason) {
+    const p = state.positions.positions.find(x => x.id === id); if (!p) return 'echec:introuvable';
+    delete p.note; delete p.reason;
+    return updatePosition(id, cleanJournal(note, reason), 'suivi: journal');
+  }
+
   const takenIds = () => new Set(state.positions.positions.map(p => p.alertId));
-  function takePosition(alert, {amount, entry, stop, target}) {
+  function takePosition(alert, {amount, entry, stop, target, note, reason}) {
     if (!isFinite(amount) || amount <= 0) throw new Error('Montant invalide');
     if (!isFinite(entry) || entry <= 0) throw new Error("Prix d'entrée invalide");
     if (takenIds().has(alert.id)) throw new Error('Déjà suivie');
     state.positions.positions.push({id: uid(), alertId: alert.id, ticker: alert.ticker || '', title: alert.title || alert.ticker, category: alert.category,
       direction: alert.direction || 'long', leverage: (alert.category === 'cfd' && window.AlgoNames && window.AlgoNames.xtbLeverage(alert) ? 'x' + window.AlgoNames.xtbLeverage(alert) : alert.leverage) || null, amount: Math.round(amount * 100) / 100, entry,
-      stop: isFinite(stop) ? stop : null, target: isFinite(target) ? target : null, status: 'open', openedAt: new Date().toISOString(), pending: true,
+      stop: isFinite(stop) ? stop : null, target: isFinite(target) ? target : null, ...cleanJournal(note, reason), status: 'open', openedAt: new Date().toISOString(), pending: true,
       ...(alert.kind === 'sfc' ? {source: 'sfc', sfc: {symbol: alert.symbol, ts: alert.ts}, ticker: alert.symbol} : {})});
     return savePositions('suivi: ouverture ' + (alert.ticker || alert.title));
   }
@@ -532,7 +557,8 @@
   function saveSettings(s) {
     state.settings = {repo: (s.repo || '').trim() || DEFAULTS.repo, branch: (s.branch || '').trim() || DEFAULTS.branch,
       dataBranch: (s.dataBranch || '').trim() || DEFAULTS.dataBranch, token: (s.token || '').trim(), finnhub: (s.finnhub || '').trim(),
-      simStake: parseFloat(s.simStake) > 0 ? parseFloat(s.simStake) : DEFAULTS.simStake};
+      simStake: parseFloat(s.simStake) > 0 ? parseFloat(s.simStake) : DEFAULTS.simStake,
+      riskEur: parseFloat(s.riskEur) > 0 ? parseFloat(s.riskEur) : DEFAULTS.riskEur};
     ls.set('at.settings', state.settings); state.ledgerSha = null; return loadAll();
   }
   const unseenCount = () => (state.alerts || []).filter(a => !state.seen.has(a.id) && !state.dismissed.has(a.id)).length;
@@ -543,6 +569,6 @@
 
   window.AlgoCore = {sfcSignals, levOf, loadLive, dismissAlert, sfcOrders, state, on, fmt, todayISO, computeLedger, snapshots, sfcSummary, loadAll, saveSettings,
     addMovement, deleteMovement, addAccount, deleteAccount, unseenCount, markAlertsSeen,
-    parseLevel, pnlAt, positionView, takePosition, updatePosition, closePosition, deletePosition, takenIds,
+    parseLevel, pnlAt, positionView, calcRisk, REASONS, saveJournal, takePosition, updatePosition, closePosition, deletePosition, takenIds,
     setAmount, pushStatus, enablePush, disablePush, testNotification};
 })();

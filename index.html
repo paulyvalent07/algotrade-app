@@ -485,6 +485,22 @@ input,select{border-radius:20px;background:var(--bg-2)}
 .more-row{width:100%;margin-top:16px;padding:14px;border-radius:20px;background:var(--lg-bg);border:var(--lg-rim);box-shadow:var(--lg-spec);-webkit-backdrop-filter:var(--lg-blur);backdrop-filter:var(--lg-blur);color:var(--text-2);font-weight:600;font-size:14px}
 .more-row svg{width:14px;height:14px;vertical-align:-2px;margin-left:6px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .3s}
 .more-row[aria-expanded="true"] svg{transform:rotate(180deg)}
+/* v23 : calculateur de risque et journal */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.grid3 input{padding:13px 12px}
+textarea{width:100%;padding:13px 16px;border:1px solid var(--line);border-radius:20px;background:var(--bg-2);font-size:16px;font-family:inherit;color:var(--ink);resize:none;margin-top:8px}
+textarea:focus{outline:none;border-color:color-mix(in srgb,var(--glacier) 60%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--glacier) 18%,transparent)}
+select{color:var(--ink);font-family:inherit}
+.riskbox{margin:12px 0 0;padding:14px 16px;border:1px solid var(--line);border-radius:20px;background:rgba(157,183,204,.06);font-size:14px;color:var(--text-2);line-height:1.5}
+.riskbox:empty{display:none}
+.riskbox .rk-main{display:flex;justify-content:space-between;align-items:center;gap:10px;color:var(--ink);margin-bottom:4px}
+.riskbox .rk-main b{font-size:20px;font-weight:600;letter-spacing:-.02em}
+.riskbox .rk-lab{font-size:13px;color:var(--muted)}
+.riskbox .rk-use{border:0;background:rgba(157,183,204,.16);color:var(--glacier);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600}
+.riskbox .rk-row{display:flex;justify-content:space-between;gap:10px;margin-top:6px;font-size:13.5px}
+.riskbox .warn{color:var(--loss)}
+.p-note{margin:12px 0 0;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.04);font-size:14px;color:var(--text-2);line-height:1.45;white-space:pre-wrap}
+.p-note .badge{margin:0 0 6px;display:inline-block}
 </style>
 </head>
 <body>
@@ -497,6 +513,7 @@ input,select{border-radius:20px;background:var(--bg-2)}
       <span class="brand"><span class="logo-badge"><img src="icon-192.png" alt="AlgoTrade" width="40" height="40"></span><span class="brand-t"><b id="h-title">Alertes</b><small id="h-sub"></small></span></span>
       <div class="icons">
         <button class="ibtn" id="refresh" aria-label="Actualiser"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v4.5h-4.5"/></svg></button>
+        <button class="ibtn" id="calc" aria-label="Calculateur de risque"><svg viewBox="0 0 24 24"><rect x="5" y="3.5" width="14" height="17" rx="3"/><path d="M8.5 8h7M8.5 12.5h.01M12 12.5h.01M15.5 12.5h.01M8.5 16.5h.01M12 16.5h.01M15.5 16.5h.01"/></svg></button>
         <button class="ibtn" id="settings" aria-label="Réglages"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.7 7.7 0 0 0 0-3l1.9-1.5-1.8-3.1-2.3.9a7.6 7.6 0 0 0-2.6-1.5L14 2.5h-3.6l-.6 2.3a7.6 7.6 0 0 0-2.6 1.5l-2.3-.9-1.8 3.1 1.9 1.5a7.7 7.7 0 0 0 0 3l-1.9 1.5 1.8 3.1 2.3-.9a7.6 7.6 0 0 0 2.6 1.5l.6 2.3H14l.6-2.3a7.6 7.6 0 0 0 2.6-1.5l2.3.9 1.8-3.1z" transform="translate(-1 0)"/></svg></button>
       </div>
     </div>
@@ -526,12 +543,14 @@ input,select{border-radius:20px;background:var(--bg-2)}
     <input id="s-finnhub" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="clé gratuite sur finnhub.io">
     <label for="s-stake">Mise par signal pour le graphique « si tu avais tout pris » (€)</label>
     <input id="s-stake" type="number" inputmode="decimal" min="1" step="1">
+    <label for="s-risk">Risque fixe par trade (€)</label>
+    <input id="s-risk" type="number" inputmode="decimal" min="0.5" step="0.5">
     <p class="section-note" style="margin:10px 4px 0">Le jeton reste sur cet appareil. Sans jeton, les alertes ne se chargent pas, et le capital reste local.</p>
     <div class="push-box"><b style="font-size:14px">Notifications</b>
       <p id="push-msg" style="margin-top:6px">Reçois les nouvelles alertes sur l'écran de verrouillage.</p>
       <div class="row2"><button type="button" class="btn" id="push-on">Activer</button><button type="button" class="btn ghost" id="push-test">Tester</button><button type="button" class="btn ghost" id="push-off">Désactiver</button></div>
     </div>
-    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 22 · l'app se met à jour toute seule</p>
+    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 23 · l'app se met à jour toute seule</p>
     <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
   </form>
 </dialog>
@@ -552,16 +571,49 @@ input,select{border-radius:20px;background:var(--bg-2)}
   <form method="dialog" id="form-take">
     <h3>Suivre cette position</h3>
     <p class="section-note" style="margin:0 4px" id="t-title"></p>
+    <div class="grid3">
+      <div><label for="t-entry">Entrée</label><input id="t-entry" type="number" inputmode="decimal" step="any" min="0" required></div>
+      <div><label for="t-stop">Stop</label><input id="t-stop" type="number" inputmode="decimal" step="any" min="0"></div>
+      <div><label for="t-target">Objectif</label><input id="t-target" type="number" inputmode="decimal" step="any" min="0"></div>
+    </div>
     <label for="t-amount">Mise sur XTB (€, marge, hors levier)</label>
     <input id="t-amount" type="number" inputmode="decimal" step="0.01" min="0" required>
-    <label for="t-entry">Prix d'entrée</label>
-    <input id="t-entry" type="number" inputmode="decimal" step="any" min="0" required>
-    <label for="t-stop">Stop (facultatif)</label>
-    <input id="t-stop" type="number" inputmode="decimal" step="any" min="0">
-    <label for="t-target">Objectif (facultatif)</label>
-    <input id="t-target" type="number" inputmode="decimal" step="any" min="0">
-    <p class="section-note" id="t-note" style="margin:10px 4px 0">L'ordre est considéré comme exécuté à ce prix. Corrige les niveaux si ton ordre réel est différent.</p>
+    <div class="riskbox" id="t-risk" aria-live="polite"></div>
+    <label for="t-reason">Pourquoi ce trade ? (facultatif)</label>
+    <select id="t-reason"></select>
+    <textarea id="t-note" rows="2" maxlength="600" placeholder="Une note pour ton journal"></textarea>
+    <p class="section-note" id="t-help" style="margin:10px 4px 0"></p>
     <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Suivre</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-calc">
+  <form method="dialog" id="form-calc">
+    <h3>Calculateur de risque</h3>
+    <p class="section-note" style="margin:0 4px">Combien miser pour ne perdre qu'un montant fixe si le stop est touché.</p>
+    <label for="k-risk">Risque maximal (€)</label>
+    <input id="k-risk" type="number" inputmode="decimal" step="0.5" min="0.5">
+    <div class="grid3">
+      <div><label for="k-entry">Entrée</label><input id="k-entry" type="number" inputmode="decimal" step="any" min="0"></div>
+      <div><label for="k-stop">Stop</label><input id="k-stop" type="number" inputmode="decimal" step="any" min="0"></div>
+      <div><label for="k-target">Objectif</label><input id="k-target" type="number" inputmode="decimal" step="any" min="0"></div>
+    </div>
+    <label for="k-lev">Levier XTB</label>
+    <input id="k-lev" type="number" inputmode="numeric" step="1" min="1" max="500">
+    <div class="riskbox" id="k-out" aria-live="polite"></div>
+    <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Fermer</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-note">
+  <form method="dialog" id="form-note">
+    <h3>Journal du trade</h3>
+    <p class="section-note" style="margin:0 4px" id="n-title"></p>
+    <label for="n-reason">Raison</label>
+    <select id="n-reason"></select>
+    <label for="n-note">Note</label>
+    <textarea id="n-note" rows="4" maxlength="600" placeholder="Ce qui t'a fait entrer, ce que tu en retiens…"></textarea>
+    <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
   </form>
 </dialog>
 
@@ -733,11 +785,12 @@ function posHtml(raw) {
   return `<article class="card pos"><div class="a-top"><span class="a-cat">${p.source === 'sfc' ? 'SFC · ' : ''}${esc(CAT[p.category] || p.category)}</span><span class="a-right">${tag}${badge}</span></div>
     ${titleHtml(p, '', 'margin-top:8px')}
     <div class="p-pnl ${cls}">${eur == null ? '–' : F.signed(eur)}${pct != null ? `<small>${pct > 0 ? '+' : pct < 0 ? '−' : ''}${F.pct(Math.abs(pct), 1)}</small>` : ''}</div>
-    <div class="p-row"><span>Engagé <b class="num">${F.eur(p.amount, 0)}</b>${C.levOf(p) > 1 ? ' · levier x' + C.levOf(p) : ''}</span><span>Entrée <b class="num">${fp(p.entry)}</b></span></div>
+    <div class="p-row"><span>Engagé <b class="num">${F.eur(p.amount, p.amount % 1 ? 2 : 0)}</b>${C.levOf(p) > 1 ? ' · levier x' + C.levOf(p) : ''}</span><span>Entrée <b class="num">${fp(p.entry)}</b></span></div>
     <div class="p-row"><span>${closed ? 'Sortie' : 'Dernier cours'} <b class="num">${(closed ? p.exit.price : p.last) != null ? fp(closed ? p.exit.price : p.last) : '–'}</b></span><span class="muted">${closed ? esc(F.dateLong(p.exit.ts)) : p.last_ts ? esc(F.dateTime(p.last_ts)) : 'en attente de cours'}</span></div>
     ${closed ? '' : gaugeHtml(p)}
     ${p.source === 'sfc' ? `<div class="p-row"><span class="muted">${closed ? (p.exit.by === 'bot' ? 'Clôturée par le bot' + (p.exit.reason ? ' · ' + esc(p.exit.reason) : '') : 'Clôturée à la main') : p.bot ? 'Bot : stop suiveur <b class="num">' + fp(p.bot.trail) + '</b>' : 'Bot : ordre non retrouvé'}</span><span class="muted">${!closed && p.bot && p.bot.cycle ? 'scan ' + esc(F.ago(p.bot.cycle)) : ''}</span></div>` : ''}
-    <div class="p-actions">${closed ? '' : `<button class="btn ghost" data-close="${esc(p.id)}">Clôturer</button>`}<button class="linkbtn" data-delpos="${esc(p.id)}">Supprimer</button><button class="linkbtn" data-fold="${esc(p.id)}" style="margin-left:auto">Réduire</button></div></article>`;
+    ${p.reason || p.note ? `<div class="p-note">${p.reason ? `<span class="badge">${esc(p.reason)}</span>` : ''}${p.reason && p.note ? '<br>' : ''}${esc(p.note || '')}</div>` : ''}
+    <div class="p-actions">${closed ? '' : `<button class="btn ghost" data-close="${esc(p.id)}">Clôturer</button>`}<button class="linkbtn" data-note="${esc(p.id)}">${p.reason || p.note ? 'Journal' : 'Ajouter une note'}</button><button class="linkbtn" data-delpos="${esc(p.id)}">Supprimer</button><button class="linkbtn" data-fold="${esc(p.id)}" style="margin-left:auto">Réduire</button></div></article>`;
 }
 function posTile(raw) {
   const p = C.positionView(raw), closed = p.status === 'closed', r = closed ? p.exit : p.res, id = N.resolve(p);
@@ -896,6 +949,9 @@ document.addEventListener('click', e => {
   if (t.dataset.more) { haptic(); view.open.has('more') ? view.open.delete('more') : view.open.add('more'); return render(); }
   if (t.dataset.take) return takeClick(t.dataset.take);
   if (t.dataset.close) return openClose(t.dataset.close);
+  if (t.dataset.note) return openNote(t.dataset.note);
+  if (t.id === 'calc') return openCalc();
+  if (t.dataset.rkuse) { const f = $('#t-amount'); f.value = t.dataset.rkuse; f.dataset.manual = ''; return renderRisk(); }
   if (t.dataset.delpos) { haptic(); return report(C.deletePosition(t.dataset.delpos)); }
   if (t.id === 'push-on') return pushAction('on');
   if (t.id === 'push-off') return pushAction('off');
@@ -938,12 +994,12 @@ function refreshNow() { $('#ptr').classList.add('spin'); return C.loadAll(); }
 })();
 
 function openSettings() {
-  $('#s-repo').value = S.settings.repo; $('#s-branch').value = S.settings.branch; $('#s-data').value = S.settings.dataBranch; $('#s-token').value = S.settings.token; $('#s-finnhub').value = S.settings.finnhub || ''; $('#s-stake').value = S.settings.simStake || 100;
+  $('#s-repo').value = S.settings.repo; $('#s-branch').value = S.settings.branch; $('#s-data').value = S.settings.dataBranch; $('#s-token').value = S.settings.token; $('#s-finnhub').value = S.settings.finnhub || ''; $('#s-stake').value = S.settings.simStake || 100; $('#s-risk').value = S.settings.riskEur || 10;
   refreshPush(); $('#dlg-settings').showModal();
 }
 $('#form-settings').addEventListener('submit', e => {
   if (e.submitter && e.submitter.value !== 'ok') return;
-  C.saveSettings({repo: $('#s-repo').value, branch: $('#s-branch').value, dataBranch: $('#s-data').value, token: $('#s-token').value, finnhub: $('#s-finnhub').value, simStake: $('#s-stake').value});
+  C.saveSettings({repo: $('#s-repo').value, branch: $('#s-branch').value, dataBranch: $('#s-data').value, token: $('#s-token').value, finnhub: $('#s-finnhub').value, simStake: $('#s-stake').value, riskEur: $('#s-risk').value});
 });
 
 $('#form-account').addEventListener('submit', e => {
@@ -987,25 +1043,79 @@ document.addEventListener('click', e => {
 });
 
 /* ---------- suivi : feuilles ---------- */
-let takeAlert = null, closeId = null, acctName = null;
+let takeAlert = null, takeLev = 1, closeId = null, acctName = null;
+const gnum = id => { const x = parseFloat($(id).value); return isFinite(x) && x > 0 ? x : null; };
+const frNum = (x, d = 1) => new Intl.NumberFormat('fr-FR', {maximumFractionDigits: d}).format(x);
+function reasonOptions(sel, cur) {
+  sel.innerHTML = '<option value="">Aucune raison précisée</option>' + C.REASONS.map(r => `<option${r === cur ? ' selected' : ''}>${esc(r)}</option>`).join('');
+}
+/* Bloc de risque : mise suggérée pour le risque fixe, puis perte, gain et rapport gain/risque de la mise saisie. */
+function riskHtml(base, stake, useBtn) {
+  const risk = base.risk, sug = C.calcRisk(base);
+  if (!sug) return `<span>Ajoute un stop pour calculer la mise selon ton risque fixe de ${F.eur(risk, 0)}.</span>`;
+  const cur = C.calcRisk({...base, stake}), xtb = (C.computeLedger(S.ledger).acc || {}).XTB, bal = xtb && xtb.value > 0 ? xtb.value : null;
+  const over = cur.loss > risk * 1.02;
+  return `<div class="rk-lab">Mise suggérée pour ${F.eur(risk, 0)} de risque</div><div class="rk-main"><b class="num">${F.eur(sug.suggested, 2)}</b>${useBtn ? `<button type="button" class="rk-use" data-rkuse="${sug.suggested}">Utiliser</button>` : ''}</div>
+    <div class="rk-row"><span>Perte si stop touché</span><b class="num ${over ? 'warn' : 'down'}">${F.signed(-cur.loss)}</b></div>
+    ${cur.gain != null ? `<div class="rk-row"><span>Gain si objectif atteint</span><b class="num up">${F.signed(cur.gain)}</b></div><div class="rk-row"><span>Rapport gain / risque</span><b class="num">${frNum(cur.rr)}</b></div>` : ''}
+    <div class="rk-row"><span>Exposition avec levier x${cur.lev}</span><b class="num">${F.eur(cur.notional, 0)}</b></div>
+    ${bal ? `<div class="rk-row"><span>Part du compte XTB</span><b class="num ${cur.stake > bal ? 'warn' : ''}">${F.pct(cur.stake / bal * 100, 1)}</b></div>` : ''}
+    ${over ? `<div class="rk-row warn"><span>Cette mise dépasse ton risque fixe de ${F.eur(risk, 0)}.</span></div>` : ''}`;
+}
+function renderRisk(auto) {
+  const base = {risk: S.settings.riskEur || 10, entry: gnum('#t-entry'), stop: gnum('#t-stop'), target: gnum('#t-target'), leverage: takeLev};
+  const amt = $('#t-amount');
+  if (auto && amt.dataset.manual !== '1') { const sug = C.calcRisk(base); amt.value = sug ? sug.suggested : ''; }
+  $('#t-risk').innerHTML = riskHtml(base, gnum('#t-amount'), true);
+}
+['#t-entry', '#t-stop', '#t-target'].forEach(id => $(id).addEventListener('input', () => renderRisk(true)));
+$('#t-amount').addEventListener('input', e => { e.target.dataset.manual = '1'; renderRisk(false); });
 function takeClick(id) {
   const a = (S.alerts || []).concat(C.sfcOrders()).find(x => x.id === id); if (!a) return;
   if (C.takenIds().has(id)) { haptic(); view.filter = 'track'; view.animate = true; return render(); }
-  takeAlert = a; haptic();
+  takeAlert = a; haptic(); takeLev = C.levOf(a) || 1;
   $('#t-title').textContent = N.resolve(a).name + (a.direction ? ' · ' + (a.direction === 'short' ? 'vente' : 'achat') : '');
   const v = x => x == null ? '' : x;
-  $('#t-amount').value = ''; $('#t-entry').value = v(C.parseLevel(a.entry, 'entry')); $('#t-stop').value = v(C.parseLevel(a.stop, 'stop')); $('#t-target').value = v(C.parseLevel(a.target, 'target'));
+  $('#t-entry').value = v(C.parseLevel(a.entry, 'entry')); $('#t-stop').value = v(C.parseLevel(a.stop, 'stop')); $('#t-target').value = v(C.parseLevel(a.target, 'target'));
+  $('#t-amount').value = ''; $('#t-amount').dataset.manual = ''; $('#t-note').value = ''; reasonOptions($('#t-reason'), '');
   const xl = a.category === 'cfd' ? N.xtbLeverage(a) : null;
-  $('#t-note').textContent = (xl ? 'Levier XTB x' + xl + ' : le résultat suivi ici = variation du cours × ta mise × ' + xl + '. ' : '') + (a.kind === 'sfc' ? "Niveaux du bot (futures Yahoo) : remplace-les par ton prix d'exécution réel sur XTB. La position se clôturera ici au prochain scan où le bot sortira de l'ordre." : "L'ordre est considéré comme exécuté à ce prix. Corrige les niveaux si ton ordre réel est différent.");
+  $('#t-help').textContent = (xl ? 'Levier XTB x' + xl + ' : le résultat suivi ici = variation du cours × ta mise × ' + xl + '. ' : '') + (a.kind === 'sfc' ? "Niveaux du bot (futures Yahoo) : remplace-les par ton prix d'exécution réel sur XTB. La position se clôturera ici au prochain scan où le bot sortira de l'ordre." : "L'ordre est considéré comme exécuté à ce prix. Corrige les niveaux si ton ordre réel est différent.");
+  renderRisk(true);
   $('#dlg-take').showModal();
 }
 $('#form-take').addEventListener('submit', e => {
   if (e.submitter && e.submitter.value !== 'ok') return;
   try {
     const n = id => { const x = parseFloat($(id).value); return isFinite(x) ? x : null; };
-    const res = C.takePosition(takeAlert, {amount: n('#t-amount'), entry: n('#t-entry'), stop: n('#t-stop'), target: n('#t-target')});
+    const res = C.takePosition(takeAlert, {amount: n('#t-amount'), entry: n('#t-entry'), stop: n('#t-stop'), target: n('#t-target'), note: $('#t-note').value, reason: $('#t-reason').value});
     view.filter = 'track'; view.animate = true; render(); report(res);
   } catch (err) { e.preventDefault(); toast(err.message); }
+});
+
+/* calculateur autonome */
+function renderCalc() {
+  const lev = parseFloat($('#k-lev').value), risk = parseFloat($('#k-risk').value);
+  $('#k-out').innerHTML = riskHtml({risk: isFinite(risk) && risk > 0 ? risk : 10, entry: gnum('#k-entry'), stop: gnum('#k-stop'), target: gnum('#k-target'), leverage: isFinite(lev) && lev >= 1 ? lev : 1}, null, false)
+    .replace('Ajoute un stop pour calculer', 'Indique l\'entrée et le stop pour calculer');
+}
+function openCalc() {
+  haptic(); if (!$('#k-risk').value) $('#k-risk').value = S.settings.riskEur || 10; if (!$('#k-lev').value) $('#k-lev').value = 10;
+  renderCalc(); $('#dlg-calc').showModal();
+}
+['#k-risk', '#k-entry', '#k-stop', '#k-target', '#k-lev'].forEach(id => $(id).addEventListener('input', renderCalc));
+$('#form-calc').addEventListener('submit', () => {});
+
+/* journal */
+let noteId = null;
+function openNote(id) {
+  const p = S.positions.positions.find(x => x.id === id); if (!p) return;
+  noteId = id; haptic(); $('#n-title').textContent = N.resolve(p).name;
+  reasonOptions($('#n-reason'), p.reason || ''); $('#n-note').value = p.note || '';
+  $('#dlg-note').showModal();
+}
+$('#form-note').addEventListener('submit', e => {
+  if (e.submitter && e.submitter.value !== 'ok') return;
+  report(C.saveJournal(noteId, $('#n-note').value, $('#n-reason').value));
 });
 function openClose(id) {
   const p = S.positions.positions.find(x => x.id === id); if (!p) return;
