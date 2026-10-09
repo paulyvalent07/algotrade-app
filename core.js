@@ -33,7 +33,7 @@
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
 
   /* ---------- état ---------- */
-  const DEFAULTS = {repo: 'paulyvalent07/AlgoTrade', branch: 'main', dataBranch: 'app-data', token: '', finnhub: '', simStake: 100, riskEur: 10};
+  const DEFAULTS = {repo: 'paulyvalent07/AlgoTrade', branch: 'main', dataBranch: 'app-data', token: '', finnhub: '', simStake: 100, riskEur: 10, resetAt: '2026-10-09T10:46:00.000Z'};
   const state = {
     settings: {...DEFAULTS, ...ls.get('at.settings', {})},
     ledger: ls.get('at.ledger', {version: 1, accounts: ['XTB', 'Revolut', 'IG', 'Boursorama', 'Trade Republic'], movements: []}),
@@ -95,8 +95,10 @@
   function sfcOrders() {
     const log = state.sfc && state.sfc.log; if (!log) return [];
     const rows = log.filter(r => (r.event === 'ENTRY' || r.event === 'EXIT') && SFC_NAMES[r.symbol]).sort((a, b) => a.ts.localeCompare(b.ts));
-    const realNow = {}, lastEntry = {}; const out = [];
+    const realNow = {}, lastEntry = {}, before = {}, cut = state.settings.resetAt || ''; const out = [];
     for (const r of rows) {
+      if (r.event === 'ENTRY' && r.ts < cut) { before[r.symbol] = true; continue; }
+      if (r.event === 'EXIT' && before[r.symbol]) { delete before[r.symbol]; continue; }
       const [name, xtb] = SFC_NAMES[r.symbol];
       const le = lastEntry[r.symbol], xl = window.AlgoNames && window.AlgoNames.xtbLeverage({symbol: r.symbol});
       let move = null;   // variation du sous-jacent entre l'entrée et la sortie (en %), indépendante de la taille de l'ordre
@@ -124,8 +126,10 @@
   function sfcSignals() {
     const log = state.sfc && state.sfc.log; if (!log) return [];
     const N = window.AlgoNames, rows = log.filter(r => (r.event === 'ENTRY' || r.event === 'EXIT') && SFC_NAMES[r.symbol]).sort((a, b) => a.ts.localeCompare(b.ts));
-    const taken = takenIds(), open = {}, out = [];
+    const taken = takenIds(), open = {}, out = [], before = {}, cut = state.settings.resetAt || '';
     for (const r of rows) {
+      if (r.event === 'ENTRY' && r.ts < cut) { before[r.symbol] = true; continue; }
+      if (r.event === 'EXIT' && before[r.symbol]) { delete before[r.symbol]; continue; }
       if (r.event === 'ENTRY') {
         const ig = (/ig_entry=([\d.]+)/.exec(r.detail || '') || [])[1];
         const s = {id: 'sfc:' + r.symbol + ':' + r.ts, symbol: r.symbol, ts: r.ts, side: r.side === 'short' ? 'short' : 'long', entry: +r.entry, igEntry: ig ? +ig : null, row: r, exitTs: null, move: null, open: true};
@@ -558,17 +562,24 @@
     state.settings = {repo: (s.repo || '').trim() || DEFAULTS.repo, branch: (s.branch || '').trim() || DEFAULTS.branch,
       dataBranch: (s.dataBranch || '').trim() || DEFAULTS.dataBranch, token: (s.token || '').trim(), finnhub: (s.finnhub || '').trim(),
       simStake: parseFloat(s.simStake) > 0 ? parseFloat(s.simStake) : DEFAULTS.simStake,
-      riskEur: parseFloat(s.riskEur) > 0 ? parseFloat(s.riskEur) : DEFAULTS.riskEur};
+      riskEur: parseFloat(s.riskEur) > 0 ? parseFloat(s.riskEur) : DEFAULTS.riskEur, resetAt: state.settings.resetAt || DEFAULTS.resetAt};
     ls.set('at.settings', state.settings); state.ledgerSha = null; return loadAll();
   }
-  const unseenCount = () => (state.alerts || []).filter(a => !state.seen.has(a.id) && !state.dismissed.has(a.id)).length;
+  /* Remise à zéro : les signaux du bot (alertes SFC et courbe « si tu avais tout pris ») ne comptent qu'à partir de cet instant.
+   * Rien n'est supprimé : tes positions suivies restent, et le bot garde tout son historique. */
+  function resetSignals() {
+    state.settings = {...state.settings, resetAt: new Date().toISOString()};
+    ls.set('at.settings', state.settings); emit(); return state.settings.resetAt;
+  }
+  const afterReset = ts => String(ts || '') >= (state.settings.resetAt || '');
+  const unseenCount = () => (state.alerts || []).filter(a => afterReset(a.ts) && !state.seen.has(a.id) && !state.dismissed.has(a.id)).length;
   function dismissAlert(id) { state.dismissed.add(id); ls.set('at.dismissed', [...state.dismissed].slice(-500)); emit(); }
   function markAlertsSeen() {
     (state.alerts || []).forEach(a => state.seen.add(a.id)); ls.set('at.seen', [...state.seen]); emit();
   }
 
   window.AlgoCore = {sfcSignals, levOf, loadLive, dismissAlert, sfcOrders, state, on, fmt, todayISO, computeLedger, snapshots, sfcSummary, loadAll, saveSettings,
-    addMovement, deleteMovement, addAccount, deleteAccount, unseenCount, markAlertsSeen,
+    resetSignals, afterReset, addMovement, deleteMovement, addAccount, deleteAccount, unseenCount, markAlertsSeen,
     parseLevel, pnlAt, positionView, calcRisk, REASONS, saveJournal, takePosition, updatePosition, closePosition, deletePosition, takenIds,
     setAmount, pushStatus, enablePush, disablePush, testNotification};
 })();

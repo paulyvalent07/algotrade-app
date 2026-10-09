@@ -147,20 +147,54 @@
     return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="${ghost ? 'Résultat cumulé hypothétique si tous les signaux avaient été pris' : 'Résultat cumulé de tes positions'}">${out}</svg>`;
   }
 
-  /* Les deux courbes sur le même graphique et la même échelle : « Tes positions » en trait plein, « Si tu avais tout pris » en pointillé. */
+  /* Courbe lisse qui passe par tous les points sans dépasser (interpolation monotone) : le rendu « ruban » du design Stitch. */
+  function smooth(P) {
+    const n = P.length; if (n < 2) return '';
+    const X = P.map(p => p[0]), Y = P.map(p => p[1]);
+    for (let i = 1; i < n; i++) if (X[i] <= X[i - 1]) X[i] = X[i - 1] + .5;
+    const d = [], m = new Array(n);
+    for (let i = 0; i < n - 1; i++) d[i] = (Y[i + 1] - Y[i]) / (X[i + 1] - X[i]);
+    m[0] = d[0]; m[n - 1] = d[n - 2];
+    for (let i = 1; i < n - 1; i++) m[i] = d[i - 1] * d[i] > 0 ? (d[i - 1] + d[i]) / 2 : 0;
+    for (let i = 0; i < n - 1; i++) {
+      if (d[i] === 0) { m[i] = 0; m[i + 1] = 0; continue; }
+      const a = m[i] / d[i], b = m[i + 1] / d[i], q = a * a + b * b;
+      if (q > 9) { const t = 3 / Math.sqrt(q); m[i] = t * a * d[i]; m[i + 1] = t * b * d[i]; }
+    }
+    let out = `M${X[0].toFixed(1)},${Y[0].toFixed(1)}`;
+    for (let i = 0; i < n - 1; i++) {
+      const h = (X[i + 1] - X[i]) / 3;
+      out += ` C${(X[i] + h).toFixed(1)},${(Y[i] + m[i] * h).toFixed(1)} ${(X[i + 1] - h).toFixed(1)},${(Y[i + 1] - m[i + 1] * h).toFixed(1)} ${X[i + 1].toFixed(1)},${Y[i + 1].toFixed(1)}`;
+    }
+    return out;
+  }
+
+  /* Les deux courbes sur le même graphique et la même échelle : « Tes positions » en ruban lumineux, « Si tu avais tout pris » en pointillé.
+   * Rendu épuré façon Revolut / Stitch : pas d'axe vertical, trois repères pointillés, dégradé sous la courbe, halo sur le dernier point. */
   function duo(real, hyp, F, dom, dateShort, dateLong) {
     if (!dom || ((!real || real.length < 2) && (!hyp || hyp.length < 2))) return '';
-    const W = 340, H = 190, L = 44, R = 12, T = 16, B = 26, iw = W - L - R, ih = H - T - B, span = (dom.t1 - dom.t0) || 1;
+    const W = 340, H = 190, L = 6, R = 10, T = 16, B = 26, iw = W - L - R, ih = H - T - B, span = (dom.t1 - dom.t0) || 1;
     const x = p => L + (new Date(p.ts).getTime() - dom.t0) / span * iw, y = v => T + ih - (v - dom.lo) / (dom.hi - dom.lo || 1) * ih;
-    const stair = pts => { let d = `M${x(pts[0]).toFixed(1)},${y(pts[0].v).toFixed(1)}`; for (let i = 1; i < pts.length; i++) d += ` H${x(pts[i]).toFixed(1)} V${y(pts[i].v).toFixed(1)}`; return d + ` H${(L + iw).toFixed(1)}`; };
-    let out = `<defs><linearGradient id="duo-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--glacier)" stop-opacity=".18"/><stop offset="1" stop-color="var(--glacier)" stop-opacity="0"/></linearGradient></defs>`;
-    for (let v = dom.lo; v <= dom.hi + 1e-9; v += dom.step) out += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" class="${Math.abs(v) < 1e-9 ? 'axis' : 'grid'}"/><text x="${L - 6}" y="${y(v) + 4}" class="tick" text-anchor="end">${nfInt(v)}</text>`;
-    const dots = (pts, ghost) => pts.map((p, i) => p.origin ? '' : `${i === pts.length - 1 && !ghost ? `<circle cx="${x(p)}" cy="${y(p.v)}" r="4" class="capdot last"/>` : ''}
-      <rect class="hit" x="${x(p) - 9}" y="${T}" width="18" height="${ih}" tabindex="0" aria-label="${esc(p.name)}" data-tip="${tip((ghost ? 'Si tu avais tout pris · ' : 'Tes positions · ') + p.name, [{n: p.live ? 'À cette heure' : 'Clôture', v: dateLong(p.ts)}, {n: p.live ? 'Latent' : 'Résultat du trade', v: F.signed(p.d, 2)}, {n: 'Cumul', v: F.signed(p.v, 2)}])}"/>`).join('');
-    if (hyp && hyp.length > 1) out += `<path d="${stair(hyp)}" class="capline ghost"/>` + dots(hyp, true);
-    if (real && real.length > 1) out += `<path d="${stair(real)} V${y(0)} H${x(real[0]).toFixed(1)} Z" fill="url(#duo-fill)"/><path d="${stair(real)}" class="capline"/>` + dots(real, false);
-    [dom.t0, dom.t0 + span / 2, dom.t1].forEach((t, k) => { out += `<text x="${L + (t - dom.t0) / span * iw}" y="${H - 8}" class="tick" text-anchor="${k === 0 ? 'start' : k === 2 ? 'end' : 'middle'}">${esc(dateShort(new Date(t).toISOString()))}</text>`; });
-    return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="Résultat cumulé : tes positions (trait plein) et si tu avais tout pris (pointillé)">${out}</svg>`;
+    const line = pts => { const P = pts.map(p => [x(p), y(p.v)]), last = P[P.length - 1]; if (last[0] < L + iw - 1) P.push([L + iw, last[1]]); return P; };
+    const lastV = real && real.length ? real[real.length - 1].v : 0, neg = lastV < 0;
+    const c0 = neg ? '#D8667D' : '#38C694';
+    let out = `<defs>
+      <linearGradient id="duo-rib" gradientUnits="userSpaceOnUse" x1="${L}" x2="${L + iw}" y1="0" y2="0"><stop offset="0" stop-color="${c0}" stop-opacity=".45"/><stop offset=".45" stop-color="#9DB7CC" stop-opacity=".95"/><stop offset=".85" stop-color="#CBE6FC"/><stop offset="1" stop-color="#FFFFFF"/></linearGradient>
+      <linearGradient id="duo-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9DB7CC" stop-opacity=".34"/><stop offset=".6" stop-color="#9DB7CC" stop-opacity=".08"/><stop offset="1" stop-color="#9DB7CC" stop-opacity="0"/></linearGradient>
+      <filter id="duo-glow" filterUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+    const mid = (dom.lo + dom.hi) / 2;
+    [dom.hi, mid, dom.lo].forEach(v => { out += `<line x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" class="grid"/>`; });
+    if (dom.lo < 0 && dom.hi > 0) out += `<line x1="${L}" x2="${W - R}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" class="axis"/>`;
+    const hits = (pts, ghost) => pts.map(p => p.origin ? '' : `<rect class="hit" x="${(x(p) - 9).toFixed(1)}" y="${T}" width="18" height="${ih}" tabindex="0" aria-label="${esc(p.name)}" data-tip="${tip((ghost ? 'Si tu avais tout pris · ' : 'Tes positions · ') + p.name, [{n: p.live ? 'À cette heure' : 'Clôture', v: dateLong(p.ts)}, {n: p.live ? 'Latent' : 'Résultat du trade', v: F.signed(p.d, 2)}, {n: 'Cumul', v: F.signed(p.v, 2)}])}"/>`).join('');
+    if (hyp && hyp.length > 1) out += `<path d="${smooth(line(hyp))}" class="ghostline"/>` + hits(hyp, true);
+    if (real && real.length > 1) {
+      const P = line(real), d = smooth(P), z = y(Math.max(dom.lo, Math.min(0, dom.hi))).toFixed(1), end = P[P.length - 1], lp = real[real.length - 1];
+      out += `<path d="${d} L${end[0].toFixed(1)},${z} L${P[0][0].toFixed(1)},${z} Z" fill="url(#duo-fill)" class="ribfill"/>
+        <path d="${d}" class="ribbon" stroke="url(#duo-rib)" pathLength="1" filter="url(#duo-glow)"/>` + hits(real, false) +
+        `<circle cx="${(x(lp)).toFixed(1)}" cy="${y(lp.v).toFixed(1)}" r="9" class="halo"/><circle cx="${x(lp).toFixed(1)}" cy="${y(lp.v).toFixed(1)}" r="4.2" class="enddot"/>`;
+    }
+    [dom.t0, dom.t0 + span / 2, dom.t1].forEach((t, k) => { out += `<text x="${(L + (t - dom.t0) / span * iw).toFixed(1)}" y="${H - 8}" class="tick" text-anchor="${k === 0 ? 'start' : k === 2 ? 'end' : 'middle'}">${esc(dateShort(new Date(t).toISOString()))}</text>`; });
+    return `<svg viewBox="0 0 ${W} ${H}" class="chart duo" role="img" aria-label="Résultat cumulé : tes positions (ruban) et si tu avais tout pris (pointillé)">${out}</svg>`;
   }
 
   window.AlgoAnalysis = {rows, pnlBars, allocation, breakdown, exposure, exposureKey, levels, series, domain, curve, duo, sum};

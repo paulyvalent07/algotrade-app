@@ -501,9 +501,115 @@ select{color:var(--ink);font-family:inherit}
 .riskbox .warn{color:var(--loss)}
 .p-note{margin:12px 0 0;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.04);font-size:14px;color:var(--text-2);line-height:1.45;white-space:pre-wrap}
 .p-note .badge{margin:0 0 6px;display:inline-block}
+
+/* ====== v24 : transparence, bulles et mouvement ====== */
+body{background:#06080B;background-image:none}
+.wrap{position:relative;z-index:1}
+.aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.aurora i{position:absolute;border-radius:50%;will-change:transform}
+.aurora i:nth-child(1){width:90vw;height:90vw;left:-28vw;top:-26vw;background:radial-gradient(circle,rgba(157,183,204,.34),transparent 66%);animation:drift1 24s ease-in-out infinite alternate}
+.aurora i:nth-child(2){width:80vw;height:80vw;right:-34vw;top:34vh;background:radial-gradient(circle,rgba(56,198,148,.17),transparent 66%);animation:drift2 30s ease-in-out infinite alternate}
+.aurora i:nth-child(3){width:90vw;height:90vw;left:-6vw;bottom:-40vw;background:radial-gradient(circle,rgba(142,143,214,.22),transparent 66%);animation:drift3 36s ease-in-out infinite alternate}
+@keyframes drift1{to{transform:translate(18vw,14vh) scale(1.12)}}
+@keyframes drift2{to{transform:translate(-20vw,-18vh) scale(.9)}}
+@keyframes drift3{to{transform:translate(14vw,-16vh) scale(1.1)}}
+.bubbles{position:fixed;inset:0;z-index:4;pointer-events:none;overflow:hidden}
+.bubbles b{position:absolute;bottom:-70px;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;opacity:0;
+  mix-blend-mode:screen;background:radial-gradient(circle at 30% 26%,rgba(255,255,255,.8),rgba(170,205,235,.26) 34%,rgba(130,170,215,.1) 62%,transparent 76%);
+  border:1px solid rgba(255,255,255,.2);box-shadow:inset 0 -6px 14px rgba(157,183,204,.14);animation:bubble var(--d) linear var(--o) infinite}
+@keyframes bubble{0%{transform:translate(0,0) scale(.8);opacity:0}8%{opacity:.9}50%{transform:translate(22px,-55vh) scale(1)}92%{opacity:.7}100%{transform:translate(-16px,-112vh) scale(1.12);opacity:0}}
+
+/* cartes translucides : le fond animé transparaît derrière, avec un reflet en haut à gauche */
+.card,.alert,.tile,.scan{background:radial-gradient(130% 90% at 0% 0%,rgba(255,255,255,.085),transparent 52%),rgba(14,19,26,.6);
+  border:1px solid rgba(255,255,255,.11);box-shadow:inset 0 1px 0 rgba(255,255,255,.17),inset 0 -1px 0 rgba(0,0,0,.35),0 16px 32px -20px rgba(0,0,0,.85)}
+.card.milled{background:radial-gradient(120% 80% at 0% 0%,rgba(157,183,204,.13),transparent 55%),rgba(14,19,26,.55);border-color:rgba(255,255,255,.15);
+  box-shadow:inset 0 1.5px 2px rgba(255,255,255,.22),inset 0 -1px 1px rgba(0,0,0,.55),0 26px 44px -18px rgba(0,0,0,.75)}
+#view[data-tab="analysis"] .card,#view[data-tab="capital"] .card{-webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%)}
+.chips,.seg,.ibtn,.pill,.more-row{-webkit-backdrop-filter:blur(22px) saturate(190%);backdrop-filter:blur(22px) saturate(190%);box-shadow:inset 0 1px 1px rgba(255,255,255,.16),0 6px 16px -8px rgba(0,0,0,.6)}
+nav.dock{background:rgba(20,27,36,.5);-webkit-backdrop-filter:blur(30px) saturate(220%);backdrop-filter:blur(30px) saturate(220%)}
+.dock-pill{background:linear-gradient(180deg,rgba(157,183,204,.24),rgba(157,183,204,.1));box-shadow:inset 0 1px 1px rgba(255,255,255,.3),0 4px 14px -4px rgba(157,183,204,.35);transition:transform .65s cubic-bezier(.34,1.5,.5,1)}
+.dock button svg{transition:transform .5s cubic-bezier(.34,1.7,.5,1)}
+.dock button svg .f{transition:fill-opacity .3s}
+.dock button[aria-selected="true"] svg{animation:bob .55s cubic-bezier(.34,1.6,.5,1)}
+.dock button[aria-selected="true"] svg .f{fill:currentColor;fill-opacity:.22}
+@keyframes bob{0%{transform:translateY(3px) scale(.86)}60%{transform:translateY(-3px) scale(1.12)}100%{transform:none}}
+
+/* entrée en cascade */
+#view.enter .card,#view.enter .aw,#view.enter .alert,#view.enter .chips,#view.enter .status,#view.enter .hero,#view.enter .sum-card,#view.enter .more-row,#view.enter .tiles .tile,#view.enter .empty{animation:rise2 .75s cubic-bezier(.2,.85,.25,1) both}
+@keyframes rise2{from{opacity:0;transform:translateY(26px) scale(.965)}to{opacity:1;transform:none}}
+#view.enter > :nth-child(2){animation-delay:.06s}#view.enter > :nth-child(3){animation-delay:.12s}#view.enter > :nth-child(4){animation-delay:.18s}
+#view.enter > :nth-child(5){animation-delay:.24s}#view.enter > :nth-child(6){animation-delay:.3s}#view.enter > :nth-child(n+7){animation-delay:.34s}
+#view.enter .tiles .tile:nth-child(2){animation-delay:.07s}#view.enter .tiles .tile:nth-child(3){animation-delay:.11s}#view.enter .tiles .tile:nth-child(4){animation-delay:.15s}
+#view.enter .tiles .tile:nth-child(5){animation-delay:.19s}#view.enter .tiles .tile:nth-child(6){animation-delay:.23s}#view.enter .tiles .tile:nth-child(n+7){animation-delay:.27s}
+.tile-full .card{animation:pop2 .55s cubic-bezier(.34,1.45,.5,1) both}
+@keyframes pop2{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
+.tile,.btn,.ibtn,.chip,.more-row,.seg button,.plus{transition:transform .5s cubic-bezier(.34,1.6,.5,1),background .25s,border-color .25s,box-shadow .3s,color .25s}
+.tile:active,.btn:active,.ibtn:active,.chip:active,.more-row:active,.plus:active{transform:scale(.94)}
+.tile:hover{border-color:rgba(157,183,204,.35)}
+
+/* graphique : ruban lumineux façon Stitch */
+.chart .grid{stroke:rgba(255,255,255,.075);stroke-dasharray:2 5}
+.chart.duo .ribbon{fill:none;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+.chart.duo .ghostline{fill:none;stroke:#94A3B8;stroke-opacity:.7;stroke-width:1.6;stroke-dasharray:4 5;stroke-linecap:round}
+.chart.duo .enddot{fill:#fff;stroke:rgba(255,255,255,.55);stroke-width:2.2}
+#view .chart.duo circle.halo{fill:rgba(255,255,255,.18);transform-box:fill-box;transform-origin:center;animation:halo 2.8s ease-in-out infinite}
+@keyframes halo{0%,100%{transform:scale(.75);opacity:.95}50%{transform:scale(1.5);opacity:.2}}
+#view.enter .chart.duo .ribbon{stroke-dasharray:1;stroke-dashoffset:1;animation:ribdraw 1.6s cubic-bezier(.45,.1,.2,1) .2s forwards}
+@keyframes ribdraw{to{stroke-dashoffset:0}}
+#view.enter .chart.duo .ribfill{animation:fadein 1.4s ease .6s both}
+#view.enter .chart.duo .ghostline{animation:fadein 1.2s ease .5s both}
+.ln-key{width:18px;height:4px;background:linear-gradient(90deg,#38C694,#CBE6FC,#fff)}
+
+/* case à cocher des alertes : carré en verre, coche tracée, éclat de bulles */
+.take{position:relative;width:32px;height:32px;border-radius:11px;border:1.5px solid rgba(255,255,255,.3);background:rgba(255,255,255,.05);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 1px 1px rgba(255,255,255,.2);transition:transform .5s cubic-bezier(.34,1.6,.5,1),background .3s,border-color .3s,box-shadow .35s}
+.take svg{width:17px;height:17px;stroke-width:2.6}
+.take svg path{stroke-dasharray:24;stroke-dashoffset:24;transition:stroke-dashoffset .35s ease .05s}
+.take.on svg path{stroke-dashoffset:0}
+.take.on{background:linear-gradient(145deg,#74E3BC,#2BA57B);border-color:transparent;color:#04130D;box-shadow:0 0 20px rgba(56,198,148,.5),inset 0 1px 1px rgba(255,255,255,.55)}
+.take::after{content:"";position:absolute;inset:-2px;border-radius:13px;border:2px solid #38C694;opacity:0;pointer-events:none}
+.take.pop{animation:tickpop .65s cubic-bezier(.34,1.7,.5,1)}
+.take.pop::after{animation:ripple .8s ease-out}
+.take.pop svg path{animation:tickdraw .45s ease .12s both}
+@keyframes tickpop{0%{transform:scale(.78)}55%{transform:scale(1.22)}100%{transform:scale(1)}}
+@keyframes ripple{from{opacity:.9;transform:scale(1)}to{opacity:0;transform:scale(2.4)}}
+@keyframes tickdraw{from{stroke-dashoffset:24}to{stroke-dashoffset:0}}
+i.burst{position:fixed;z-index:30;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);
+  background:radial-gradient(circle at 30% 28%,rgba(255,255,255,.75),rgba(116,227,188,.28) 50%,transparent 72%);border:1px solid rgba(255,255,255,.4);animation:burst 1s cubic-bezier(.2,.8,.3,1) both}
+@keyframes burst{from{opacity:1;transform:translate(-50%,-50%) scale(.4)}to{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.15)}}
+
+/* en-tête : trois boutons sans écraser le titre */
+.ibtn{width:40px;height:40px;margin-left:4px}
+.brand{flex:1}
+.brand-t small{overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.a-cat{padding:4px 4px 4px 6px;margin:-4px 0 -4px -6px}
+.fresh-dot{box-shadow:0 0 0 3px rgba(157,183,204,.2)}
+
+/* feuilles et notification */
+dialog[open]{animation:sheet2 .6s cubic-bezier(.2,.95,.25,1.12)}
+@keyframes sheet2{from{opacity:0;transform:translateY(70px) scale(.93)}}
+dialog[open]::backdrop{animation:fadein .4s ease}
+#toast{transition:opacity .3s,transform .55s cubic-bezier(.34,1.6,.5,1);transform:translate(-50%,24px) scale(.9)}
+#toast.on{transform:translate(-50%,0) scale(1)}
+
+/* capital : couleurs franches */
+#view[data-tab="capital"]{--series-1:#4C9AFF;--series-2:#FF7A3D;--series-3:#22C493;--series-4:#F2B53C;--series-5:#F0689B;--series-6:#4FD16B;--series-7:#9B8CFF}
+#view[data-tab="capital"] .split{height:13px;gap:4px}
+#view[data-tab="capital"] .split i{position:relative}
+#view[data-tab="capital"] .split i::after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(180deg,rgba(255,255,255,.34),transparent 62%)}
+#view[data-tab="capital"] .row .logo{box-shadow:0 0 0 2px var(--c),0 0 16px -2px color-mix(in srgb,var(--c) 70%,transparent)}
+.row .l.has-logo>span:not(.logo){display:block;min-width:0}
+.sbar{display:block;height:4px;width:min(140px,100%);margin-top:7px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.sbar i{display:block;height:100%;border-radius:99px;background:var(--c,var(--glacier));box-shadow:0 0 10px color-mix(in srgb,var(--c,var(--glacier)) 70%,transparent)}
+#view.enter .sbar i{transform-origin:left;animation:barin 1s cubic-bezier(.2,.85,.25,1) .3s both}
+@keyframes barin{from{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){.bubbles{display:none}}
 </style>
 </head>
 <body>
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="bubbles" aria-hidden="true">
+  <b style="--s:46px;--x:8%;--d:34s;--o:-6s"></b><b style="--s:20px;--x:22%;--d:26s;--o:-19s"></b><b style="--s:34px;--x:41%;--d:38s;--o:-27s"></b>
+  <b style="--s:16px;--x:58%;--d:24s;--o:-3s"></b><b style="--s:52px;--x:72%;--d:42s;--o:-14s"></b><b style="--s:26px;--x:90%;--d:30s;--o:-22s"></b></div>
 <div id="splash" aria-hidden="true"><div class="sp-logo"><img src="icon-512.png" alt=""><svg class="sp-ring" viewBox="0 0 100 100"><rect x="1" y="1" width="98" height="98" rx="26" pathLength="1"/></svg></div><div class="sp-word">AlgoTrade</div><div class="sp-line"><i></i></div></div>
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v10M7.5 11 12 15.5 16.5 11"/></svg></div>
 
@@ -523,9 +629,9 @@ select{color:var(--ink);font-family:inherit}
 
 <nav class="dock" aria-label="Navigation"><div class="dock-in" role="tablist" id="dock">
   <span class="dock-pill" aria-hidden="true"></span>
-  <button role="tab" data-tab="alerts" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M6 17.5V11a6 6 0 0 1 12 0v6.5l1.5 1.5h-15z"/><path d="M10 21.5h4"/></svg>Alertes<span class="dot" id="badge" hidden></span></button>
-  <button role="tab" data-tab="analysis" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M5 20v-7M12 20V4M19 20v-10"/><path d="M3 20h18"/></svg>Analyse</button>
-  <button role="tab" data-tab="capital" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 1 0 8.5 8.5H12z"/><path d="M15.5 3.9a8.5 8.5 0 0 1 4.6 4.6h-4.6z"/></svg>Capital</button>
+  <button role="tab" data-tab="alerts" aria-selected="true"><svg viewBox="0 0 24 24"><path class="f" d="M6.2 10.4a5.8 5.8 0 0 1 11.6 0c0 4.2 1.3 5.6 2.2 6.6.3.3.1.8-.3.8H4.3c-.4 0-.6-.5-.3-.8.9-1 2.2-2.4 2.2-6.6z"/><path d="M12 3.2v1.4"/><path d="M9.8 20.2a2.3 2.3 0 0 0 4.4 0"/></svg>Alertes<span class="dot" id="badge" hidden></span></button>
+  <button role="tab" data-tab="analysis" aria-selected="false"><svg viewBox="0 0 24 24"><rect class="f" x="3.8" y="13.4" width="4.4" height="6.8" rx="1.4"/><rect class="f" x="9.8" y="8.9" width="4.4" height="11.3" rx="1.4"/><rect class="f" x="15.8" y="3.8" width="4.4" height="16.4" rx="1.4"/></svg>Analyse</button>
+  <button role="tab" data-tab="capital" aria-selected="false"><svg viewBox="0 0 24 24"><path class="f" d="M12 3.5a8.5 8.5 0 1 0 8.5 8.5H12z"/><path d="M15.5 3.9a8.5 8.5 0 0 1 4.6 4.6h-4.6z"/></svg>Capital</button>
 </div></nav>
 
 <dialog id="dlg-settings">
@@ -545,12 +651,16 @@ select{color:var(--ink);font-family:inherit}
     <input id="s-stake" type="number" inputmode="decimal" min="1" step="1">
     <label for="s-risk">Risque fixe par trade (€)</label>
     <input id="s-risk" type="number" inputmode="decimal" min="0.5" step="0.5">
+    <div class="push-box"><b style="font-size:14px">Signaux du bot</b>
+      <p id="reset-msg" style="margin-top:6px"></p>
+      <div class="row2"><button type="button" class="btn ghost" id="reset-sig">Remettre à zéro</button></div>
+    </div>
     <p class="section-note" style="margin:10px 4px 0">Le jeton reste sur cet appareil. Sans jeton, les alertes ne se chargent pas, et le capital reste local.</p>
     <div class="push-box"><b style="font-size:14px">Notifications</b>
       <p id="push-msg" style="margin-top:6px">Reçois les nouvelles alertes sur l'écran de verrouillage.</p>
       <div class="row2"><button type="button" class="btn" id="push-on">Activer</button><button type="button" class="btn ghost" id="push-test">Tester</button><button type="button" class="btn ghost" id="push-off">Désactiver</button></div>
     </div>
-    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 23 · l'app se met à jour toute seule</p>
+    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 24 · l'app se met à jour toute seule</p>
     <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
   </form>
 </dialog>
@@ -673,6 +783,16 @@ function report(promise) {
 const tokenHelp = () => `<div class="err">Dépôt privé : ajoute ton jeton GitHub dans les réglages pour charger les données.</div>`;
 
 /* chiffres qui se posent en douceur */
+/* petites bulles qui s'échappent de la case cochée */
+function burst(el) {
+  if (reduceMotion()) return;
+  const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  for (let i = 0; i < 9; i++) {
+    const b = document.createElement('i'), a = Math.random() * Math.PI * 2, d = 26 + Math.random() * 34, sz = 5 + Math.random() * 9;
+    b.className = 'burst'; b.style.cssText = `left:${cx}px;top:${cy}px;width:${sz}px;height:${sz}px;--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d - 18}px;animation-delay:${i * 18}ms`;
+    document.body.appendChild(b); setTimeout(() => b.remove(), 1200);
+  }
+}
 function tween(el, to, f) {
   const from = el._v ?? 0; el._v = to; cancelAnimationFrame(el._r);
   if (reduceMotion() || from === to) { el.textContent = f(to); return; }
@@ -691,9 +811,9 @@ function viewAlerts() {
   if (S.alertsErr === 'token') return chips + tokenHelp();
   if (S.alertsErr) return chips + (navigator.onLine ? `<div class="err">Impossible de lire les alertes : ${esc(S.alertsErr)}.</div>` : offlineHtml());
   if (S.alerts === null) return chips + `<p class="empty">Chargement…</p>`;
-  const list = S.alerts.concat(C.sfcOrders()).filter(a => !S.dismissed.has(a.id) && (view.filter === 'all' || a.category === view.filter)).sort((a, b) => String(b.ts).localeCompare(String(a.ts)));
+  const list = S.alerts.filter(a => C.afterReset(a.ts)).concat(C.sfcOrders()).filter(a => !S.dismissed.has(a.id) && (view.filter === 'all' || a.category === view.filter)).sort((a, b) => String(b.ts).localeCompare(String(a.ts)));
   const body = list.length ? list.map(a => swipeWrap(a.id, alertHtml(a))).join('') :
-    `<div class="empty"><b>Aucune alerte pour l'instant</b>Les scans publient ici dès qu'un candidat passe leur filtre. Un jour sans alerte est normal.</div>`;
+    `<div class="empty"><b>Aucune alerte pour l'instant</b>Les prochains signaux du bot apparaîtront ici dès leur envoi (comptés depuis le ${esc(F.dateTime(S.settings.resetAt))}).</div>`;
   return `${chips}${scansHtml()}${body}<p class="disclaimer">Aide à la décision, pas un conseil financier. Les CFD à levier peuvent faire perdre plus que la mise.</p>`;
 }
 /* titre d'un actif : nom anglais + symbole XTB (la référence) */
@@ -841,7 +961,7 @@ function viewAnalysis() {
   const skipped = sigEv.filter(e => !e.taken), skippedEur = skipped.reduce((t, e) => t + e.d, 0);
   const rs = A.rows(open, C, N), tot = A.sum;
   const hero = `<section class="hero c"><span class="pill"><i></i>${open.length} position${open.length > 1 ? 's' : ''} en cours</span>
-      <b class="metal num ${real < 0 ? 'neg' : ''}">${F.signed(real, 0)}</b>
+      <b class="metal num ${real < 0 ? 'neg' : ''}" id="f-real" data-v="${real}">${F.signed(real, 0)}</b>
       ${pct != null ? `<span class="hero-pct num ${toneOf(pct)}">${pct > 0 ? '+' : pct < 0 ? '−' : ''}${F.pct(Math.abs(pct), 1)} <span class="muted" style="font-weight:400">sur ${F.eur(base, 0)} engagés</span></span>` : ''}
       <span class="hero-cap">Résultat net, latent inclus</span>
       <div class="seg" role="group" aria-label="Période">${PERIODS.map(([k, l]) => `<button data-period="${k}" aria-pressed="${view.period === k}">${l}</button>`).join('')}</div></section>`;
@@ -885,7 +1005,7 @@ function viewCapital() {
   const parts = A.map(n => ({name: n, value: c.acc[n].value, slot: G.slotOf(n, A)}));
   const rowOf = p => {
     const share = total > 0 ? Math.max(0, p.value) / total * 100 : 0;
-    return `<div class="row"><div class="l has-logo">${G.logo(p.name, 30)}<span><b>${esc(p.name)}</b> <small style="display:inline;margin-left:6px" class="num">${F.pct(share, 0)}</small></span></div>
+    return `<div class="row" style="--c:var(--series-${p.slot})"><div class="l has-logo">${G.logo(p.name, 34)}<span><b>${esc(p.name)}</b> <small style="display:inline;margin-left:6px" class="num">${F.pct(share, 0)}</small><span class="sbar"><i style="width:${share.toFixed(1)}%"></i></span></span></div>
       <div class="r"><button class="amt num" data-edit="${esc(p.name)}" aria-label="Modifier le montant de ${esc(p.name)}">${fe(p.value)}</button></div></div>`;
   };
   const rows = parts.map(p =>
@@ -902,7 +1022,7 @@ function renderHead() {
   if (view.wasLoading && !S.loading) view.lastLoad = Date.now(); view.wasLoading = S.loading;
   const off = !navigator.onLine, sub = $('#h-sub');
   $('#h-title').textContent = TITLE[view.tab];
-  sub.className = off ? 'off' : ''; sub.textContent = off ? 'Hors connexion' : S.loading ? 'Actualisation…' : view.lastLoad ? 'Mis à jour ' + F.ago(new Date(view.lastLoad).toISOString()) : 'Connecté';
+  sub.className = off ? 'off' : ''; sub.textContent = off ? 'Hors connexion' : S.loading ? 'Actualisation…' : view.lastLoad ? F.ago(new Date(view.lastLoad).toISOString()) : 'Connecté';
 }
 function render() {
   renderHead();
@@ -913,8 +1033,11 @@ function render() {
   document.body.classList.toggle('loading', S.loading);
   const v = $('#view');
   v.classList.toggle('enter', view.animate && !reduceMotion());
+  v.dataset.tab = view.tab;
   v.innerHTML = view.tab === 'alerts' ? viewAlerts() : view.tab === 'analysis' ? viewAnalysis() : viewCapital();
   const ft = $('#f-total'); if (ft) { ft._v = view.lastTotal ?? 0; view.lastTotal = c.value; tween(ft, c.value, v => F.eur(v)); }
+  const fr = $('#f-real'); if (fr) { fr._v = view.lastReal ?? 0; view.lastReal = +fr.dataset.v; tween(fr, +fr.dataset.v, v => F.signed(v, 0)); }
+  if (view.popId) { const b = document.querySelector(`[data-take="${CSS.escape(view.popId)}"]`); view.popId = null; if (b) { b.classList.add('pop'); burst(b); } }
   view.animate = false;
   if (!S.loading) $('#ptr').classList.remove('spin');
 }
@@ -953,6 +1076,7 @@ document.addEventListener('click', e => {
   if (t.id === 'calc') return openCalc();
   if (t.dataset.rkuse) { const f = $('#t-amount'); f.value = t.dataset.rkuse; f.dataset.manual = ''; return renderRisk(); }
   if (t.dataset.delpos) { haptic(); return report(C.deletePosition(t.dataset.delpos)); }
+  if (t.id === 'reset-sig') { haptic(); C.resetSignals(); resetMsg(); view.animate = true; render(); return toast('Signaux remis à zéro'); }
   if (t.id === 'push-on') return pushAction('on');
   if (t.id === 'push-off') return pushAction('off');
   if (t.id === 'push-test') return pushAction('test');
@@ -993,9 +1117,10 @@ function refreshNow() { $('#ptr').classList.add('spin'); return C.loadAll(); }
   }, {passive: true});
 })();
 
+function resetMsg() { $('#reset-msg').textContent = 'Alertes et courbe « si tu avais tout pris » comptées depuis le ' + F.dateTime(S.settings.resetAt) + '. Tes positions suivies ne bougent pas.'; }
 function openSettings() {
   $('#s-repo').value = S.settings.repo; $('#s-branch').value = S.settings.branch; $('#s-data').value = S.settings.dataBranch; $('#s-token').value = S.settings.token; $('#s-finnhub').value = S.settings.finnhub || ''; $('#s-stake').value = S.settings.simStake || 100; $('#s-risk').value = S.settings.riskEur || 10;
-  refreshPush(); $('#dlg-settings').showModal();
+  refreshPush(); resetMsg(); $('#dlg-settings').showModal();
 }
 $('#form-settings').addEventListener('submit', e => {
   if (e.submitter && e.submitter.value !== 'ok') return;
@@ -1088,7 +1213,7 @@ $('#form-take').addEventListener('submit', e => {
   try {
     const n = id => { const x = parseFloat($(id).value); return isFinite(x) ? x : null; };
     const res = C.takePosition(takeAlert, {amount: n('#t-amount'), entry: n('#t-entry'), stop: n('#t-stop'), target: n('#t-target'), note: $('#t-note').value, reason: $('#t-reason').value});
-    view.filter = 'track'; view.animate = true; render(); report(res);
+    view.popId = takeAlert.id; render(); report(res);
   } catch (err) { e.preventDefault(); toast(err.message); }
 });
 
