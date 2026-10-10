@@ -646,6 +646,15 @@ dialog::backdrop{background:rgba(2,4,10,.38);-webkit-backdrop-filter:blur(3px);b
 
 /* lisibilité sur verre : textes secondaires un peu plus clairs */
 :root{--muted:#A3AEBD;--text-2:#C6CEDA}
+/* détail des positions (Analyse) */
+.pd-h{display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 4px;font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.pd-h:first-of-type{margin-top:4px}.pd-h b{font-size:14px;letter-spacing:0;text-transform:none}
+.pd-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.pd-row:last-child{border-bottom:0;padding-bottom:2px}
+.pd-l{min-width:0}.pd-n{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px}.pd-n b{font-weight:600;font-size:15.5px}
+.pd-l small{display:block;margin-top:3px;color:var(--muted);font-size:12.5px}
+.pd-r{text-align:right;flex:none}.pd-r b{display:block;font-size:16px;font-weight:650}.pd-r small{display:block;margin-top:2px;font-size:12.5px}
+.pd-n .badge{padding:2px 8px;font-size:10.5px}
 </style>
 </head>
 <body>
@@ -687,7 +696,7 @@ dialog::backdrop{background:rgba(2,4,10,.38);-webkit-backdrop-filter:blur(3px);b
     <input id="s-token" type="password" autocomplete="off" placeholder="github_pat_…">
     <label for="s-finnhub">Clé Finnhub (cours en direct des actions, facultatif)</label>
     <input id="s-finnhub" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="clé gratuite sur finnhub.io">
-    <label for="s-stake">Mise par signal pour le graphique « si tu avais tout pris » (€)</label>
+    <label for="s-stake">Mise par signal pour le graphique « Simuler » (€)</label>
     <input id="s-stake" type="number" inputmode="decimal" min="1" step="1">
     <label for="s-risk">Risque fixe par trade (€)</label>
     <input id="s-risk" type="number" inputmode="decimal" min="0.5" step="0.5">
@@ -700,7 +709,7 @@ dialog::backdrop{background:rgba(2,4,10,.38);-webkit-backdrop-filter:blur(3px);b
       <p id="push-msg" style="margin-top:6px">Reçois les nouvelles alertes sur l'écran de verrouillage.</p>
       <div class="row2"><button type="button" class="btn" id="push-on">Activer</button><button type="button" class="btn ghost" id="push-test">Tester</button><button type="button" class="btn ghost" id="push-off">Désactiver</button></div>
     </div>
-    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 26 · l'app se met à jour toute seule</p>
+    <p class="section-note" style="margin:10px 2px 0;text-align:center">Version 27 · l'app se met à jour toute seule</p>
     <div class="dlg-actions"><button class="btn ghost" value="cancel" formnovalidate>Annuler</button><button class="btn" value="ok">Enregistrer</button></div>
   </form>
 </dialog>
@@ -996,11 +1005,21 @@ function viewAnalysis() {
       <span class="hero-cap">Résultat net, latent inclus</span>
       <div class="seg" role="group" aria-label="Période">${PERIODS.map(([k, l]) => `<button data-period="${k}" aria-pressed="${view.period === k}">${l}</button>`).join('')}</div></section>`;
   const chart = A.duo(rp, sp, F, dom, F.dateShort, F.dateLong);
-  const curveCard = `<section class="card milled"><div class="lgd"><span><i class="ln-key"></i>Tes positions <b class="num ${toneOf(real)}">${F.signed(real, 0)}</b></span>${sigEv.length ? `<span><i class="ln-key d"></i>Si tout pris <b class="num ${toneOf(hyp)}">${F.signed(hyp, 0)}</b></span>` : ''}</div>
+  const curveCard = `<section class="card milled"><div class="lgd"><span><i class="ln-key"></i>Tes positions <b class="num ${toneOf(real)}">${F.signed(real, 0)}</b></span><span><i class="ln-key d"></i>Simuler <b class="num ${toneOf(hyp)}">${F.signed(hyp, 0)}</b></span></div>
     ${chart || `<p class="empty">Pas encore assez de données pour tracer les courbes.</p>`}
     ${skipped.length ? `<div class="gap-row"><span>Signaux non pris · ${skipped.length}</span><b class="num ${toneOf(skippedEur)}" style="font-size:13px">${sg(skippedEur)}</b></div>` : ''}</section>`;
-  const pnl = A.pnlBars(rs, F, N);
-  const pnlCard = pnl ? `<section class="card"><div class="k-row"><span class="k">P&amp;L par actif</span><span class="badge">${rs.length} position${rs.length > 1 ? 's' : ''}</span></div>${pnl}</section>` : '';
+  /* détail de chaque position : ce qui fait perdre, ce qui fait gagner */
+  const dRows = views.filter(p => p.status === 'closed' ? p.exit && isFinite(p.exit.eur) && inP(p.exit.ts) : true).map(p => {
+    const closed = p.status === 'closed', r = closed ? p.exit : p.res, id = N.resolve(p), px = closed ? p.exit.price : p.last;
+    return {p, closed, id, eur: r ? r.eur : null, pct: r ? r.pct : null, px};
+  });
+  const dRow = d => { const p = d.p, tone = toneOf(d.eur == null ? 0 : d.eur), lev = C.levOf(p);
+    return `<div class="pd-row"><div class="pd-l"><div class="pd-n"><b>${esc(d.id.name)}</b>${d.id.xtb ? `<span class="xsym">${esc(d.id.xtb)}</span>` : ''}${d.closed ? '<span class="badge">Clôturée</span>' : ''}</div>
+      <small>${p.direction === 'short' ? 'Vente' : 'Achat'} · ${F.eur(p.amount, p.amount % 1 ? 2 : 0)} engagés${lev > 1 ? ' · x' + lev : ''} · ${fp(p.entry)} → ${d.px != null ? fp(d.px) : '–'}</small></div>
+      <div class="pd-r"><b class="num ${tone}">${d.eur == null ? 'en attente' : sg(d.eur, 2)}</b>${d.pct != null ? `<small class="num ${tone}">${d.pct > 0 ? '+' : d.pct < 0 ? '−' : ''}${F.pct(Math.abs(d.pct), 1)}</small>` : ''}</div></div>`; };
+  const grp = (title, list, tone) => list.length ? `<div class="pd-h"><span>${title}</span><b class="num ${tone}">${tone === 'muted' ? '' : sg(list.reduce((t, d) => t + d.eur, 0), 2)}</b></div>${list.map(dRow).join('')}` : '';
+  const losers = dRows.filter(d => d.eur != null && d.eur < 0).sort((a, b) => a.eur - b.eur), winners = dRows.filter(d => d.eur != null && d.eur > 0).sort((a, b) => b.eur - a.eur), flat = dRows.filter(d => d.eur == null || d.eur === 0);
+  const pnlCard = dRows.length ? `<section class="card"><div class="k-row"><span class="k">Détail de tes positions</span><span class="badge">${dRows.length}</span></div>${grp('Font perdre', losers, 'down')}${grp('Font gagner', winners, 'up')}${grp('Sans résultat pour l\'instant', flat, 'muted')}</section>` : '';
   const alloc = A.allocation(rs, F, N);
   const allocCard = alloc ? `<section class="card"><div class="k-row"><span class="k">Répartition du capital engagé</span></div>${alloc}</section>` : '';
   /* le reste, sur demande */
@@ -1129,7 +1148,7 @@ function refreshNow() { $('#ptr').classList.add('spin'); return C.loadAll(); }
   addEventListener('touchmove', e => {
     if (!on) return;
     const dy = e.touches[0].clientY - y0;
-    if (dy <= 0 || scrollY > 0) { dist = 0; ptr.style.opacity = 0; return; }
+    if (window._hs || dy <= 0 || scrollY > 0) { dist = 0; ptr.style.opacity = 0; return; }
     dist = Math.min(dy * .5, 84);
     ptr.style.transition = 'none';
     ptr.style.opacity = Math.min(1, dist / 50);
@@ -1147,7 +1166,7 @@ function refreshNow() { $('#ptr').classList.add('spin'); return C.loadAll(); }
   }, {passive: true});
 })();
 
-function resetMsg() { $('#reset-msg').textContent = 'Alertes et courbe « si tu avais tout pris » comptées depuis le ' + F.dateTime(S.settings.resetAt) + '. Tes positions suivies ne bougent pas.'; }
+function resetMsg() { $('#reset-msg').textContent = 'Alertes et courbe « Simuler » comptées depuis le ' + F.dateTime(S.settings.resetAt) + '. Tes positions suivies ne bougent pas.'; }
 function openSettings() {
   $('#s-repo').value = S.settings.repo; $('#s-branch').value = S.settings.branch; $('#s-data').value = S.settings.dataBranch; $('#s-token').value = S.settings.token; $('#s-finnhub').value = S.settings.finnhub || ''; $('#s-stake').value = S.settings.simStake || 100; $('#s-risk').value = S.settings.riskEur || 10;
   refreshPush(); resetMsg(); $('#dlg-settings').showModal();
@@ -1297,6 +1316,67 @@ $('#form-edit').addEventListener('submit', e => {
   if (e.submitter && e.submitter.value !== 'ok') return;
   try { report(C.setAmount(editName, parseFloat($('#e-amount').value))); } catch (err) { e.preventDefault(); toast(err.message); }
 });
+
+/* ---------- changer de page en glissant ---------- */
+(function () {
+  const dock = $('#dock'), head = $('header'), main = $('#view');
+  const modalOpen = () => document.querySelector('dialog[open]');
+  const go = (t, dir) => {
+    if (!t || t === view.tab) return;
+    switchTab(t);
+    if (dir && !reduceMotion()) main.animate([{transform: `translateX(${dir * 42}px)`, opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, easing: 'cubic-bezier(.2,.85,.25,1)'});
+  };
+  const near = d => TABS[TABS.indexOf(view.tab) + d];
+
+  /* 1. barre du bas : le doigt glisse le long de la barre, l'onglet suit */
+  let dk = false;
+  dock.addEventListener('touchstart', () => { dk = true; }, {passive: true});
+  dock.addEventListener('touchmove', e => {
+    if (!dk) return;
+    const r = dock.getBoundingClientRect(), x = e.touches[0].clientX;
+    const i = Math.max(0, Math.min(TABS.length - 1, Math.floor((x - r.left) / r.width * TABS.length)));
+    const t = TABS[i]; if (t !== view.tab) go(t, Math.sign(i - TABS.indexOf(view.tab)));
+  }, {passive: true});
+  addEventListener('touchend', () => { dk = false; }, {passive: true});
+  addEventListener('touchcancel', () => { dk = false; }, {passive: true});
+
+  /* 2. en-tête et pages : glisser horizontalement, la page suit le doigt */
+  let x0 = 0, y0 = 0, t0 = 0, lock = null, zone = null, on = false, dx = 0;
+  const skip = el => !el || el.closest('.swipe,input,textarea,select,dialog,#dock') ||
+    (el.closest('.chips') && el.closest('.chips').scrollWidth > el.closest('.chips').clientWidth + 1);
+  addEventListener('touchstart', e => {
+    on = false; window._hs = false;
+    if (e.touches.length !== 1 || modalOpen() || skip(e.target)) return;
+    const el = e.target; zone = head.contains(el) ? 'head' : main.contains(el) || el.closest('.wrap') ? 'page' : null;
+    if (!zone) return;
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = performance.now(); lock = null; dx = 0; on = true;
+  }, {passive: true});
+  addEventListener('touchmove', e => {
+    if (!on) return;
+    const mx = e.touches[0].clientX - x0, my = e.touches[0].clientY - y0;
+    if (lock === null) {
+      if (Math.abs(mx) > 10 && Math.abs(mx) > Math.abs(my) * 1.5) lock = 'x';
+      else if (Math.abs(my) > 10) { lock = 'y'; on = false; return; }
+      else return;
+    }
+    window._hs = true; if (e.cancelable) e.preventDefault();
+    dx = mx;
+    const canPrev = !!near(-1), canNext = !!near(1);
+    let d = dx; if ((d > 0 && !canPrev) || (d < 0 && !canNext)) d = dx * .18;   // résistance en bout de course
+    if (zone === 'page') { main.style.transition = 'none'; main.style.transform = `translateX(${d * .55}px)`; main.style.opacity = String(1 - Math.min(.45, Math.abs(d) / 520)); }
+  }, {passive: false});
+  const end = () => {
+    if (!on) return; on = false;
+    const was = lock === 'x'; window._hs = false;
+    if (!was) return;
+    const vel = Math.abs(dx) / Math.max(40, performance.now() - t0);
+    main.style.transition = ''; main.style.transform = ''; main.style.opacity = '';
+    const d = dx > 0 ? -1 : 1, t = near(d);
+    if (t && (Math.abs(dx) > 70 || (vel > .45 && Math.abs(dx) > 30))) go(t, -d);
+    else if (!reduceMotion()) main.animate([{transform: `translateX(${dx * .3}px)`, opacity: .8}, {transform: 'none', opacity: 1}], {duration: 320, easing: 'cubic-bezier(.3,1.3,.4,1)'});
+  };
+  addEventListener('touchend', end, {passive: true}); addEventListener('touchcancel', end, {passive: true});
+})();
 
 /* ---------- glisser pour supprimer ---------- */
 (function () {
