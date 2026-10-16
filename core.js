@@ -40,12 +40,10 @@
     ledgerSha: null,
     positions: ls.get('at.positions', {version: 1, positions: []}), positionsSha: null,
     quotes: ls.get('at.quotes', {positions: {}}),
-    sfcQuotes: ls.get('at.sfcquotes', {prices: {}}),
-    live: ls.get('at.live', {prices: {}}),
+    outcomes: {}, calib: null,
     stockQuotes: {},
     scans: [],
     alerts: null, alertsErr: null,   // alertsErr : null | 'token' | message
-    sfc: null, sfcErr: null,
     seen: new Set(ls.get('at.seen', [])),
     dismissed: new Set(ls.get('at.dismissed', [])),
     loading: false
@@ -87,98 +85,18 @@
     });
   }
 
-  /* Résumé de SFC prêt à afficher. */
-  /* Ordres du bot SFC (entrées / clôtures) présentés comme des alertes CFD */
-  const SFC_NAMES = {'CL=F': ['Pétrole WTI', 'OIL.WTI'], 'NG=F': ['Gaz naturel', 'NATGAS'], 'SI=F': ['Argent', 'SILVER'], 'GC=F': ['Or', 'GOLD'],
-    'ZW=F': ['Blé', 'WHEAT'], 'ZC=F': ['Maïs', 'CORN'], 'CT=F': ['Coton', 'COTTON']};
-  const SFC_WHY = {tp: 'Objectif atteint', tp_gap: 'Objectif atteint', trail: 'Stop suiveur', sl: 'Stop loss', time: 'Durée max'};
-  function sfcOrders() {
-    const log = state.sfc && state.sfc.log; if (!log) return [];
-    const rows = log.filter(r => (r.event === 'ENTRY' || r.event === 'EXIT') && SFC_NAMES[r.symbol]).sort((a, b) => a.ts.localeCompare(b.ts));
-    const realNow = {}, lastEntry = {}, before = {}, cut = state.settings.resetAt || ''; const out = [];
-    for (const r of rows) {
-      if (r.event === 'ENTRY' && r.ts < cut) { before[r.symbol] = true; continue; }
-      if (r.event === 'EXIT' && before[r.symbol]) { delete before[r.symbol]; continue; }
-      const [name, xtb] = SFC_NAMES[r.symbol];
-      const le = lastEntry[r.symbol], xl = window.AlgoNames && window.AlgoNames.xtbLeverage({symbol: r.symbol});
-      let move = null;   // variation du sous-jacent entre l'entrée et la sortie (en %), indépendante de la taille de l'ordre
-      if (r.event === 'EXIT' && le && le.row) {
-        const k = exitRatio(le.row, r);
-        if (k != null) move = (k - 1) * (le.direction === 'short' ? -1 : 1) * 100;
-      }
-      if (r.event === 'ENTRY') realNow[r.symbol] = !!r.deal_id;
-      else if (le) le.done = true;
-      const real = r.event === 'ENTRY' ? !!r.deal_id : (r.pnl_source === 'ig' || !!realNow[r.symbol]);
-      const n = v => (v === '' || v == null || isNaN(+v)) ? '' : String(Math.round(+v * 10000) / 10000);
-      const o = {id: 'sfc:' + r.symbol + ':' + r.ts, kind: 'sfc', category: 'cfd', ts: r.ts, exit: r.event === 'EXIT', real, xtb, symbol: r.symbol, ticker: r.symbol, leverage: 'x' + (xl || 3), move, row: r.event === 'ENTRY' ? r : null, igEntry: r.event === 'ENTRY' ? +((/ig_entry=([\d.]+)/.exec(r.detail || '') || [])[1]) || null : null,
-        title: (r.event === 'ENTRY' ? '' : 'Clôture · ') + name,
-        direction: r.event === 'ENTRY' ? (r.side === 'short' ? 'short' : 'long') : null,
-        entry: r.event === 'ENTRY' ? n(r.entry) : '', stop: r.event === 'ENTRY' ? n(r.sl) : '', target: r.event === 'ENTRY' ? n(r.tp) : '',
-        exitPrice: n(r.exit), pnl: r.pnl_eur === '' ? null : +r.pnl_eur, why: SFC_WHY[r.reason] || r.reason || '', detail: r.detail || ''};
-      if (r.event === 'ENTRY') lastEntry[r.symbol] = o;
-      out.push(o);
+  /* Alertes notées 7/10 ou plus (celles qui déclenchent une notification) avec leur résultat mesuré par le workflow « données de marché »
+   * (data/outcomes.json) : base de la courbe « si tu avais tout pris ». move = variation du sous-jacent en %, signée selon le sens. */
+  function alertSignals() {
+    const out = [], taken = takenIds(), N = window.AlgoNames, oc = state.outcomes || {};
+    for (const a of (state.alerts || [])) {
+      if (!afterReset(a.ts) || !(Number(a.conviction) >= 7)) continue;
+      const o = oc[a.id]; if (!o || o.pct == null || !isFinite(o.pct)) continue;
+      const open = o.result === 'en cours';
+      out.push({id: a.id, ts: a.ts, exitTs: open ? null : (o.ts || a.ts), open, move: o.pct, stake: a.amount_eur, lev: a.category === 'cfd' ? levOf(a) : 1,
+        name: N ? N.resolve(a).name : (a.title || a.ticker), taken: taken.has(a.id)});
     }
-    return out.reverse().slice(0, 30);
-  }
-
-  /* Tous les signaux du bot (entrée puis sortie), pris ou non, avec la variation du cours : base du graphique « si tu avais tout pris ».
-   * Le résultat en € se calcule ensuite avec une mise fixe (réglage) et le levier XTB. */
-  function sfcSignals() {
-    const log = state.sfc && state.sfc.log; if (!log) return [];
-    const N = window.AlgoNames, rows = log.filter(r => (r.event === 'ENTRY' || r.event === 'EXIT') && SFC_NAMES[r.symbol]).sort((a, b) => a.ts.localeCompare(b.ts));
-    const taken = takenIds(), open = {}, out = [], before = {}, cut = state.settings.resetAt || '';
-    for (const r of rows) {
-      if (r.event === 'ENTRY' && r.ts < cut) { before[r.symbol] = true; continue; }
-      if (r.event === 'EXIT' && before[r.symbol]) { delete before[r.symbol]; continue; }
-      if (r.event === 'ENTRY') {
-        const ig = (/ig_entry=([\d.]+)/.exec(r.detail || '') || [])[1];
-        const s = {id: 'sfc:' + r.symbol + ':' + r.ts, symbol: r.symbol, ts: r.ts, side: r.side === 'short' ? 'short' : 'long', entry: +r.entry, igEntry: ig ? +ig : null, row: r, exitTs: null, move: null, open: true};
-        open[r.symbol] = s; out.push(s);
-      } else if (open[r.symbol]) {
-        const s = open[r.symbol], k = exitRatio(s.row, r);
-        if (k != null) s.move = (k - 1) * (s.side === 'short' ? -1 : 1) * 100;
-        s.exitTs = r.ts; s.open = false; delete open[r.symbol];
-      }
-    }
-    const live = (state.live && state.live.prices) || {};
-    for (const s of out) {
-      if (s.open) { const l = live[s.symbol]; if (l && isFinite(l.last) && s.entry > 0) s.move = (l.last / s.entry - 1) * (s.side === 'short' ? -1 : 1) * 100; }
-      s.lev = (N && N.xtbLeverage({symbol: s.symbol})) || 1;
-      s.name = N ? N.resolve({symbol: s.symbol}).name : s.symbol;
-      s.taken = taken.has(s.id);
-    }
-    return out.filter(s => s.move != null);
-  }
-
-  /* Rapport sortie / entrée d'un signal, à l'échelle du signal (cours des futures) : un « objectif atteint » vaut l'objectif du signal,
-   * un stop vaut son stop. Les prix en points IG ne servent qu'en dernier recours, ramenés à l'échelle par la variation. */
-  function exitRatio(en, ex) {
-    const entry = +en.entry, tp = +en.tp, sl = +en.sl, px = +ex.exit;
-    if (ex.pnl_source === 'ig') {
-      if (/^tp/.test(ex.reason) && tp > 0 && entry > 0) return tp / entry;
-      if (/^sl/.test(ex.reason) && sl > 0 && entry > 0) return sl / entry;
-      const m = /ig_entry=([\d.]+)/.exec(en.detail || '');
-      return m && +m[1] > 0 && isFinite(px) ? px / +m[1] : null;
-    }
-    return entry > 0 && isFinite(px) ? px / entry : null;
-  }
-  function sfcSummary(sfc) {
-    if (!sfc) return null;
-    const {state: st, heartbeat: hb, log} = sfc;
-    const ageMin = (Date.now() - new Date(hb.ts).getTime()) / 60000;
-    const exits = log.filter(r => r.event === 'EXIT').sort((a, b) => b.ts.localeCompare(a.ts));
-    const pnl = r => parseFloat(r.pnl_eur) || 0;
-    return {
-      alive: ageMin < 130, lastCycle: hb.ts,
-      cum: st.cum_pnl || 0, capital: st.trading_capital || 0,
-      week: exits.filter(r => Date.now() - new Date(r.ts).getTime() < 7 * 864e5).reduce((s, r) => s + pnl(r), 0),
-      errors24h: log.filter(r => /error/.test(r.event) && Date.now() - new Date(r.ts).getTime() < 864e5).length,
-      positions: Object.entries(st.positions || {}).map(([symbol, p]) => ({
-        symbol, side: p.side, entry: +p.entry, tp: +p.tp, sl: +p.sl, notional: p.notional,
-        since: p.entry_ts.replace(' ', 'T') + 'Z', real: !!p.deal_id
-      })),
-      exits: exits.slice(0, 8).map(r => ({symbol: r.symbol, ts: r.ts, pnl: pnl(r), reason: r.reason}))
-    };
+    return out;
   }
 
   /* ---------- GitHub ---------- */
@@ -242,12 +160,9 @@
     try { const j = JSON.parse(await ghRaw('data/scans.json', state.settings.dataBranch)); state.scans = (j.scans || []).slice().sort((a, b) => String(b.ts).localeCompare(String(a.ts))); }
     catch (e) { state.scans = []; }
   }
-  async function loadSfc() {
-    try {
-      const [st, hb, log] = await Promise.all([ghRaw('state.json'), ghRaw('heartbeat.json'), ghRaw('bot_log.csv')]);
-      state.sfc = {state: JSON.parse(st), heartbeat: JSON.parse(hb), log: parseCSV(log)};
-      state.sfcErr = null;
-    } catch (e) { state.sfc = null; state.sfcErr = needToken(e) ? 'token' : e.message; }
+  async function loadOutcomes() {
+    try { state.outcomes = JSON.parse(await ghRaw('data/outcomes.json', state.settings.dataBranch)).outcomes || {}; } catch (e) { /* pas encore calculé */ }
+    try { state.calib = JSON.parse(await ghRaw('data/calibration.json', state.settings.dataBranch)); } catch (e) { /* pas encore calculé */ }
   }
   function mergeLedger(local, remote) {
     const ids = new Set(remote.movements.map(m => m.id));
@@ -270,22 +185,11 @@
       const q = await ghJsonWithSha('data/quotes.json');
       if (q) { state.quotes = q.data; ls.set('at.quotes', state.quotes); }
     } catch (e) { /* pas encore de cours */ }
-    try {
-      const q = await ghJsonWithSha('data/sfc_quotes.json');
-      if (q) { state.sfcQuotes = q.data; ls.set('at.sfcquotes', state.sfcQuotes); }
-    } catch (e) { /* pas encore de cours SFC */ }
   }
-  /* Cours en direct (≈ toutes les 5 min) : branche « live » du dépôt public, mise à jour par un workflow GitHub. */
-  async function loadLive() {
-    try {
-      const r = await fetch('https://raw.githubusercontent.com/paulyvalent07/algotrade-app/live/quotes.json?t=' + Math.floor(Date.now() / 60000), {cache: 'no-store'});
-      if (!r.ok) return;
-      const d = await r.json(); if (d && d.prices) { state.live = d; ls.set('at.live', d); emit(); }
-    } catch (e) { /* hors ligne : on garde les derniers cours connus */ }
-    loadStocks();
-  }
+  /* Cours en direct des actions suivies (Finnhub, clé facultative saisie dans les réglages). */
+  async function loadLive() { loadStocks(); }
   /* Actions suivies : cours en direct via Finnhub (clé gratuite saisie dans les réglages, gardée sur cet appareil). Actions US uniquement. */
-  const stockSym = p => (p.source !== 'sfc' && p.category !== 'cfd' && /^[A-Z]{1,5}(\.[A-Z])?$/.test(p.ticker || '')) ? p.ticker : null;
+  const stockSym = p => (p.category !== 'cfd' && /^[A-Z]{1,5}(\.[A-Z])?$/.test(p.ticker || '')) ? p.ticker : null;
   async function loadStocks() {
     const key = state.settings.finnhub; if (!key) return;
     const syms = [...new Set(state.positions.positions.filter(p => p.status !== 'closed').map(stockSym).filter(Boolean))].slice(0, 12);
@@ -301,9 +205,8 @@
   }
   async function loadAll() {
     state.loading = true; emit();
-    await Promise.allSettled([loadAlerts(), loadScans(), loadSfc(), loadLedgerRemote(), loadPositionsRemote(), loadLive()]);
+    await Promise.allSettled([loadAlerts(), loadScans(), loadOutcomes(), loadLedgerRemote(), loadPositionsRemote(), loadLive()]);
     state.loading = false; emit();
-    syncSfcPositions().catch(() => {});
   }
 
   /* ---------- actions sur le registre ---------- */
@@ -377,10 +280,6 @@
   /* Position enrichie du dernier cours connu (écrit par le suivi planifié). */
   function positionView(p) {
     const q = {...((state.quotes.positions || {})[p.id] || {})};
-    const sq = p.source === 'sfc' ? ((state.sfcQuotes || {}).prices || {})[p.sfc.symbol] : null;
-    if (sq && isFinite(sq.last)) { q.last = sq.last; q.last_ts = (state.sfcQuotes || {}).ts || sq.ts; }
-    const lv = p.source === 'sfc' ? ((state.live || {}).prices || {})[p.sfc.symbol] : null;
-    if (lv && isFinite(lv.last) && (!q.last_ts || (state.live.ts || '') >= q.last_ts)) { q.last = lv.last; q.last_ts = state.live.ts; }
     const ss = stockSym(p), st = ss ? state.stockQuotes[ss] : null;
     if (st && (!q.last_ts || st.fetched >= q.last_ts)) { q.last = st.last; q.last_ts = st.fetched; }
     const last = p.status === 'closed' ? p.exit?.price : (isFinite(q.last) ? q.last : null);
@@ -388,41 +287,13 @@
     let hit = null;
     if (p.status !== 'closed') {
       hit = q.hit || null;
-      if (!hit && last != null && (st || (p.source === 'sfc' && q.last_ts))) {   // niveaux touchés d'après le cours en direct
+      if (!hit && last != null && st) {   // niveaux touchés d'après le cours en direct
         const long = p.direction !== 'short';
         if (Number.isFinite(p.stop) && (long ? last <= p.stop : last >= p.stop)) hit = 'stop';
         else if (Number.isFinite(p.target) && (long ? last >= p.target : last <= p.target)) hit = 'target';
       }
     }
-    let bot = null;
-    if (p.source === 'sfc' && p.status !== 'closed' && state.sfc) {
-      const bp = (state.sfc.state.positions || {})[p.sfc.symbol];
-      if (bp) bot = {trail: +bp.trail, tp: +bp.tp, sl: +bp.sl, lastBar: bp.last_bar_ts, cycle: state.sfc.heartbeat && state.sfc.heartbeat.ts};
-    }
-    return {...p, last, last_ts: q.last_ts || null, hit, res, bot, exit: p.status === 'closed' && p.exit && res ? {...p.exit, pct: res.pct, eur: res.eur} : p.exit};
-  }
-  /* Positions SFC suivies : quand le bot clôture l'ordre (scan horaire), la position se clôture ici avec le prix de sortie du bot. */
-  let syncing = false;
-  async function syncSfcPositions() {
-    if (syncing || !state.sfc) return; syncing = true;
-    try {
-      let changed = false;
-      for (const p of state.positions.positions) {
-        if (p.source !== 'sfc' || p.status === 'closed') continue;
-        const ex = state.sfc.log.filter(r => r.event === 'EXIT' && r.symbol === p.sfc.symbol && r.ts > p.sfc.ts && isFinite(parseFloat(r.exit))).sort((a, b) => a.ts.localeCompare(b.ts))[0];
-        if (!ex) continue;
-        const en = state.sfc.log.find(r => r.event === 'ENTRY' && r.symbol === p.sfc.symbol && r.ts === p.sfc.ts);
-        let price = parseFloat(ex.exit);
-        if (ex.pnl_source === 'ig') {   // sortie en points IG : on la remplace par le niveau du signal, à l'échelle de ton prix d'entrée
-          const k = en ? exitRatio(en, ex) : null;
-          if (k == null) continue;
-          price = p.entry * k;
-        }
-        const r = pnlAt(p, price);
-        Object.assign(p, {status: 'closed', pending: true, exit: {price, ts: ex.ts, pct: r.pct, eur: r.eur, reason: ex.reason || '', by: 'bot'}}); changed = true;
-      }
-      if (changed) await savePositions('suivi: clôture par le bot SFC');
-    } finally { syncing = false; }
+    return {...p, last, last_ts: q.last_ts || null, hit, res, exit: p.status === 'closed' && p.exit && res ? {...p.exit, pct: res.pct, eur: res.eur} : p.exit};
   }
   function mergePositions(local, remote) {
     const byId = new Map(remote.positions.map(p => [p.id, p]));
@@ -476,8 +347,7 @@
     if (takenIds().has(alert.id)) throw new Error('Déjà suivie');
     state.positions.positions.push({id: uid(), alertId: alert.id, ticker: alert.ticker || '', title: alert.title || alert.ticker, category: alert.category,
       direction: alert.direction || 'long', leverage: (alert.category === 'cfd' && window.AlgoNames && window.AlgoNames.xtbLeverage(alert) ? 'x' + window.AlgoNames.xtbLeverage(alert) : alert.leverage) || null, amount: Math.round(amount * 100) / 100, entry,
-      stop: isFinite(stop) ? stop : null, target: isFinite(target) ? target : null, ...cleanJournal(note, reason), status: 'open', openedAt: new Date().toISOString(), pending: true,
-      ...(alert.kind === 'sfc' ? {source: 'sfc', sfc: {symbol: alert.symbol, ts: alert.ts}, ticker: alert.symbol} : {})});
+      stop: isFinite(stop) ? stop : null, target: isFinite(target) ? target : null, ...cleanJournal(note, reason), status: 'open', openedAt: new Date().toISOString(), pending: true});
     return savePositions('suivi: ouverture ' + (alert.ticker || alert.title));
   }
   function updatePosition(id, patch, message) {
@@ -578,7 +448,7 @@
     (state.alerts || []).forEach(a => state.seen.add(a.id)); ls.set('at.seen', [...state.seen]); emit();
   }
 
-  window.AlgoCore = {sfcSignals, levOf, loadLive, dismissAlert, sfcOrders, state, on, fmt, todayISO, computeLedger, snapshots, sfcSummary, loadAll, saveSettings,
+  window.AlgoCore = {alertSignals, levOf, loadLive, dismissAlert, state, on, fmt, todayISO, computeLedger, snapshots, loadAll, saveSettings,
     resetSignals, afterReset, addMovement, deleteMovement, addAccount, deleteAccount, unseenCount, markAlertsSeen,
     parseLevel, pnlAt, positionView, calcRisk, REASONS, saveJournal, takePosition, updatePosition, closePosition, deletePosition, takenIds,
     setAmount, pushStatus, enablePush, disablePush, testNotification};

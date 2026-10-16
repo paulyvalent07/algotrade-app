@@ -155,7 +155,6 @@ h2{font-size:13px;font-weight:600;margin:30px 4px 10px;letter-spacing:.09em;text
 .alert.open .chev{transform:rotate(180deg)}
 .disclaimer{font-size:12px;color:var(--muted);margin:22px 8px 0;text-align:center;opacity:.8}
 
-/* SFC */
 .status{display:flex;align-items:center;gap:12px;margin-top:6px;padding:12px 18px;border-radius:999px;background:var(--glass);border:1px solid var(--line);font-size:14.5px;font-weight:550}
 .status small{display:block;color:var(--muted);font-weight:400;font-size:12.5px}
 .pulse{width:9px;height:9px;border-radius:50%;background:var(--up);flex:none;box-shadow:0 0 0 0 color-mix(in srgb,var(--up) 60%,transparent);animation:pulse 2.4s ease-out infinite}
@@ -679,19 +678,15 @@ dialog::backdrop{background:rgba(2,4,10,.38);-webkit-backdrop-filter:blur(3px);b
     <h3>Réglages</h3>
     <label for="s-repo">Dépôt GitHub</label>
     <input id="s-repo" autocomplete="off" autocapitalize="off" spellcheck="false">
-    <label for="s-branch">Branche de SFC</label>
-    <input id="s-branch" autocomplete="off" autocapitalize="off" spellcheck="false">
     <label for="s-data">Branche des données (alertes et capital)</label>
     <input id="s-data" autocomplete="off" autocapitalize="off" spellcheck="false">
     <label for="s-token">Jeton GitHub (lecture et écriture sur ce dépôt)</label>
     <input id="s-token" type="password" autocomplete="off" placeholder="github_pat_…">
     <label for="s-finnhub">Clé Finnhub (cours en direct des actions, facultatif)</label>
     <input id="s-finnhub" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="clé gratuite sur finnhub.io">
-    <label for="s-stake">Mise par signal pour le graphique « si tu avais tout pris » (€)</label>
-    <input id="s-stake" type="number" inputmode="decimal" min="1" step="1">
     <label for="s-risk">Risque fixe par trade (€)</label>
     <input id="s-risk" type="number" inputmode="decimal" min="0.5" step="0.5">
-    <div class="push-box"><b style="font-size:14px">Signaux du bot</b>
+    <div class="push-box"><b style="font-size:14px">Historique des alertes</b>
       <p id="reset-msg" style="margin-top:6px"></p>
       <div class="row2"><button type="button" class="btn ghost" id="reset-sig">Remettre à zéro</button></div>
     </div>
@@ -841,9 +836,9 @@ function viewAlerts() {
   if (S.alertsErr === 'token') return chips + tokenHelp();
   if (S.alertsErr) return chips + (navigator.onLine ? `<div class="err">Impossible de lire les alertes : ${esc(S.alertsErr)}.</div>` : offlineHtml());
   if (S.alerts === null) return chips + `<p class="empty">Chargement…</p>`;
-  const list = S.alerts.filter(a => C.afterReset(a.ts)).concat(C.sfcOrders()).filter(a => !S.dismissed.has(a.id) && (view.filter === 'all' || a.category === view.filter)).sort((a, b) => String(b.ts).localeCompare(String(a.ts)));
+  const list = S.alerts.filter(a => C.afterReset(a.ts)).filter(a => !S.dismissed.has(a.id) && (view.filter === 'all' || a.category === view.filter)).sort((a, b) => String(b.ts).localeCompare(String(a.ts)));
   const body = list.length ? list.map(a => swipeWrap(a.id, alertHtml(a))).join('') :
-    `<div class="empty"><b>Aucune alerte pour l'instant</b>Les prochains signaux du bot apparaîtront ici dès leur envoi (comptés depuis le ${esc(F.dateTime(S.settings.resetAt))}).</div>`;
+    `<div class="empty"><b>Aucune alerte pour l'instant</b>Les prochaines alertes (7/10 et plus) apparaîtront ici dès leur envoi (comptés depuis le ${esc(F.dateTime(S.settings.resetAt))}).</div>`;
   return `${chips}${scansHtml()}${body}<p class="disclaimer">Aide à la décision, pas un conseil financier. Les CFD à levier peuvent faire perdre plus que la mise.</p>`;
 }
 /* titre d'un actif : nom anglais + symbole XTB (la référence) */
@@ -854,29 +849,7 @@ function titleHtml(o, prefix = '', style = '') {
 function swipeWrap(id, html) {
   return `<div class="swipe aw"><button class="swipe-act" data-dismiss="${esc(id)}" aria-label="Supprimer"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg>Supprimer</button>${html}</div>`;
 }
-function orderHtml(a) {
-  const open = view.open.has(a.id), pl = a.pnl, taken = C.takenIds().has(a.id);
-  const lev = parseFloat(String(a.leverage || '').replace(/[^\d.]/g, '')) || null, mv = a.move, per100 = mv != null && lev ? mv * lev : null;
-  const sgn = v => (v > 0 ? '+' : v < 0 ? '−' : '') + F.num2(Math.abs(v));
-  const tag = a.exit ? `<span class="tag ${mv != null && mv < 0 ? 'sell' : 'buy'}">${mv != null ? sgn(mv) + ' %' : 'Clôture'}</span>`
-    : a.direction === 'short' ? '<span class="tag sell">Vente</span>' : '<span class="tag buy">Achat</span>';
-  const lv = a.exit ? [['Sortie', a.exitPrice]] : [['Entrée', a.entry], ['Stop', a.stop], ['Objectif', a.target]];
-  const lvh = lv.filter(([, v]) => v).map(([k, v]) => `<span>${k}<b class="num">${esc(v)}</b></span>`).join('');
-  const note = a.exit ? "Signal de sortie du bot : ne fais rien si tu n'avais pas pris la position." : "Signal du bot : coche-le si tu le prends sur XTB, sinon il n'a aucun effet.";
-  return `<article class="alert ${open ? 'open' : ''}" data-alert="${esc(a.id)}" role="button" tabindex="0" aria-expanded="${open}">
-    <div class="a-top"><span class="a-cat">SFC · ${a.exit ? 'Clôture' : 'Signal'}<span style="font-weight:400;letter-spacing:0;text-transform:none">· ${esc(F.ago(a.ts))}</span></span><span class="a-right">${tag}${a.exit ? '' : a.done && !taken ? '<span class="badge">Clôturé</span>' : `<button class="take ${taken ? 'on' : ''}" data-take="${esc(a.id)}" aria-label="${taken ? 'Position suivie' : 'Suivre cette position'}"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>`}</span></div>
-    ${titleHtml(a, a.exit ? 'Clôture · ' : '')}
-    <div class="a-line">${a.exit ? esc(a.why || 'Sortie') + (a.exitPrice ? ' · ' + esc(a.exitPrice) : '') : a.entry ? 'Entrée ' + esc(a.entry) : 'Signal'}</div>
-    ${lvh ? `<div class="lv">${lvh}</div>` : ''}
-    <div class="a-more"><div><div class="a-body">
-      <p class="a-sum">${a.exit ? esc((a.why || 'Sortie') + '. ') + (per100 != null ? `Variation du cours ${sgn(mv)} %. Sur XTB (levier x${lev}) cela fait environ <b>${sgn(per100 * 1)} €</b> pour 100 € de mise. ` : '') + 'Clôture ta position XTB si tu l\'as ouverte.' : 'À reproduire sur XTB si tu veux la suivre.'}</p>
-      <div class="a-meta"><span>XTB <b>${esc(a.xtb)}</b></span>${lev ? `<span>Levier XTB <b>x${lev}</b></span>` : ''}<span>${esc(F.dateTime(a.ts))}</span></div>
-      <p class="a-risk">${note} Niveaux calculés sur les futures : sur XTB le cours peut différer (surtout l'or, de plusieurs dizaines de points).</p>
-    </div></div></div>
-  </article>`;
-}
 function alertHtml(a) {
-  if (a.kind === 'sfc') return orderHtml(a);
   const fresh = !S.seen.has(a.id), open = view.open.has(a.id);
   const taken = C.takenIds().has(a.id);
   const tag = a.direction === 'long' ? '<span class="tag buy">Achat</span>' : a.direction === 'short' ? '<span class="tag sell">Vente</span>' : '';
@@ -932,13 +905,12 @@ function posHtml(raw) {
   const cls = eur == null ? 'muted' : eur > 0 ? 'up' : eur < 0 ? 'down' : 'muted';
   const badge = closed ? '<span class="badge">Clôturée</span>' : p.hit === 'target' ? '<span class="badge win">Objectif atteint</span>' : p.hit === 'stop' ? '<span class="badge loss">Stop touché</span>' : '<span class="badge">En cours</span>';
   const tag = p.direction === 'short' ? '<span class="tag sell">Vente</span>' : '<span class="tag buy">Achat</span>';
-  return `<article class="card pos"><div class="a-top"><span class="a-cat">${p.source === 'sfc' ? 'SFC · ' : ''}${esc(CAT[p.category] || p.category)}</span><span class="a-right">${tag}${badge}</span></div>
+  return `<article class="card pos"><div class="a-top"><span class="a-cat">${esc(CAT[p.category] || p.category)}</span><span class="a-right">${tag}${badge}</span></div>
     ${titleHtml(p, '', 'margin-top:8px')}
     <div class="p-pnl ${cls}">${eur == null ? '–' : F.signed(eur)}${pct != null ? `<small>${pct > 0 ? '+' : pct < 0 ? '−' : ''}${F.pct(Math.abs(pct), 1)}</small>` : ''}</div>
     <div class="p-row"><span>Engagé <b class="num">${F.eur(p.amount, p.amount % 1 ? 2 : 0)}</b>${C.levOf(p) > 1 ? ' · levier x' + C.levOf(p) : ''}</span><span>Entrée <b class="num">${fp(p.entry)}</b></span></div>
     <div class="p-row"><span>${closed ? 'Sortie' : 'Dernier cours'} <b class="num">${(closed ? p.exit.price : p.last) != null ? fp(closed ? p.exit.price : p.last) : '–'}</b></span><span class="muted">${closed ? esc(F.dateLong(p.exit.ts)) : p.last_ts ? esc(F.dateTime(p.last_ts)) : 'en attente de cours'}</span></div>
     ${closed ? '' : gaugeHtml(p)}
-    ${p.source === 'sfc' ? `<div class="p-row"><span class="muted">${closed ? (p.exit.by === 'bot' ? 'Clôturée par le bot' + (p.exit.reason ? ' · ' + esc(p.exit.reason) : '') : 'Clôturée à la main') : p.bot ? 'Bot : stop suiveur <b class="num">' + fp(p.bot.trail) + '</b>' : 'Bot : ordre non retrouvé'}</span><span class="muted">${!closed && p.bot && p.bot.cycle ? 'scan ' + esc(F.ago(p.bot.cycle)) : ''}</span></div>` : ''}
     ${p.reason || p.note ? `<div class="p-note">${p.reason ? `<span class="badge">${esc(p.reason)}</span>` : ''}${p.reason && p.note ? '<br>' : ''}${esc(p.note || '')}</div>` : ''}
     <div class="p-actions">${closed ? '' : `<button class="btn ghost" data-close="${esc(p.id)}">Clôturer</button>`}<button class="linkbtn" data-note="${esc(p.id)}">${p.reason || p.note ? 'Journal' : 'Ajouter une note'}</button><button class="linkbtn" data-delpos="${esc(p.id)}">Supprimer</button><button class="linkbtn" data-fold="${esc(p.id)}" style="margin-left:auto">Réduire</button></div></article>`;
 }
@@ -961,7 +933,7 @@ function viewTrack() {
   const engaged = open.reduce((s, p) => s + p.amount, 0), latent = views.reduce((s, p) => s + (p.res ? p.res.eur : 0), 0), real = done.map(C.positionView).reduce((s, p) => s + (p.exit ? p.exit.eur : 0), 0);
   const sum = `<section class="card sum-card"><div><small>Engagé</small><b class="num">${F.eur(engaged, 0)}</b></div><div><small>En cours</small><b class="num ${latent > 0 ? 'up' : latent < 0 ? 'down' : 'muted'}">${F.signed(latent)}</b></div><div><small>Réalisé</small><b class="num ${real > 0 ? 'up' : real < 0 ? 'down' : 'muted'}">${F.signed(real)}</b></div></section>`;
   return sum + `<div class="tiles">${open.map(tileOrCard).join('')}</div>` + (done.length ? `<h2>Clôturées</h2><div class="tiles">${done.map(tileOrCard).join('')}</div>` : '') +
-    `<p class="disclaimer">Cours SFC rafraîchis toutes les ~5 min ; actions US en direct avec une clé Finnhub (réglages). Résultat estimé sur le montant alloué, levier inclus.</p>`;
+    `<p class="disclaimer">Actions US en direct avec une clé Finnhub (réglages). Résultat estimé sur le montant alloué, levier inclus.</p>`;
 }
 
 /* ---------- analyse : un chiffre, un graphique, deux blocs, le reste sur demande ---------- */
@@ -974,15 +946,23 @@ function periodStart(k) {
 const arr = v => v > 0 ? '↗' : v < 0 ? '↘' : '';
 const sg = (v, d = 0) => (arr(v) ? arr(v) + ' ' : '') + F.signed(v, d);
 const toneOf = v => v > 0 ? 'up' : v < 0 ? 'down' : 'muted';
+function calibCard(card) {
+  const c = S.calib; if (!c || !c.by_score) return '';
+  const rows = Object.keys(c.by_score).sort((a, b) => b - a).map(k => { const r = c.by_score[k], dec = r.wins + r.losses;
+    return `<div class="gap-row"><span>Note ${esc(k)}/10 · ${r.n} alerte${r.n > 1 ? 's' : ''}${r.open ? ' (' + r.open + ' en cours)' : ''}</span><b class="num ${dec ? toneOf(r.win_rate - 50) : 'muted'}" style="font-size:13px">${dec ? F.pct(r.win_rate, 0) + ' réussies' : '–'}</b></div>`; }).join('');
+  if (!rows) return '';
+  const t = c.total || {};
+  return card('Fiabilité des notes', rows + `<p class="sub" style="margin:12px 0 0">Part des alertes closes qui ont touché l'objectif avant le stop${t.decided ? ' · ' + t.decided + ' alertes tranchées au total' : ''}. Une note n'est fiable que si le taux monte avec elle.</p>`);
+}
 function viewAnalysis() {
-  const all = S.positions.positions, sig = C.sfcSignals();
+  const all = S.positions.positions, sig = C.alertSignals();
   if (!all.length && !sig.length) return `<div class="empty"><b>Rien à analyser pour l'instant</b>Coche une alerte et indique ta mise : la position apparaît ici avec ses graphiques.</div>`;
-  const now = new Date().toISOString(), stake = S.settings.simStake || 100, since = periodStart(view.period), inP = ts => !since || String(ts) >= since;
+  const now = new Date().toISOString(), since = periodStart(view.period), inP = ts => !since || String(ts) >= since;
   const views = all.map(C.positionView), open = views.filter(p => p.status !== 'closed');
   /* événements des deux courbes, limités à la période */
   const realEv = views.filter(p => p.status === 'closed' ? p.exit && isFinite(p.exit.eur) && inP(p.exit.ts) : p.res)
     .map(p => { const name = N.resolve(p).name; return p.status === 'closed' ? {ts: p.exit.ts, start: p.openedAt, d: p.exit.eur, amt: p.amount, name} : {ts: p.openedAt, start: p.openedAt, d: p.res.eur, amt: p.amount, name, open: true}; });
-  const sigEv = sig.filter(s => s.open || inP(s.exitTs)).map(s => ({ts: s.open ? s.ts : s.exitTs, start: s.ts, d: stake * s.lev * s.move / 100, name: s.name + (s.taken ? ' · pris' : ' · non pris'), open: s.open, taken: s.taken}));
+  const sigEv = sig.filter(s => s.open || inP(s.exitTs)).map(s => ({ts: s.open ? s.ts : s.exitTs, start: s.ts, d: (s.stake || 50) * s.lev * s.move / 100, name: s.name + (s.taken ? ' · pris' : ' · non pris'), open: s.open, taken: s.taken}));
   const starts = realEv.concat(sigEv).map(e => e.start).sort(), origin = starts.length ? (since && starts[0] < since ? since : starts[0]) : now;
   realEv.concat(sigEv).forEach(e => { e.start = origin; });
   const rp = A.series(realEv, now), sp = A.series(sigEv, now), dom = A.domain([rp, sp], now);
@@ -1017,8 +997,9 @@ function viewAnalysis() {
     card('Par type et par sens', rs.length ? A.breakdown(rs, F, r => CAT[r.cat] || r.cat) + `<p class="sub-h">Par sens</p>` + A.breakdown(rs, F, r => r.dir === 'short' ? 'Vente' : 'Achat') : '') +
     card('Exposition avec levier', rs.length ? A.exposure(rs, F, N) + A.exposureKey() : '') +
     card('Entre stop et objectif', lv ? lv + `<div class="legend-line"><span><i class="key" style="background:color-mix(in srgb,var(--down) 55%,transparent)"></i>Zone de perte</span><span><i class="key" style="background:color-mix(in srgb,var(--up) 55%,transparent)"></i>Zone de gain</span></div>` : '') +
-    (sigEv.length ? card('Signaux du bot', `<div class="stats" style="margin-top:0;padding-top:0;border:0"><div><small>Signaux sur la période</small><b class="num">${sigEv.length}${closedOf(sigEv).length ? ' · ' + winsOf(sigEv) + ' gagnants' : ''}</b></div>
-        <div><small>Pris / non pris</small><b class="num">${sigEv.length - skipped.length} / ${skipped.length}</b></div></div><p class="sub" style="margin:12px 0 0">Chaque signal est compté avec ${F.eur(stake, 0)} de mise et le levier XTB (réglable dans les réglages).</p>`) : '') +
+    (sigEv.length ? card('Alertes 7/10 et plus', `<div class="stats" style="margin-top:0;padding-top:0;border:0"><div><small>Alertes sur la période</small><b class="num">${sigEv.length}${closedOf(sigEv).length ? ' · ' + winsOf(sigEv) + ' gagnantes' : ''}</b></div>
+        <div><small>Prises / non prises</small><b class="num">${sigEv.length - skipped.length} / ${skipped.length}</b></div></div><p class="sub" style="margin:12px 0 0">Chaque alerte est comptée avec son montant conseillé et le levier XTB, jusqu'au stop, à l'objectif ou à l'expiration (mesuré chaque jour d'après les cours).</p>`) : '') +
+    calibCard(card) +
     (realEv.length ? card('Tes positions', `<div class="stats" style="margin-top:0;padding-top:0;border:0"><div><small>Positions sur la période</small><b class="num">${realEv.length}${closedOf(realEv).length ? ' · ' + winsOf(realEv) + ' gagnantes' : ''}</b></div></div>`) : '');
   return hero + curveCard + pnlCard + allocCard +
     `<button class="more-row" data-more="1" aria-expanded="${more}">${more ? 'Voir moins' : 'Voir plus de métriques'}<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>` + extra +
@@ -1149,12 +1130,12 @@ function refreshNow() { $('#ptr').classList.add('spin'); return C.loadAll(); }
 
 function resetMsg() { $('#reset-msg').textContent = 'Alertes et courbe « si tu avais tout pris » comptées depuis le ' + F.dateTime(S.settings.resetAt) + '. Tes positions suivies ne bougent pas.'; }
 function openSettings() {
-  $('#s-repo').value = S.settings.repo; $('#s-branch').value = S.settings.branch; $('#s-data').value = S.settings.dataBranch; $('#s-token').value = S.settings.token; $('#s-finnhub').value = S.settings.finnhub || ''; $('#s-stake').value = S.settings.simStake || 100; $('#s-risk').value = S.settings.riskEur || 10;
+  $('#s-repo').value = S.settings.repo; $('#s-data').value = S.settings.dataBranch; $('#s-token').value = S.settings.token; $('#s-finnhub').value = S.settings.finnhub || ''; $('#s-risk').value = S.settings.riskEur || 10;
   refreshPush(); resetMsg(); $('#dlg-settings').showModal();
 }
 $('#form-settings').addEventListener('submit', e => {
   if (e.submitter && e.submitter.value !== 'ok') return;
-  C.saveSettings({repo: $('#s-repo').value, branch: $('#s-branch').value, dataBranch: $('#s-data').value, token: $('#s-token').value, finnhub: $('#s-finnhub').value, simStake: $('#s-stake').value, riskEur: $('#s-risk').value});
+  C.saveSettings({repo: $('#s-repo').value, dataBranch: $('#s-data').value, token: $('#s-token').value, finnhub: $('#s-finnhub').value, riskEur: $('#s-risk').value});
 });
 
 $('#form-account').addEventListener('submit', e => {
@@ -1226,7 +1207,7 @@ function renderRisk(auto) {
 ['#t-entry', '#t-stop', '#t-target'].forEach(id => $(id).addEventListener('input', () => renderRisk(true)));
 $('#t-amount').addEventListener('input', e => { e.target.dataset.manual = '1'; renderRisk(false); });
 function takeClick(id) {
-  const a = (S.alerts || []).concat(C.sfcOrders()).find(x => x.id === id); if (!a) return;
+  const a = (S.alerts || []).find(x => x.id === id); if (!a) return;
   if (C.takenIds().has(id)) { haptic(); view.filter = 'track'; view.animate = true; return render(); }
   takeAlert = a; haptic(); takeLev = C.levOf(a) || 1;
   $('#t-title').textContent = N.resolve(a).name + (a.direction ? ' · ' + (a.direction === 'short' ? 'vente' : 'achat') : '');
@@ -1234,7 +1215,7 @@ function takeClick(id) {
   $('#t-entry').value = v(C.parseLevel(a.entry, 'entry')); $('#t-stop').value = v(C.parseLevel(a.stop, 'stop')); $('#t-target').value = v(C.parseLevel(a.target, 'target'));
   $('#t-amount').value = ''; $('#t-amount').dataset.manual = ''; $('#t-note').value = ''; reasonOptions($('#t-reason'), '');
   const xl = a.category === 'cfd' ? N.xtbLeverage(a) : null;
-  $('#t-help').textContent = (xl ? 'Levier XTB x' + xl + ' : le résultat suivi ici = variation du cours × ta mise × ' + xl + '. ' : '') + (a.kind === 'sfc' ? "Niveaux du bot (futures Yahoo) : remplace-les par ton prix d'exécution réel sur XTB. La position se clôturera ici au prochain scan où le bot sortira de l'ordre." : "L'ordre est considéré comme exécuté à ce prix. Corrige les niveaux si ton ordre réel est différent.");
+  $('#t-help').textContent = (xl ? 'Levier XTB x' + xl + ' : le résultat suivi ici = variation du cours × ta mise × ' + xl + '. ' : '') + "L'ordre est considéré comme exécuté à ce prix. Corrige les niveaux si ton ordre réel est différent.";
   renderRisk(true);
   $('#dlg-take').showModal();
 }
