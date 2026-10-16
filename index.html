@@ -952,7 +952,7 @@ function calibCard(card) {
     return `<div class="gap-row"><span>Note ${esc(k)}/10 · ${r.n} alerte${r.n > 1 ? 's' : ''}${r.open ? ' (' + r.open + ' en cours)' : ''}</span><b class="num ${dec ? toneOf(r.win_rate - 50) : 'muted'}" style="font-size:13px">${dec ? F.pct(r.win_rate, 0) + ' réussies' : '–'}</b></div>`; }).join('');
   if (!rows) return '';
   const t = c.total || {};
-  return card('Fiabilité des notes', rows + `<p class="sub" style="margin:12px 0 0">Part des alertes closes qui ont touché l'objectif avant le stop${t.decided ? ' · ' + t.decided + ' alertes tranchées au total' : ''}. Une note n'est fiable que si le taux monte avec elle.</p>`);
+  return card('Fiabilité des notes', rows + `<p class="sub" style="margin:12px 0 0">Part des alertes closes gagnantes (objectif atteint, ou dans le vert à l'expiration)${t.decided ? ' · ' + t.decided + ' alertes mesurées au total' : ''}. Une note n'est fiable que si le taux monte avec elle.</p>`);
 }
 function viewAnalysis() {
   const all = S.positions.positions, sig = C.alertSignals();
