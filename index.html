@@ -952,7 +952,9 @@ function calibCard(card) {
     return `<div class="gap-row"><span>Note ${esc(k)}/10 · ${r.n} alerte${r.n > 1 ? 's' : ''}${r.open ? ' (' + r.open + ' en cours)' : ''}</span><b class="num ${dec ? toneOf(r.win_rate - 50) : 'muted'}" style="font-size:13px">${dec ? F.pct(r.win_rate, 0) + ' réussies' : '–'}</b></div>`; }).join('');
   if (!rows) return '';
   const t = c.total || {};
-  return card('Fiabilité des notes', rows + `<p class="sub" style="margin:12px 0 0">Part des alertes closes gagnantes (objectif atteint, ou dans le vert à l'expiration)${t.decided ? ' · ' + t.decided + ' alertes mesurées au total' : ''}. Une note n'est fiable que si le taux monte avec elle.</p>`);
+  const d = c.direction || {}, line = (lbl, x) => x && x.n ? `<div class="gap-row"><span>${lbl} · ${x.n} alerte${x.n > 1 ? 's' : ''}</span><b class="num ${toneOf(x.rate - 50)}" style="font-size:13px">${F.pct(x.rate, 0)} dans le bon sens${x.bench_rate != null ? ' · marché ' + F.pct(x.bench_rate, 0) : ''}</b></div>` : '';
+  const dirRows = line('Notes 7 et plus', d.strong) + line('Notes sous 7', d.weak);
+  return card('Fiabilité des notes', rows + (dirRows ? `<p class="sub-h">Sens à l'échéance</p>` + dirRows : '') + `<p class="sub" style="margin:12px 0 0">Part des alertes closes gagnantes (objectif atteint, ou dans le vert à l'expiration)${t.decided ? ' · ' + t.decided + ' alertes mesurées au total' : ''}. Une note n'est fiable que si le taux monte avec elle. « Marché » = part des cas où l'indice a fait le même mouvement sur la période : pour avoir un avantage, il faut le battre.</p>`);
 }
 function viewAnalysis() {
   const all = S.positions.positions, sig = C.alertSignals();
