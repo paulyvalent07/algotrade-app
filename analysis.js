@@ -176,25 +176,24 @@
     const W = 340, H = 190, L = 6, R = 10, T = 16, B = 26, iw = W - L - R, ih = H - T - B, span = (dom.t1 - dom.t0) || 1;
     const x = p => L + (new Date(p.ts).getTime() - dom.t0) / span * iw, y = v => T + ih - (v - dom.lo) / (dom.hi - dom.lo || 1) * ih;
     const line = pts => { const P = pts.map(p => [x(p), y(p.v)]), last = P[P.length - 1]; if (last[0] < L + iw - 1) P.push([L + iw, last[1]]); return P; };
-    const lastV = real && real.length ? real[real.length - 1].v : 0, neg = lastV < 0;
-    const c0 = neg ? '#D8667D' : '#38C694';
-    let out = `<defs>
-      <linearGradient id="duo-rib" gradientUnits="userSpaceOnUse" x1="${L}" x2="${L + iw}" y1="0" y2="0"><stop offset="0" stop-color="${c0}" stop-opacity=".45"/><stop offset=".45" stop-color="#9DB7CC" stop-opacity=".95"/><stop offset=".85" stop-color="#CBE6FC"/><stop offset="1" stop-color="#FFFFFF"/></linearGradient>
-      <linearGradient id="duo-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9DB7CC" stop-opacity=".34"/><stop offset=".6" stop-color="#9DB7CC" stop-opacity=".08"/><stop offset="1" stop-color="#9DB7CC" stop-opacity="0"/></linearGradient>
-      <filter id="duo-glow" filterUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+    const lastV = real && real.length ? real[real.length - 1].v : 0, neg = lastV < 0, col = neg ? '#FF6B64' : '#3DD68C';
+    let out = `<defs><linearGradient id="duo-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".34"/><stop offset=".65" stop-color="${col}" stop-opacity=".07"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>`;
     const mid = (dom.lo + dom.hi) / 2;
     [dom.hi, mid, dom.lo].forEach(v => { out += `<line x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" class="grid"/>`; });
     if (dom.lo < 0 && dom.hi > 0) out += `<line x1="${L}" x2="${W - R}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" class="axis"/>`;
-    const hits = (pts, ghost) => pts.map(p => p.origin ? '' : `<rect class="hit" x="${(x(p) - 9).toFixed(1)}" y="${T}" width="18" height="${ih}" tabindex="0" aria-label="${esc(p.name)}" data-tip="${tip((ghost ? 'Si tu avais tout pris · ' : 'Tes positions · ') + p.name, [{n: p.live ? 'À cette heure' : 'Clôture', v: dateLong(p.ts)}, {n: p.live ? 'Latent' : 'Résultat du trade', v: F.signed(p.d, 2)}, {n: 'Cumul', v: F.signed(p.v, 2)}])}"/>`).join('');
-    if (hyp && hyp.length > 1) out += `<path d="${smooth(line(hyp))}" class="ghostline"/>` + hits(hyp, true);
+    let hasR = false, hasH = false;
+    if (hyp && hyp.length > 1) { hasH = true; const d = smooth(line(hyp)); out += `<path d="${d}" class="ghostline"/><path d="${d}" class="probe probe-h" fill="none" stroke="none"/>`; }
     if (real && real.length > 1) {
+      hasR = true;
       const P = line(real), d = smooth(P), z = y(Math.max(dom.lo, Math.min(0, dom.hi))).toFixed(1), end = P[P.length - 1], lp = real[real.length - 1];
       out += `<path d="${d} L${end[0].toFixed(1)},${z} L${P[0][0].toFixed(1)},${z} Z" fill="url(#duo-fill)" class="ribfill"/>
-        <path d="${d}" class="ribbon" stroke="url(#duo-rib)" pathLength="1" filter="url(#duo-glow)"/>` + hits(real, false) +
-        `<circle cx="${(x(lp)).toFixed(1)}" cy="${y(lp.v).toFixed(1)}" r="9" class="halo"/><circle cx="${x(lp).toFixed(1)}" cy="${y(lp.v).toFixed(1)}" r="4.2" class="enddot"/>`;
+        <path d="${d}" class="ribbon" stroke="${col}" pathLength="1"/><path d="${d}" class="probe probe-r" fill="none" stroke="none"/>
+        <circle cx="${x(lp).toFixed(1)}" cy="${y(lp.v).toFixed(1)}" r="9" class="halo" fill="${col}" fill-opacity=".35"/><circle cx="${x(lp).toFixed(1)}" cy="${y(lp.v).toFixed(1)}" r="4.2" class="enddot" fill="${col}"/>`;
     }
+    out += `<g class="scrub"><line x1="0" x2="0" y1="${T}" y2="${T + ih}"/><circle class="sg" r="4" cx="0" cy="0"/><circle class="sr" r="5.5" cx="0" cy="0"/></g>`;
     [dom.t0, dom.t0 + span / 2, dom.t1].forEach((t, k) => { out += `<text x="${(L + (t - dom.t0) / span * iw).toFixed(1)}" y="${H - 8}" class="tick" text-anchor="${k === 0 ? 'start' : k === 2 ? 'end' : 'middle'}">${esc(dateShort(new Date(t).toISOString()))}</text>`; });
-    return `<svg viewBox="0 0 ${W} ${H}" class="chart duo" role="img" aria-label="Résultat cumulé : tes positions (ruban) et si tu avais tout pris (pointillé)">${out}</svg>`;
+    const meta = esc(JSON.stringify({L, iw, T, ih, lo: dom.lo, hi: dom.hi, t0: dom.t0, t1: dom.t1, W, r: hasR, h: hasH}));
+    return `<svg viewBox="0 0 ${W} ${H}" class="chart duo" data-scrub="${meta}" role="img" aria-label="Résultat cumulé : tes positions (trait plein) et simulation (pointillé). Glisse le doigt pour lire les valeurs.">${out}</svg>`;
   }
 
   window.AlgoAnalysis = {rows, pnlBars, allocation, breakdown, exposure, exposureKey, levels, series, domain, curve, duo, sum};
