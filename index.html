@@ -146,6 +146,7 @@ h2{font-size:13px;font-weight:500;margin:28px 16px 8px;letter-spacing:-.003em;te
 .ico.c-cfd{background:linear-gradient(160deg,#FFB766,#F27F3F)}
 .ico.c-short_term{background:linear-gradient(160deg,#6FB6FF,#3C7DEB)}
 .ico.c-long_term{background:linear-gradient(160deg,#BDA4FF,#7F5CF0)}
+.ico.c-swing{background:linear-gradient(160deg,#7BE0B0,#2FB07A)}
 .ico.c-misc{background:linear-gradient(160deg,#5FDCC6,#2E9F92)}
 .fresh-dot{position:absolute;top:-4px;right:-4px;width:13px;height:13px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px #17181c}
 .a-txt{flex:1;min-width:0}
@@ -660,11 +661,12 @@ const C = window.AlgoCore, G = window.AlgoCharts, N = window.AlgoNames, A = wind
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const view = {tab: 'alerts', period: '30J', filter: 'all', open: new Set(), histAll: false, animate: true};
-const CAT = {cfd: 'CFD', short_term: 'Court terme', long_term: 'Long terme'};
+const CAT = {cfd: 'CFD', short_term: 'Court terme', swing: 'Moyen terme', long_term: 'Long terme'};
 const TABS = ['alerts', 'analysis', 'capital'];
 const ICON = {
   cfd: '<path d="M4 16.5 9.5 11l3.5 3 7-7.5"/><path d="M15 6.5h5v5"/>',
   short_term: '<path d="M13 3 5.5 13.5H11L10 21l8-11h-5.5z"/>',
+  swing: '<path d="M4 16.5 9 11.5l3.5 3L20 6.5"/><path d="M4 20h16"/>',
   long_term: '<path d="M7 3h10M7 21h10M8 3v3.6c0 2.3 4 3.4 4 5.4s-4 3.1-4 5.4V21M16 3v3.6c0 2.3-4 3.4-4 5.4s4 3.1 4 5.4V21"/>',
   misc: '<path d="M3.5 12h3.2l2.3-6.5 4 13 2.4-6.5h5"/>'
 };
@@ -701,15 +703,16 @@ function tween(el, to, f) {
 const offlineHtml = () => `<div class="empty"><b>Hors connexion</b>Les alertes reviendront dès que le réseau sera de retour. Ton suivi reste consultable.</div>`;
 function viewAlerts() {
   const tracked = S.positions.positions.filter(p => p.status === 'open').length;
-  const chips = `<div class="chips" data-thumb="f">${[['all', 'Tout'], ['cfd', 'CFD'], ['short_term', 'Court terme'], ['long_term', 'Long terme'], ['track', 'Suivi' + (tracked ? ' · ' + tracked : '')]]
+  const chips = `<div class="chips" data-thumb="f">${[['all', 'Tout'], ['swing', 'Moyen terme'], ['radar', 'Radar'], ['short_term', 'Court terme'], ['cfd', 'CFD'], ['long_term', 'Long terme'], ['track', 'Suivi' + (tracked ? ' · ' + tracked : '')]]
     .map(([k, l]) => `<button class="chip" data-filter="${k}" aria-pressed="${view.filter === k}">${l}</button>`).join('')}</div>`;
   if (view.filter === 'track') return chips + viewTrack();
+  if (view.filter === 'radar') return chips + viewRadar();
   if (S.alertsErr === 'token') return chips + tokenHelp();
   if (S.alertsErr) return chips + (navigator.onLine ? `<div class="err">Impossible de lire les alertes : ${esc(S.alertsErr)}.</div>` : offlineHtml());
   if (S.alerts === null) return chips + `<p class="empty">Chargement…</p>`;
   const list = S.alerts.filter(a => C.afterReset(a.ts)).filter(a => !S.dismissed.has(a.id) && (view.filter === 'all' || a.category === view.filter)).sort((a, b) => String(b.ts).localeCompare(String(a.ts)));
   const body = list.length ? list.map(a => swipeWrap(a.id, alertHtml(a))).join('') :
-    `<div class="empty"><b>Aucune alerte pour l'instant</b>Les prochaines alertes (7/10 et plus) apparaîtront ici dès leur envoi (comptés depuis le ${esc(F.dateTime(S.settings.resetAt))}).</div>`;
+    `<div class="empty"><b>Aucune alerte pour l'instant</b>Environ une idée moyen terme par semaine apparaîtra ici dès son envoi (comptés depuis le ${esc(F.dateTime(S.settings.resetAt))}).</div>`;
   return `${chips}${scansHtml()}${body}<p class="disclaimer">Aide à la décision, pas un conseil financier. Les CFD à levier peuvent faire perdre plus que la mise.</p>`;
 }
 /* titre d'un actif : nom anglais + symbole XTB (la référence) */
@@ -728,13 +731,14 @@ function alertHtml(a) {
     .map(([k, v]) => `<span>${k}<b class="num">${esc(v)}</b></span>`).join('');
   const xl = a.category === 'cfd' ? N.xtbLeverage(a) : null, meta = [['Levier', xl ? 'x' + xl + ' (XTB)' : a.leverage], ['Horizon', a.horizon]].filter(([, v]) => v).map(([k, v]) => `<span>${k} <b>${esc(v)}</b></span>`).join('');
   const src = (a.sources || []).filter(s => /^https?:\/\//.test(s.url)).map(s => `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.name)}</a>`).join('');
-  const more = a.summary || meta || a.risk || src;
+  const more = a.summary || a.thesis || meta || a.risk || src;
   return `<article class="alert ${open ? 'open' : ''}" data-alert="${esc(a.id)}" ${more ? 'role="button" tabindex="0" aria-expanded="' + open + '"' : ''}>
-    <div class="a-top">${icoHtml(a.category, fresh)}<div class="a-txt">${titleHtml(a)}<div class="a-sub">${tag}<span>${esc(CAT[a.category] || a.category)} · ${esc(F.ago(a.ts))}</span></div></div><span class="a-right"><button class="take ${taken ? 'on' : ''}" data-take="${esc(a.id)}" aria-label="${taken ? 'Position suivie' : 'Suivre cette position'}"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></span></div>
+    <div class="a-top">${icoHtml(a.category, fresh)}<div class="a-txt">${titleHtml(a)}<div class="a-sub">${tag}<span>${esc(CAT[a.category] || a.category)}${a.source === 'quant' ? ' · quant' : ''} · ${esc(F.ago(a.ts))}</span></div></div><span class="a-right"><button class="take ${taken ? 'on' : ''}" data-take="${esc(a.id)}" aria-label="${taken ? 'Position suivie' : 'Suivre cette position'}"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></span></div>
     ${a.summary ? `<div class="a-line">${esc(a.summary)}</div>` : ''}
     ${lv ? `<div class="lv">${lv}</div>` : ''}
     ${more ? `<div class="a-more"><div><div class="a-body">
       ${a.summary ? `<p class="a-sum">${esc(a.summary)}</p>` : ''}
+      ${a.thesis ? `<p class="a-sum">${esc(a.thesis)}</p>` : ''}
       ${meta ? `<div class="a-meta">${meta}<span>${esc(F.dateTime(a.ts))}</span></div>` : ''}
       ${a.risk ? `<p class="a-risk"><b>Risque principal.</b> ${esc(a.risk)}</p>` : ''}
       ${src ? `<div class="a-src">${src}</div>` : ''}
@@ -743,6 +747,33 @@ function alertHtml(a) {
 }
 
 
+
+
+/* ---------- radar moyen terme : classement automatique du jour, climat de marché, fiabilité mesurée ---------- */
+const sp1 = v => v == null ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + F.pct(Math.abs(v), 1);
+function viewRadar() {
+  const s = S.screen;
+  if (!s) return `<div class="empty"><b>Radar en préparation</b>Le premier classement arrive après la prochaine clôture des marchés.</div>`;
+  const R = s.regime || {}, tone = R.label === 'favorable' ? 'win' : R.label === 'défavorable' ? 'loss' : '';
+  const climat = `<section class="card"><div class="k-row"><span class="k">Climat de marché</span><span class="badge ${tone}">${esc(R.label || '–')}</span></div>
+    <p class="section-note" style="margin:8px 0 0">${R.spy_vs_sma50 != null ? `S&P 500 ${sp1(R.spy_vs_sma50)} par rapport à sa moyenne 50 jours, ` : ''}${R.breadth50 != null ? `${R.breadth50} % des actions au-dessus de la leur. ` : ''}Calculé ${esc(F.ago(s.generated))}${s.universe ? ` sur ${s.universe.total} actifs` : ''}.</p></section>`;
+  const rows = (s.candidates || []).map(c => `<div class="scan-row"><b>${c.rank}. ${esc(c.name)} <span class="xsym">${esc(c.sym)}</span></b><span class="vd ${c.blocked ? '' : 'win'}">${c.score}/100</span><small>Entrée jusqu'à ${c.entry_max} · stop ${c.stop_px} · objectif ${c.target_px}${c.blocked ? ' · ' + esc(c.blocked) : c.note ? ' · ' + esc(c.note) : ''}</small></div>`).join('');
+  const cand = `<section class="card"><div class="k-row"><span class="k">Meilleures idées du jour</span></div><div class="a-body scan-list" style="margin-top:8px">${rows || '<p class="section-note">Aucune action ne passe les filtres aujourd\'hui.</p>'}</div>
+    <p class="sub" style="margin:12px 0 0">Classement automatique : tendance haussière installée, momentum sur 3 et 6 mois, proximité du plus haut annuel. Ce n'est pas encore une alerte : l'alerte de la semaine est la meilleure de ces idées après vérification de l'actualité (résultats, dégradations, litiges).</p></section>`;
+  const b = S.backtest;
+  const bt = b && b.top3 && b.top3.n ? `<section class="card"><div class="k-row"><span class="k">Rétro-test du moteur</span></div>
+    <div class="gap-row"><span>Les 3 meilleures idées de chaque semaine · ${b.top3.n} cas</span><b class="num ${toneOf((b.top3.up20 || 0) - 50)}" style="font-size:13px">${F.pct(b.top3.up20, 0)} en hausse à 20 séances</b></div>
+    <div class="gap-row"><span>Moyenne de l'univers · ${b.universe.n} cas</span><b class="num muted" style="font-size:13px">${F.pct(b.universe.up20, 0)} en hausse</b></div>
+    <div class="gap-row"><span>Avance moyenne sur le S&P 500</span><b class="num ${toneOf(b.top3.avg_excess20)}" style="font-size:13px">${sp1(b.top3.avg_excess20)} (univers ${sp1(b.universe.avg_excess20)})</b></div>
+    <p class="sub" style="margin:12px 0 0">Du ${esc(b.period.from)} au ${esc(b.period.to)}. Univers des grandes valeurs d'aujourd'hui, donc biais de survie : seule l'avance sur la moyenne de l'univers est informative. Frais non inclus. Ce n'est pas une promesse de résultat.</p></section>` : '';
+  const sh = S.shadow && S.shadow.summary && S.shadow.summary.all;
+  const sd = sh && sh.n ? `<section class="card"><div class="k-row"><span class="k">Mesure en conditions réelles</span></div>
+    <div class="gap-row"><span>Top 10 de chaque semaine suivi automatiquement · ${sh.n} idées</span><b class="num muted" style="font-size:13px">${sh.closed} terminées</b></div>
+    ${sh.closed ? `<div class="gap-row"><span>Réussies (objectif atteint ou dans le vert)</span><b class="num ${toneOf((sh.win_rate || 0) - 50)}" style="font-size:13px">${F.pct(sh.win_rate, 0)} · moyenne ${sp1(sh.avg_pct)}</b></div>` : ''}
+    ${sh.horizon_n ? `<div class="gap-row"><span>Dans le bon sens à l'échéance · ${sh.horizon_n} idées</span><b class="num ${toneOf((sh.up_rate || 0) - 50)}" style="font-size:13px">${F.pct(sh.up_rate, 0)} · vs marché ${sp1(sh.excess_avg)}</b></div>` : ''}
+    <p class="sub" style="margin:12px 0 0">Chaque lundi, les 10 meilleures idées sont enregistrées avec leurs niveaux, puis mesurées sans intervention. C'est la preuve en continu, indépendante des alertes publiées.</p></section>` : '';
+  return climat + cand + bt + sd;
+}
 
 /* ---------- journal des scans : preuve que les scans tournent, même sans alerte ---------- */
 const VERD = {signal: 'Signal', 'à surveiller': 'À surveiller', 'écarté': 'Écarté', 'marché fermé': 'Marché fermé'};

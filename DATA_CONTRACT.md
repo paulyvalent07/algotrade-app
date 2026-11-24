@@ -1,10 +1,11 @@
 # AlgoTrade (app) : contrat de données
 
-L'app ne lit que des fichiers du dépôt, aucun serveur. Le bot SFC vit sur `main` ; les alertes et le registre vivent sur la branche séparée `app-data`, pour que rien de ce qui est écrit par l'app ou par les scans ne puisse toucher `main`.
+L'app ne lit que des fichiers du dépôt, aucun serveur. Le code (workflows, scripts) vit sur `main` ; les données (alertes, radar, cotations)  et le registre vivent sur la branche séparée `app-data`, pour que rien de ce qui est écrit par l'app ou par les scans ne puisse toucher `main`.
 
 | Fichier | Écrit par | Lu par |
 |---|---|---|
-| `state.json`, `heartbeat.json`, `bot_log.csv` | SFC (workflow horaire existant, inchangé) | écran SFC |
+| `data/screen.json`, `data/shadow.json`, `data/backtest.json` (`app-data`) | workflows « Radar moyen terme » et « Rétro-test moteur » | vue Radar |
+| `data/quotes.json` (`app-data`) | workflow « Données de marché » | suivi des positions |
 | `data/alerts.json` (branche `app-data`) | les 3 scans de Place à l'Action | écran Alertes |
 | `data/ledger.json` (branche `app-data`) | l'app (depuis le téléphone) | écran Capital |
 
@@ -16,7 +17,7 @@ L'app ne lit que des fichiers du dépôt, aucun serveur. Le bot SFC vit sur `mai
   "alerts": [
     {
       "id": "2026-10-07-cfd-gold-long",
-      "category": "cfd | short_term | long_term",
+      "category": "swing | cfd | short_term | long_term",
       "ts": "2026-10-07T01:10:00Z",
       "ticker": "GC=F",
       "title": "Or (XAU/USD)",

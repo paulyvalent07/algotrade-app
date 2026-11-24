@@ -164,6 +164,11 @@
     try { state.outcomes = JSON.parse(await ghRaw('data/outcomes.json', state.settings.dataBranch)).outcomes || {}; } catch (e) { /* pas encore calculé */ }
     try { state.calib = JSON.parse(await ghRaw('data/calibration.json', state.settings.dataBranch)); } catch (e) { /* pas encore calculé */ }
   }
+  async function loadEngine() {
+    for (const [k, f] of [['screen', 'screen.json'], ['backtest', 'backtest.json'], ['shadow', 'shadow.json']]) {
+      try { state[k] = JSON.parse(await ghRaw('data/' + f, state.settings.dataBranch)); } catch (e) { /* pas encore calculé */ }
+    }
+  }
   function mergeLedger(local, remote) {
     const ids = new Set(remote.movements.map(m => m.id));
     return {...remote, movements: [...remote.movements, ...local.movements.filter(m => !ids.has(m.id) && m.pending)]};
@@ -205,7 +210,7 @@
   }
   async function loadAll() {
     state.loading = true; emit();
-    await Promise.allSettled([loadAlerts(), loadScans(), loadOutcomes(), loadLedgerRemote(), loadPositionsRemote(), loadLive()]);
+    await Promise.allSettled([loadAlerts(), loadScans(), loadOutcomes(), loadEngine(), loadLedgerRemote(), loadPositionsRemote(), loadLive()]);
     state.loading = false; emit();
   }
 
